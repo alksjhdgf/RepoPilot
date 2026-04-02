@@ -4,7 +4,7 @@ import kit.ArkUI.*
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
-import ohos_app_cangjie_entry.infra.logging.{logInfo, logWarn}
+import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.github.{exchangeGitHubDeviceCode, requestGitHubDeviceCode}
 import ohos_app_cangjie_entry.services.github.{fetchGitHubRepositories, fetchGitHubViewer}
@@ -233,17 +233,16 @@ public class AppShell {
     }
 
     /**
-     * 将 device code 请求结果写回 UI 状态。
      * Writes the device code response back into the auth UI state.
+     * Keeps the auth sheet fields synchronized with the latest GitHub device-flow payload.
      */
     func applyDeviceCode(snapshot: GitHubDeviceCodeSnapshot): Unit {
         logInfo("AppShell", "Device code received. userCode=${snapshot.userCode}")
-        getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
-            this.authMessage = "Open the GitHub page below and enter the code."
-            this.authVerificationUri = snapshot.verificationUri
-            this.authUserCode = snapshot.userCode
-            this.authDeviceCode = snapshot.deviceCode
-        })
+        this.authMessage = "Open the GitHub page below and enter the code."
+        this.authVerificationUri = snapshot.verificationUri
+        this.authUserCode = snapshot.userCode
+        this.authDeviceCode = snapshot.deviceCode
+        logDebug("AppShell", "Device code state applied.")
     }
 
     /**
@@ -252,11 +251,10 @@ public class AppShell {
      */
     func applyAccessToken(snapshot: GitHubAccessTokenSnapshot): Unit {
         logInfo("AppShell", "GitHub access token stored in memory.")
-        getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
-            this.authAccessToken = snapshot.accessToken
-            this.authStage = "connected"
-            this.authMessage = this.t("auth_connected_body")
-        })
+        this.authAccessToken = snapshot.accessToken
+        this.authStage = "connected"
+        this.authMessage = this.t("auth_connected_body")
+        logDebug("AppShell", "Access token state applied.")
         this.refreshGitHubProfile()
     }
 
@@ -266,9 +264,8 @@ public class AppShell {
      */
     func applyAuthFailure(message: String): Unit {
         logWarn("AppShell", "Auth flow failed: ${message}")
-        getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
-            this.authMessage = message
-        })
+        this.authMessage = message
+        logDebug("AppShell", "Failure state applied.")
     }
 
     func enterWorkspace(): Unit {
@@ -445,10 +442,9 @@ public class AppShell {
      */
     func applyViewer(snapshot: GitHubViewerSnapshot): Unit {
         logInfo("AppShell", "Viewer applied: ${snapshot.login}")
-        getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
-            this.viewerLogin = snapshot.login
-            this.viewerDisplayName = snapshot.displayName
-        })
+        this.viewerLogin = snapshot.login
+        this.viewerDisplayName = snapshot.displayName
+        logDebug("AppShell", "Viewer state applied.")
     }
     /**
      * 更新个人页上的真实仓库摘要列表。
@@ -456,9 +452,8 @@ public class AppShell {
      */
     func applyLiveRepositories(repositories: ArrayList<GitHubRepositoryCardSnapshot>): Unit {
         logInfo("AppShell", "Applied ${repositories.size} live repositories.")
-        getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
-            this.liveRepositories = repositories
-        })
+        this.liveRepositories = repositories
+        logDebug("AppShell", "Live repository state applied.")
     }
     func preferenceLabel(kind: String, value: String): String {
         if (value == "system") {

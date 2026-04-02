@@ -3,7 +3,7 @@ package ohos_app_cangjie_entry.infra.logging
 import ohos.hilog.Hilog
 
 let APP_LOG_DOMAIN: UInt32 = 0x1001u32
-let APP_LOG_TAG = "RepoPilot"
+let APP_LOG_TAG = "RPDIAG"
 
 /**
  * 统一记录调试日志，便于后续替换为日志收集或上报实现。

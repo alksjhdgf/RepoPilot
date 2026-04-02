@@ -74,8 +74,8 @@ func buildAuthCredentials(shell: AppShell) {
             Blank().height(32)
             Text(shell.t("auth_web_subtitle")).fontSize(16).fontColor(0xE5E7EB).textAlign(TextAlign.Center)
             Text(shell.authMessageText()).fontSize(14).fontColor(0x98A2B3).textAlign(TextAlign.Center)
-            buildAuthField("Verification URL", shell.authVerificationHint())
-            buildAuthField("User Code", shell.authUserCodeValue())
+            buildVerificationField(shell)
+            buildUserCodeField(shell)
             Button(shell.t("sign_in_github"))
                 .width(100.percent).height(48).backgroundColor(0x458D45).fontColor(0xF8FAFC).fontSize(18).borderRadius(10)
                 .onClick({ _ => shell.confirmAuth() })
@@ -124,6 +124,24 @@ func buildAuthField(label: String, value: String) {
             .borderRadius(10).backgroundColor(0x151A21).opacity(0.92)
     }
     .width(100.percent)
+}
+
+/**
+ * Reads the verification URI inside its own builder on every rerender.
+ * This avoids freezing the auth field value inside a nested builder call.
+ */
+@Builder
+func buildVerificationField(shell: AppShell) {
+    buildAuthField("Verification URL", shell.authVerificationHint())
+}
+
+/**
+ * Reads the user code inside its own builder on every rerender.
+ * This keeps the code label reactive after the device-flow callback returns.
+ */
+@Builder
+func buildUserCodeField(shell: AppShell) {
+    buildAuthField("User Code", shell.authUserCodeValue())
 }
 
 @Builder

@@ -1,6 +1,7 @@
 package ohos_app_cangjie_entry.app
 
 import kit.ArkUI.*
+import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
@@ -233,16 +234,29 @@ public class AppShell {
     }
 
     /**
+     * 将异步回调中的 UI 写操作切回主线程执行。
+     * Moves UI mutations from async callbacks back onto the UI thread.
+     */
+    func runOnUi(task: () -> Unit): Unit {
+        spawn(UIThread) { =>
+            task()
+        }
+    }
+
+    /**
      * Writes the device code response back into the auth UI state.
      * Keeps the auth sheet fields synchronized with the latest GitHub device-flow payload.
      */
     func applyDeviceCode(snapshot: GitHubDeviceCodeSnapshot): Unit {
-        logInfo("AppShell", "Device code received. userCode=${snapshot.userCode}")
-        this.authMessage = "Open the GitHub page below and enter the code."
-        this.authVerificationUri = snapshot.verificationUri
-        this.authUserCode = snapshot.userCode
-        this.authDeviceCode = snapshot.deviceCode
-        logDebug("AppShell", "Device code state applied.")
+        this.runOnUi({
+            =>
+            logInfo("AppShell", "Device code received. userCode=${snapshot.userCode}")
+            this.authMessage = "Open the GitHub page below and enter the code."
+            this.authVerificationUri = snapshot.verificationUri
+            this.authUserCode = snapshot.userCode
+            this.authDeviceCode = snapshot.deviceCode
+            logDebug("AppShell", "Device code state applied on UI thread.")
+        })
     }
 
     /**
@@ -250,12 +264,15 @@ public class AppShell {
      * Stores the access token after auth and continues loading live GitHub user data.
      */
     func applyAccessToken(snapshot: GitHubAccessTokenSnapshot): Unit {
-        logInfo("AppShell", "GitHub access token stored in memory.")
-        this.authAccessToken = snapshot.accessToken
-        this.authStage = "connected"
-        this.authMessage = this.t("auth_connected_body")
-        logDebug("AppShell", "Access token state applied.")
-        this.refreshGitHubProfile()
+        this.runOnUi({
+            =>
+            logInfo("AppShell", "GitHub access token stored in memory.")
+            this.authAccessToken = snapshot.accessToken
+            this.authStage = "connected"
+            this.authMessage = this.t("auth_connected_body")
+            logDebug("AppShell", "Access token state applied on UI thread.")
+            this.refreshGitHubProfile()
+        })
     }
 
     /**
@@ -263,9 +280,12 @@ public class AppShell {
      * Pushes auth or network failures into the auth UI.
      */
     func applyAuthFailure(message: String): Unit {
-        logWarn("AppShell", "Auth flow failed: ${message}")
-        this.authMessage = message
-        logDebug("AppShell", "Failure state applied.")
+        this.runOnUi({
+            =>
+            logWarn("AppShell", "Auth flow failed: ${message}")
+            this.authMessage = message
+            logDebug("AppShell", "Failure state applied on UI thread.")
+        })
     }
 
     func enterWorkspace(): Unit {
@@ -441,19 +461,25 @@ public class AppShell {
      * Updates the display metadata of the current GitHub viewer.
      */
     func applyViewer(snapshot: GitHubViewerSnapshot): Unit {
-        logInfo("AppShell", "Viewer applied: ${snapshot.login}")
-        this.viewerLogin = snapshot.login
-        this.viewerDisplayName = snapshot.displayName
-        logDebug("AppShell", "Viewer state applied.")
+        this.runOnUi({
+            =>
+            logInfo("AppShell", "Viewer applied: ${snapshot.login}")
+            this.viewerLogin = snapshot.login
+            this.viewerDisplayName = snapshot.displayName
+            logDebug("AppShell", "Viewer state applied on UI thread.")
+        })
     }
     /**
      * 更新个人页上的真实仓库摘要列表。
      * Updates the live repository summary list shown on the profile tab.
      */
     func applyLiveRepositories(repositories: ArrayList<GitHubRepositoryCardSnapshot>): Unit {
-        logInfo("AppShell", "Applied ${repositories.size} live repositories.")
-        this.liveRepositories = repositories
-        logDebug("AppShell", "Live repository state applied.")
+        this.runOnUi({
+            =>
+            logInfo("AppShell", "Applied ${repositories.size} live repositories.")
+            this.liveRepositories = repositories
+            logDebug("AppShell", "Live repository state applied on UI thread.")
+        })
     }
     func preferenceLabel(kind: String, value: String): String {
         if (value == "system") {

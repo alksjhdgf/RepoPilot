@@ -3,8 +3,8 @@ package ohos_app_cangjie_entry.app
 import kit.ArkUI.*
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, InboxItemSnapshot, RepositorySnapshot, TaskSnapshot}
-import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, repositorySnapshot, workplaceSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
@@ -39,10 +39,16 @@ public class AppShell {
     var currentWorkplace: String = "github"
 
     @Provide
+    var stack: NavPathStack = NavPathStack()
+
+    @Provide
     var selectedRepository: String = ""
 
     @Provide
     var selectedIssue: String = ""
+
+    @Provide
+    var selectedPullRequest: String = ""
 
     @Provide
     var selectedTask: String = ""
@@ -87,40 +93,46 @@ public class AppShell {
 
     @Builder
     func buildMainScene() {
-        Stack() {
-            this.buildRootBackground()
+        Navigation(this.stack) {
+            Stack() {
+                this.buildRootBackground()
 
-            Scroll {
-                Column(space: 18) {
-                    buildTopBar(this)
-                    buildActiveTabContent(this)
+                Scroll {
+                    Column(space: 18) {
+                        buildTopBar(this)
+                        buildActiveTabContent(this)
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 16, bottom: 132)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 16, bottom: 132)
-            }
-            .width(100.percent)
-            .height(100.percent)
-            .scrollBar(BarState.Off)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
 
-            if (this.showWorkplacePicker) {
-                Column() {}
-                    .width(100.percent)
-                    .height(100.percent)
-                    .backgroundColor(0x33000000)
-                    .onClick({ _ => this.toggleWorkplacePicker(false) })
+                if (this.showWorkplacePicker) {
+                    Column() {}
+                        .width(100.percent)
+                        .height(100.percent)
+                        .backgroundColor(0x33000000)
+                        .onClick({ _ => this.toggleWorkplacePicker(false) })
 
-                buildWorkplacePicker(this)
-            }
+                    buildWorkplacePicker(this)
+                }
 
-            Column() {
-                Blank()
-                buildFloatingNavigation(this)
+                Column() {
+                    Blank()
+                    buildFloatingNavigation(this)
+                }
+                .width(100.percent)
+                .height(100.percent)
             }
             .width(100.percent)
             .height(100.percent)
         }
         .width(100.percent)
         .height(100.percent)
+        .hideTitleBar(true)
+        .navDestination(bind(pageMap, this))
     }
 
     @Builder
@@ -167,6 +179,7 @@ public class AppShell {
             this.showWorkplacePicker = false
             this.selectedRepository = primaryRepositoryId(this.currentWorkplace)
             this.selectedIssue = repositorySnapshot(this.selectedRepository).primaryIssueId
+            this.selectedPullRequest = repositorySnapshot(this.selectedRepository).primaryPullRequestId
             this.selectedTask = taskIdForIssue(this.selectedIssue)
             this.draftPrStatusKey = "draft_pr_pending"
         })
@@ -204,6 +217,7 @@ public class AppShell {
             this.currentWorkplace = workplaceId
             this.selectedRepository = repositoryId
             this.selectedIssue = repository.primaryIssueId
+            this.selectedPullRequest = repository.primaryPullRequestId
             this.selectedTask = taskIdForIssue(repository.primaryIssueId)
             this.showWorkplacePicker = false
         })
@@ -222,6 +236,9 @@ public class AppShell {
         }
         if (this.selectedIssue == "") {
             this.selectedIssue = repositorySnapshot(this.selectedRepository).primaryIssueId
+        }
+        if (this.selectedPullRequest == "") {
+            this.selectedPullRequest = repositorySnapshot(this.selectedRepository).primaryPullRequestId
         }
         if (this.selectedTask == "") {
             this.selectedTask = taskIdForIssue(this.selectedIssue)
@@ -243,6 +260,7 @@ public class AppShell {
     }
     func focusedTask(): TaskSnapshot { taskSnapshot(this.selectedTask) }
     func reviewTask(): TaskSnapshot { taskSnapshot("repoPolish") }
+    func highlightedPullRequest(): PullRequestSnapshot { pullRequestSnapshot(this.selectedPullRequest) }
     func inboxPrimary(): InboxItemSnapshot { inboxItem(1) }
     func inboxSecondary(): InboxItemSnapshot { inboxItem(2) }
     func inboxTertiary(): InboxItemSnapshot { inboxItem(3) }
@@ -317,4 +335,38 @@ public class AppShell {
     func navBarColor(): Int64 { appThemeColor("navBar", this.isDarkTheme()) }
     func navSelectionColor(): Int64 { appThemeColor("navSelection", this.isDarkTheme()) }
     func shadowColor(): Int64 { appThemeColor("shadow", this.isDarkTheme()) }
+
+    func openRepository(repositoryId: String): Unit {
+        this.selectedRepository = repositoryId
+        let repository = repositorySnapshot(repositoryId)
+        this.selectedIssue = repository.primaryIssueId
+        this.selectedPullRequest = repository.primaryPullRequestId
+        this.selectedTask = taskIdForIssue(this.selectedIssue)
+        this.stack.pushPath(NavPathInfo(name: "repositoryDetail", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openSelectedIssue(): Unit {
+        this.stack.pushPath(NavPathInfo(name: "issueDetail", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openSelectedPullRequest(): Unit {
+        this.stack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openCreateTask(): Unit {
+        this.stack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openTaskDetail(taskId: String): Unit {
+        this.selectedTask = taskId
+        this.stack.pushPath(NavPathInfo(name: "taskDetail", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openDiffReview(): Unit {
+        this.stack.pushPath(NavPathInfo(name: "diffReview", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openSettings(): Unit {
+        this.stack.pushPath(NavPathInfo(name: "settings", param: ""), options: NavigationOptions(animated: true))
+    }
 }

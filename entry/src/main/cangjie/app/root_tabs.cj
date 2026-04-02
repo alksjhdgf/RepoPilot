@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.app
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, InboxItemSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 
 @Builder
 func buildTopBar(shell: AppShell) {
@@ -56,6 +56,9 @@ func buildHomeTab(shell: AppShell) {
         buildRepositoryCard(shell, shell.secondaryHomeRepository())
         buildRepositoryCard(shell, shell.tertiaryHomeRepository())
 
+        buildSectionHeader(shell, shell.t("pull_requests"), shell.t("see_all"))
+        buildPullRequestCard(shell, shell.highlightedPullRequest())
+
         buildSectionHeader(shell, shell.t("recent_tasks"), shell.t("focus_label"))
         buildTaskPreviewCard(shell, shell.focusedTask())
         buildTaskPreviewCard(shell, shell.reviewTask())
@@ -101,6 +104,9 @@ func buildProfileTab(shell: AppShell) {
         Button(shell.t("create_repository"))
             .width(100.percent).height(48).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor())
             .onClick({ _ => shell.createScratchRepository() })
+        Button(shell.t("settings"))
+            .width(100.percent).height(48).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor())
+            .onClick({ _ => shell.openSettings() })
         Button(shell.t("sign_out"))
             .width(100.percent).height(48).backgroundColor(shell.mutedSurfaceColor()).fontColor(shell.primaryTextColor())
             .onClick({ _ => shell.signOut() })
@@ -137,26 +143,51 @@ func buildStatChip(shell: AppShell, value: String, label: String) {
 
 @Builder
 func buildRepositoryCard(shell: AppShell, snapshot: RepositorySnapshot) {
-    Column(space: 10) {
-        Text(shell.t(snapshot.titleKey)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-        Text(shell.t(snapshot.summaryKey)).fontSize(13).fontColor(shell.secondaryTextColor())
+    Button() {
+        Column(space: 10) {
+            Text(shell.t(snapshot.titleKey)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+            Text(shell.t(snapshot.summaryKey)).fontSize(13).fontColor(shell.secondaryTextColor())
+        }
+        .width(100.percent)
     }
     .width(100.percent)
     .padding(18)
     .backgroundColor(shell.surfaceColor())
     .borderRadius(24)
+    .onClick({ _ => shell.openRepository(snapshot.id) })
+}
+
+@Builder
+func buildPullRequestCard(shell: AppShell, snapshot: PullRequestSnapshot) {
+    Button() {
+        Column(space: 10) {
+            Text(shell.t(snapshot.titleKey)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+            Text(shell.t(snapshot.summaryKey)).fontSize(13).fontColor(shell.secondaryTextColor())
+            Text(shell.t(snapshot.statusKey)).fontSize(12).fontColor(shell.accentStrongColor())
+        }
+        .width(100.percent)
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(24)
+    .onClick({ _ => shell.openSelectedPullRequest() })
 }
 
 @Builder
 func buildTaskPreviewCard(shell: AppShell, snapshot: TaskSnapshot) {
-    Column(space: 8) {
-        Text(shell.t(snapshot.titleKey)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-        Text(shell.t(snapshot.summaryKey)).fontSize(13).fontColor(shell.secondaryTextColor())
+    Button() {
+        Column(space: 8) {
+            Text(shell.t(snapshot.titleKey)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+            Text(shell.t(snapshot.summaryKey)).fontSize(13).fontColor(shell.secondaryTextColor())
+        }
+        .width(100.percent)
     }
     .width(100.percent)
     .padding(18)
     .backgroundColor(shell.surfaceColor())
     .borderRadius(24)
+    .onClick({ _ => shell.openTaskDetail(snapshot.id) })
 }
 
 @Builder
@@ -173,14 +204,18 @@ func buildInboxMessage(shell: AppShell, snapshot: InboxItemSnapshot) {
 
 @Builder
 func buildExploreLane(shell: AppShell, snapshot: ExploreLaneSnapshot) {
-    Column(space: 8) {
-        Text(shell.t(snapshot.titleKey)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-        Text(shell.t(snapshot.summaryKey)).fontSize(13).fontColor(shell.secondaryTextColor())
+    Button() {
+        Column(space: 8) {
+            Text(shell.t(snapshot.titleKey)).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+            Text(shell.t(snapshot.summaryKey)).fontSize(13).fontColor(shell.secondaryTextColor())
+        }
+        .width(100.percent)
     }
     .width(100.percent)
     .padding(18)
     .backgroundColor(shell.surfaceColor())
     .borderRadius(24)
+    .onClick({ _ => shell.openRepository(snapshot.repositoryId) })
 }
 
 @Builder

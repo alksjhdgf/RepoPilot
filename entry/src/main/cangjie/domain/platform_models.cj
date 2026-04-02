@@ -32,7 +32,8 @@ public class RepositorySnapshot {
     public let issueCount: String
     public let reviewCount: String
     public let primaryIssueId: String
-    public init(id: String, titleKey: String, summaryKey: String, activeCount: String, issueCount: String, reviewCount: String, primaryIssueId: String) {
+    public let primaryPullRequestId: String
+    public init(id: String, titleKey: String, summaryKey: String, activeCount: String, issueCount: String, reviewCount: String, primaryIssueId: String, primaryPullRequestId: String) {
         this.id = id
         this.titleKey = titleKey
         this.summaryKey = summaryKey
@@ -40,6 +41,35 @@ public class RepositorySnapshot {
         this.issueCount = issueCount
         this.reviewCount = reviewCount
         this.primaryIssueId = primaryIssueId
+        this.primaryPullRequestId = primaryPullRequestId
+    }
+}
+
+public class IssueSnapshot {
+    public let id: String
+    public let titleKey: String
+    public let summaryKey: String
+    public let contextKey: String
+    public let suggestedTaskId: String
+    public init(id: String, titleKey: String, summaryKey: String, contextKey: String, suggestedTaskId: String) {
+        this.id = id
+        this.titleKey = titleKey
+        this.summaryKey = summaryKey
+        this.contextKey = contextKey
+        this.suggestedTaskId = suggestedTaskId
+    }
+}
+
+public class PullRequestSnapshot {
+    public let id: String
+    public let titleKey: String
+    public let summaryKey: String
+    public let statusKey: String
+    public init(id: String, titleKey: String, summaryKey: String, statusKey: String) {
+        this.id = id
+        this.titleKey = titleKey
+        this.summaryKey = summaryKey
+        this.statusKey = statusKey
     }
 }
 

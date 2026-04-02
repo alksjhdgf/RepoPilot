@@ -6,6 +6,7 @@ import kit.AbilityKit.UIAbility
 import kit.AbilityKit.LaunchParam
 import kit.AbilityKit.LaunchReason
 import kit.ArkUI.WindowStage
+import ohos_app_cangjie_entry.infra.runtime.setAppAbilityContext
 
 class MainAbility <: UIAbility {
     public init() {
@@ -23,6 +24,7 @@ class MainAbility <: UIAbility {
 
     public override func onWindowStageCreate(windowStage: WindowStage): Unit {
         Hilog.info(1, "Cangjie", "MainAbility onWindowStageCreate.")
+        setAppAbilityContext(this.context)
         windowStage.loadContent("EntryView")
     }
 }

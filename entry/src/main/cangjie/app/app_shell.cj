@@ -1,11 +1,15 @@
 package ohos_app_cangjie_entry.app
 
 import kit.ArkUI.*
+import kit.AbilityKit.Want
+import ohos.business_exception.BusinessException
 import ohos.base.UIThread
 import std.collection.ArrayList
+import std.core.Duration
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
+import ohos_app_cangjie_entry.infra.runtime.getAppAbilityContext
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.github.{exchangeGitHubDeviceCode, requestGitHubDeviceCode}
 import ohos_app_cangjie_entry.services.github.{fetchGitHubRepositories, fetchGitHubViewer}
@@ -84,6 +88,8 @@ public class AppShell {
     @State
     var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
 
+    var authPollingSession: Int64 = 0
+
     /**
      * 初始化顶层选中态，避免页面首次渲染时出现空引用状态。
      * Initializes top-level selections so the first render does not depend on empty state.
@@ -111,7 +117,7 @@ public class AppShell {
             if (this.authStage == "welcome") {
                 buildAuthWelcome(this)
             } else if (this.authStage == "credentials") {
-                buildAuthCredentials(this)
+                this.buildAuthCredentials()
             } else {
                 buildAuthConnected(this)
             }
@@ -164,6 +170,43 @@ public class AppShell {
         .navDestination(bind(pageMap, this))
     }
 
+    /**
+     * 认证页直接读取组件状态，确保 ArkUI 能建立状态到节点的依赖关系。
+     * Reads auth state directly inside the component so ArkUI can bind state to render nodes.
+     */
+    @Builder
+    func buildAuthCredentials() {
+        Column() {
+            Row() {
+                Button("X")
+                    .width(40).height(40).backgroundColor(0x1E232C).fontColor(0xF8FAFC).borderRadius(20)
+                    .onClick({ _ => this.returnToAuthWelcome() })
+                Blank()
+                Text(this.t("auth_web_title")).fontSize(20).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
+                Blank()
+                Button("...").width(40).height(40).backgroundColor(0x1E232C).fontColor(0xF8FAFC).borderRadius(20)
+            }
+            .width(100.percent)
+            .padding(left: 18, right: 18, top: 16)
+
+            Column(space: 18) {
+                Blank().height(32)
+                Text(this.t("auth_web_subtitle")).fontSize(16).fontColor(0xE5E7EB).textAlign(TextAlign.Center)
+                Text(if (this.authMessage == "") { this.t("auth_subtitle") } else { this.authMessage })
+                    .fontSize(14).fontColor(0x98A2B3).textAlign(TextAlign.Center)
+
+                Button("Open GitHub")
+                    .width(100.percent).height(48).backgroundColor(0x458D45).fontColor(0xF8FAFC).fontSize(18).borderRadius(10)
+                    .onClick({ _ => this.reopenGitHubVerification() })
+            }
+            .width(100.percent)
+            .padding(left: 18, right: 18, top: 24)
+        }
+        .width(100.percent)
+        .height(100.percent)
+        .backgroundColor(0x11151B)
+    }
+
     @Builder
     func buildRootBackground() {
         Column() {
@@ -186,9 +229,10 @@ public class AppShell {
      */
     func beginAuth(): Unit {
         logInfo("AppShell", "Begin GitHub authentication flow.")
+        this.authPollingSession += 1
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authStage = "credentials"
-            this.authMessage = "Requesting a GitHub device code..."
+            this.authMessage = "Preparing GitHub sign-in..."
             this.authVerificationUri = ""
             this.authUserCode = ""
             this.authDeviceCode = ""
@@ -205,6 +249,7 @@ public class AppShell {
      */
     func returnToAuthWelcome(): Unit {
         logInfo("AppShell", "Return to auth welcome stage.")
+        this.authPollingSession += 1
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authStage = "welcome"
             this.authMessage = ""
@@ -215,22 +260,11 @@ public class AppShell {
     }
 
     /**
-     * 在用户完成网页授权后继续轮询 GitHub 访问令牌。
-     * Continues token polling after the user finishes authorization in GitHub.
+     * 允许用户在等待页再次拉起 GitHub 验证页面。
+     * Reopens the GitHub verification page from the waiting screen.
      */
     func confirmAuth(): Unit {
-        if (this.authDeviceCode == "") {
-            logWarn("AppShell", "Confirm auth tapped before device code was ready.")
-            this.authMessage = "Device code not ready yet."
-            return
-        }
-        logInfo("AppShell", "Confirming GitHub authorization with device code.")
-        this.authMessage = "Checking GitHub authorization..."
-        exchangeGitHubDeviceCode(
-            this.authDeviceCode,
-            { token => this.applyAccessToken(token) },
-            { message => this.applyAuthFailure(message) }
-        )
+        this.reopenGitHubVerification()
     }
 
     /**
@@ -244,18 +278,90 @@ public class AppShell {
     }
 
     /**
+     * 重新拉起 GitHub 验证页面，减少用户手动复制地址的步骤。
+     * Opens the GitHub verification page through the system browser or web handler.
+     */
+    func reopenGitHubVerification(): Unit {
+        if (this.authVerificationUri == "") {
+            logWarn("AppShell", "Verification page requested before the URI was ready.")
+            return
+        }
+        try {
+            getAppAbilityContext().startAbility(
+                Want(
+                    uri: this.authVerificationUri,
+                    action: "ohos.want.action.viewData"
+                )
+            )
+            logInfo("AppShell", "Opened GitHub verification page.")
+        } catch (e: BusinessException) {
+            logWarn("AppShell", "Failed to open GitHub verification page: ${e.code} ${e.message}")
+            this.applyAuthFailure("Unable to open GitHub. Please try again.")
+        }
+    }
+
+    /**
+     * 在后台轮询 GitHub 令牌接口，直到授权成功或会话失效。
+     * Polls GitHub in the background until authorization succeeds or the session is canceled.
+     */
+    func startAuthPolling(snapshot: GitHubDeviceCodeSnapshot): Unit {
+        let session = this.authPollingSession
+        let waitSeconds = if (snapshot.pollIntervalSeconds > 0) { snapshot.pollIntervalSeconds } else { 5 }
+        spawn { =>
+            for (_ in 0..120) {
+                if (session != this.authPollingSession) {
+                    logDebug("AppShell", "Auth polling canceled by a newer session.")
+                    return
+                }
+                sleep(waitSeconds * Duration.second)
+                exchangeGitHubDeviceCode(
+                    snapshot.deviceCode,
+                    { token => this.applyAccessToken(token) },
+                    { code, description => this.handlePendingAuth(code, description) },
+                    { message => this.applyAuthFailure(message) }
+                )
+                if (session != this.authPollingSession) {
+                    return
+                }
+                if (this.authAccessToken != "") {
+                    return
+                }
+            }
+            this.applyAuthFailure("GitHub authorization timed out.")
+        }
+    }
+
+    /**
+     * 处理 GitHub 轮询中的中间态，保持等待文案而不误报失败。
+     * Handles intermediate polling states without surfacing them as hard failures.
+     */
+    func handlePendingAuth(code: String, description: String): Unit {
+        this.runOnUi({
+            =>
+            if (code == "slow_down") {
+                this.authMessage = "GitHub asked RepoPilot to slow down. Waiting to retry..."
+            } else {
+                this.authMessage = "Finish authorization in GitHub. RepoPilot will continue automatically."
+            }
+            logDebug("AppShell", "Auth polling still pending: ${code} ${description}")
+        })
+    }
+
+    /**
+     * 将 device code 请求结果写回 UI 状态。
      * Writes the device code response back into the auth UI state.
-     * Keeps the auth sheet fields synchronized with the latest GitHub device-flow payload.
      */
     func applyDeviceCode(snapshot: GitHubDeviceCodeSnapshot): Unit {
         this.runOnUi({
             =>
-            logInfo("AppShell", "Device code received. userCode=${snapshot.userCode}")
-            this.authMessage = "Open the GitHub page below and enter the code."
+            logInfo("AppShell", "Device code received. userCode=${snapshot.userCode} authVerificationUri=${snapshot.verificationUri}")
+            this.authMessage = "Continue in GitHub. RepoPilot will finish sign-in automatically after authorization."
             this.authVerificationUri = snapshot.verificationUri
             this.authUserCode = snapshot.userCode
             this.authDeviceCode = snapshot.deviceCode
             logDebug("AppShell", "Device code state applied on UI thread.")
+            this.reopenGitHubVerification()
+            this.startAuthPolling(snapshot)
         })
     }
 
@@ -266,6 +372,7 @@ public class AppShell {
     func applyAccessToken(snapshot: GitHubAccessTokenSnapshot): Unit {
         this.runOnUi({
             =>
+            this.authPollingSession += 1
             logInfo("AppShell", "GitHub access token stored in memory.")
             this.authAccessToken = snapshot.accessToken
             this.authStage = "connected"
@@ -282,6 +389,7 @@ public class AppShell {
     func applyAuthFailure(message: String): Unit {
         this.runOnUi({
             =>
+            this.authPollingSession += 1
             logWarn("AppShell", "Auth flow failed: ${message}")
             this.authMessage = message
             logDebug("AppShell", "Failure state applied on UI thread.")
@@ -303,6 +411,7 @@ public class AppShell {
 
     func signOut(): Unit {
         logInfo("AppShell", "Signing out and clearing live GitHub state.")
+        this.authPollingSession += 1
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.isAuthenticated = false
             this.authStage = "welcome"
@@ -425,12 +534,6 @@ public class AppShell {
     }
     func hasLiveRepositories(): Bool { this.liveRepositories.size > 0 }
     func visibleLiveRepositories(): ArrayList<GitHubRepositoryCardSnapshot> { this.liveRepositories }
-    func authVerificationHint(): String {
-        if (this.authVerificationUri == "") { "Waiting for GitHub..." } else { this.authVerificationUri }
-    }
-    func authUserCodeValue(): String {
-        if (this.authUserCode == "") { "---- ----" } else { this.authUserCode }
-    }
     func applyRootPreference(kind: String, value: String): Unit {
         getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
             if (kind == "theme") {
@@ -494,7 +597,6 @@ public class AppShell {
             this.t("lang_en")
         }
     }
-    func authMessageText(): String { if (this.authMessage == "") { this.t("auth_subtitle") } else { this.authMessage } }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }

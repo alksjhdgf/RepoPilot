@@ -81,6 +81,7 @@ public func requestGitHubDeviceCode(
 public func exchangeGitHubDeviceCode(
     deviceCode: String,
     onSuccess: (GitHubAccessTokenSnapshot) -> Unit,
+    onPending: (String, String) -> Unit,
     onFailure: (String) -> Unit
 ): Unit {
     logInfo("AuthService", "Polling GitHub access token.")
@@ -117,7 +118,9 @@ public func exchangeGitHubDeviceCode(
                     let errorCode = extractJsonStringField(body, "error")
                     let errorDescription = extractJsonStringField(body, "error_description")
                     logWarn("AuthService", "Token exchange incomplete: ${errorCode} ${errorDescription}")
-                    if (errorCode != "") {
+                    if (errorCode == "authorization_pending" || errorCode == "slow_down") {
+                        onPending(errorCode, errorDescription)
+                    } else if (errorCode != "") {
                         onFailure("${errorCode}: ${errorDescription}")
                     } else {
                         onFailure("GitHub token exchange did not return an access token.")

@@ -4,16 +4,22 @@ import std.collection.{ArrayList, HashMap}
 import kit.NetworkKit.*
 import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
 import ohos_app_cangjie_entry.domain.{GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
 let GITHUB_API_ACCEPT = "application/vnd.github+json"
 let GITHUB_API_VERSION = "2022-11-28"
 
+/**
+ * 对 GitHub REST API 发起统一的 GET 请求，并返回 JSON 字符串。
+ * Sends a shared GitHub REST GET request and returns the JSON response body.
+ */
 func requestGitHubJson(
     url: String,
     token: String,
     onSuccess: (String) -> Unit,
     onFailure: (String) -> Unit
 ): Unit {
+    logInfo("GitHubApi", "Requesting ${url}")
     let httpRequest = createHttp()
     let headers = HashMap<String, String>()
     headers.add("Accept", GITHUB_API_ACCEPT)
@@ -31,6 +37,7 @@ func requestGitHubJson(
             err, resp =>
             if (let Some(networkError) <- err) {
                 httpRequest.destroy()
+                logError("GitHubApi", "Request failed: ${networkError.code} ${networkError.message}")
                 onFailure("Network error ${networkError.code}: ${networkError.message}")
                 return
             }
@@ -40,19 +47,26 @@ func requestGitHubJson(
                     case _ => ""
                 }
                 httpRequest.destroy()
+                logDebug("GitHubApi", "Response ${response.responseCode} from ${url}")
                 if (response.responseCode >= 200u32 && response.responseCode < 300u32) {
                     onSuccess(body)
                 } else {
+                    logWarn("GitHubApi", "Non-success response ${response.responseCode} from ${url}")
                     onFailure("GitHub API ${response.responseCode}")
                 }
                 return
             }
             httpRequest.destroy()
+            logWarn("GitHubApi", "Request returned no response for ${url}")
             onFailure("GitHub returned no response.")
         }
     )
 }
 
+/**
+ * 获取当前已登录 GitHub 用户的基础资料。
+ * Fetches the currently authenticated GitHub user's basic profile.
+ */
 public func fetchGitHubViewer(
     token: String,
     onSuccess: (GitHubViewerSnapshot) -> Unit,
@@ -64,10 +78,12 @@ public func fetchGitHubViewer(
         { body =>
             let login = extractJsonStringField(body, "login")
             if (login == "") {
+                logError("GitHubApi", "Viewer payload parse failed.")
                 onFailure("Unable to parse GitHub user profile.")
                 return
             }
             let displayName = extractJsonStringField(body, "name")
+            logInfo("GitHubApi", "Viewer loaded for ${login}")
             onSuccess(
                 GitHubViewerSnapshot(
                     login,
@@ -80,6 +96,10 @@ public func fetchGitHubViewer(
     )
 }
 
+/**
+ * 获取当前用户的仓库摘要列表，用于个人页和后续仓库流转。
+ * Fetches a repository summary list for the current user.
+ */
 public func fetchGitHubRepositories(
     token: String,
     onSuccess: (ArrayList<GitHubRepositoryCardSnapshot>) -> Unit,
@@ -106,6 +126,7 @@ public func fetchGitHubRepositories(
                     )
                 )
             }
+            logInfo("GitHubApi", "Loaded ${repositories.size} repositories.")
             onSuccess(repositories)
         },
         onFailure

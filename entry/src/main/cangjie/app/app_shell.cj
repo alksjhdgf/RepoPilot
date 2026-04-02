@@ -4,6 +4,7 @@ import kit.ArkUI.*
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.infra.logging.{logInfo, logWarn}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.github.{exchangeGitHubDeviceCode, requestGitHubDeviceCode}
 import ohos_app_cangjie_entry.services.github.{fetchGitHubRepositories, fetchGitHubViewer}
@@ -82,6 +83,10 @@ public class AppShell {
     @State
     var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
 
+    /**
+     * 初始化顶层选中态，避免页面首次渲染时出现空引用状态。
+     * Initializes top-level selections so the first render does not depend on empty state.
+     */
     protected override func aboutToAppear(): Unit {
         this.ensureInitialSelection()
     }
@@ -174,7 +179,12 @@ public class AppShell {
         .backgroundColor(this.pageBackgroundColor())
     }
 
+    /**
+     * 开始 GitHub 登录流程，先请求 device code，再展示给用户。
+     * Starts GitHub sign-in by requesting a device code before showing it in the auth sheet.
+     */
     func beginAuth(): Unit {
+        logInfo("AppShell", "Begin GitHub authentication flow.")
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authStage = "credentials"
             this.authMessage = "Requesting a GitHub device code..."
@@ -188,7 +198,12 @@ public class AppShell {
         )
     }
 
+    /**
+     * 返回认证欢迎页，并清理当前这轮认证上下文。
+     * Returns to the auth welcome stage and clears the current auth context.
+     */
     func returnToAuthWelcome(): Unit {
+        logInfo("AppShell", "Return to auth welcome stage.")
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authStage = "welcome"
             this.authMessage = ""
@@ -198,11 +213,17 @@ public class AppShell {
         })
     }
 
+    /**
+     * 在用户完成网页授权后继续轮询 GitHub 访问令牌。
+     * Continues token polling after the user finishes authorization in GitHub.
+     */
     func confirmAuth(): Unit {
         if (this.authDeviceCode == "") {
+            logWarn("AppShell", "Confirm auth tapped before device code was ready.")
             this.authMessage = "Device code not ready yet."
             return
         }
+        logInfo("AppShell", "Confirming GitHub authorization with device code.")
         this.authMessage = "Checking GitHub authorization..."
         exchangeGitHubDeviceCode(
             this.authDeviceCode,
@@ -211,7 +232,12 @@ public class AppShell {
         )
     }
 
+    /**
+     * 将 device code 请求结果写回 UI 状态。
+     * Writes the device code response back into the auth UI state.
+     */
     func applyDeviceCode(snapshot: GitHubDeviceCodeSnapshot): Unit {
+        logInfo("AppShell", "Device code received. userCode=${snapshot.userCode}")
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authMessage = "Open the GitHub page below and enter the code."
             this.authVerificationUri = snapshot.verificationUri
@@ -220,7 +246,12 @@ public class AppShell {
         })
     }
 
+    /**
+     * 认证成功后保存访问令牌，并继续拉取真实 GitHub 用户数据。
+     * Stores the access token after auth and continues loading live GitHub user data.
+     */
     func applyAccessToken(snapshot: GitHubAccessTokenSnapshot): Unit {
+        logInfo("AppShell", "GitHub access token stored in memory.")
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authAccessToken = snapshot.accessToken
             this.authStage = "connected"
@@ -229,7 +260,12 @@ public class AppShell {
         this.refreshGitHubProfile()
     }
 
+    /**
+     * 将认证或网络错误反馈到认证界面。
+     * Pushes auth or network failures into the auth UI.
+     */
     func applyAuthFailure(message: String): Unit {
+        logWarn("AppShell", "Auth flow failed: ${message}")
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authMessage = message
         })
@@ -249,6 +285,7 @@ public class AppShell {
     }
 
     func signOut(): Unit {
+        logInfo("AppShell", "Signing out and clearing live GitHub state.")
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.isAuthenticated = false
             this.authStage = "welcome"
@@ -390,6 +427,7 @@ public class AppShell {
         if (this.authAccessToken == "") {
             return
         }
+        logInfo("AppShell", "Refreshing GitHub viewer and repository summaries.")
         fetchGitHubViewer(
             this.authAccessToken,
             { snapshot => this.applyViewer(snapshot) },
@@ -401,13 +439,23 @@ public class AppShell {
             { message => this.applyAuthFailure(message) }
         )
     }
+    /**
+     * 更新当前登录用户的展示信息。
+     * Updates the display metadata of the current GitHub viewer.
+     */
     func applyViewer(snapshot: GitHubViewerSnapshot): Unit {
+        logInfo("AppShell", "Viewer applied: ${snapshot.login}")
         getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
             this.viewerLogin = snapshot.login
             this.viewerDisplayName = snapshot.displayName
         })
     }
+    /**
+     * 更新个人页上的真实仓库摘要列表。
+     * Updates the live repository summary list shown on the profile tab.
+     */
     func applyLiveRepositories(repositories: ArrayList<GitHubRepositoryCardSnapshot>): Unit {
+        logInfo("AppShell", "Applied ${repositories.size} live repositories.")
         getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
             this.liveRepositories = repositories
         })

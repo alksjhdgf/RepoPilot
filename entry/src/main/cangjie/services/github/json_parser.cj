@@ -3,6 +3,10 @@ package ohos_app_cangjie_entry.services.github
 import std.collection.ArrayList
 import std.convert.*
 
+/**
+ * 从简单 JSON 对象中读取字符串字段，适用于当前 GitHub 认证链的轻量解析。
+ * Reads a string field from a simple JSON object for the current lightweight GitHub flow.
+ */
 func extractJsonStringField(payload: String, key: String): String {
     let marker = "\"${key}\":"
     match (payload.indexOf(marker)) {
@@ -23,6 +27,10 @@ func extractJsonStringField(payload: String, key: String): String {
     }
 }
 
+/**
+ * 从简单 JSON 对象中读取整数字段。
+ * Reads an integer field from a simple JSON object.
+ */
 func extractJsonIntField(payload: String, key: String): Int64 {
     let marker = "\"${key}\":"
     match (payload.indexOf(marker)) {
@@ -48,6 +56,10 @@ func extractJsonIntField(payload: String, key: String): Int64 {
     }
 }
 
+/**
+ * 从简单 JSON 对象中读取布尔字段。
+ * Reads a boolean field from a simple JSON object.
+ */
 func extractJsonBoolField(payload: String, key: String): Bool {
     let marker = "\"${key}\":"
     match (payload.indexOf(marker)) {
@@ -60,6 +72,10 @@ func extractJsonBoolField(payload: String, key: String): Bool {
     }
 }
 
+/**
+ * 解析顶层 JSON 数组中的对象片段，供仓库列表做最小依赖解析。
+ * Extracts top-level object fragments from a JSON array for low-dependency list parsing.
+ */
 func extractTopLevelObjectArray(payload: String): ArrayList<String> {
     let items = ArrayList<String>()
     var objectStart = -1

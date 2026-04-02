@@ -87,6 +87,8 @@ func buildExploreTab(shell: AppShell) {
 
 @Builder
 func buildProfileTab(shell: AppShell) {
+    // 个人页同时承载本地偏好设置和 GitHub 实时摘要信息。
+    // The profile tab hosts both local preferences and live GitHub summaries.
     Column(space: 18) {
         Column(space: 12) {
             Text("RepoPilot").fontSize(24).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
@@ -125,6 +127,8 @@ func buildProfileTab(shell: AppShell) {
 
 @Builder
 func buildLiveRepositoryCard(shell: AppShell, snapshot: GitHubRepositoryCardSnapshot) {
+    // 真实 GitHub 仓库卡片，优先用于验证认证链和数据读取链是否闭环。
+    // Live GitHub repository card used to verify that auth and read flows are wired correctly.
     Column(space: 8) {
         Text(snapshot.name).fontSize(17).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
         Text(snapshot.summary).fontSize(12).fontColor(shell.secondaryTextColor())

@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.app
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubRepositoryCardSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 
 @Builder
 func buildTopBar(shell: AppShell) {
@@ -104,6 +104,15 @@ func buildProfileTab(shell: AppShell) {
         Button(shell.t("create_repository"))
             .width(100.percent).height(48).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor())
             .onClick({ _ => shell.createScratchRepository() })
+        if (shell.hasLiveRepositories()) {
+            buildSectionHeader(shell, "GitHub", "live")
+            ForEach(
+                shell.visibleLiveRepositories(),
+                itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
+                    buildLiveRepositoryCard(shell, item)
+                }
+            )
+        }
         Button(shell.t("settings"))
             .width(100.percent).height(48).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor())
             .onClick({ _ => shell.openSettings() })
@@ -112,6 +121,20 @@ func buildProfileTab(shell: AppShell) {
             .onClick({ _ => shell.signOut() })
     }
     .width(100.percent)
+}
+
+@Builder
+func buildLiveRepositoryCard(shell: AppShell, snapshot: GitHubRepositoryCardSnapshot) {
+    Column(space: 8) {
+        Text(snapshot.name).fontSize(17).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Text(snapshot.summary).fontSize(12).fontColor(shell.secondaryTextColor())
+        Text(if (snapshot.isFork) { "Fork" } else if (snapshot.isPrivate) { "Private" } else { "Public" })
+            .fontSize(11).fontColor(shell.accentStrongColor())
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(24)
 }
 
 @Builder

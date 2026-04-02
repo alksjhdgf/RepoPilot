@@ -3,9 +3,10 @@ package ohos_app_cangjie_entry.app
 import kit.ArkUI.*
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.github.{exchangeGitHubDeviceCode, requestGitHubDeviceCode}
+import ohos_app_cangjie_entry.services.github.{fetchGitHubRepositories, fetchGitHubViewer}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
@@ -71,6 +72,15 @@ public class AppShell {
 
     @State
     var authAccessToken: String = ""
+
+    @State
+    var viewerLogin: String = ""
+
+    @State
+    var viewerDisplayName: String = ""
+
+    @State
+    var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
 
     protected override func aboutToAppear(): Unit {
         this.ensureInitialSelection()
@@ -216,6 +226,7 @@ public class AppShell {
             this.authStage = "connected"
             this.authMessage = this.t("auth_connected_body")
         })
+        this.refreshGitHubProfile()
     }
 
     func applyAuthFailure(message: String): Unit {
@@ -246,6 +257,9 @@ public class AppShell {
             this.authUserCode = ""
             this.authDeviceCode = ""
             this.authAccessToken = ""
+            this.viewerLogin = ""
+            this.viewerDisplayName = ""
+            this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
         })
     }
 
@@ -349,9 +363,14 @@ public class AppShell {
         }
     }
     func accountCaption(): String {
+        if (this.viewerLogin != "") {
+            return "GitHub / ${this.viewerDisplayName} (@${this.viewerLogin})"
+        }
         let account = activeAccountSnapshot()
         "${this.t("profile_account_prefix")}: ${this.t(account.providerKey)} / ${account.accountLabel}"
     }
+    func hasLiveRepositories(): Bool { this.liveRepositories.size > 0 }
+    func visibleLiveRepositories(): ArrayList<GitHubRepositoryCardSnapshot> { this.liveRepositories }
     func authVerificationHint(): String {
         if (this.authVerificationUri == "") { "Waiting for GitHub..." } else { this.authVerificationUri }
     }
@@ -365,6 +384,32 @@ public class AppShell {
             } else {
                 this.languagePreference = value
             }
+        })
+    }
+    func refreshGitHubProfile(): Unit {
+        if (this.authAccessToken == "") {
+            return
+        }
+        fetchGitHubViewer(
+            this.authAccessToken,
+            { snapshot => this.applyViewer(snapshot) },
+            { message => this.applyAuthFailure(message) }
+        )
+        fetchGitHubRepositories(
+            this.authAccessToken,
+            { repositories => this.applyLiveRepositories(repositories) },
+            { message => this.applyAuthFailure(message) }
+        )
+    }
+    func applyViewer(snapshot: GitHubViewerSnapshot): Unit {
+        getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
+            this.viewerLogin = snapshot.login
+            this.viewerDisplayName = snapshot.displayName
+        })
+    }
+    func applyLiveRepositories(repositories: ArrayList<GitHubRepositoryCardSnapshot>): Unit {
+        getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
+            this.liveRepositories = repositories
         })
     }
     func preferenceLabel(kind: String, value: String): String {

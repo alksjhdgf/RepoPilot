@@ -3,8 +3,9 @@ package ohos_app_cangjie_entry.app
 import kit.ArkUI.*
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
+import ohos_app_cangjie_entry.services.github.{exchangeGitHubDeviceCode, requestGitHubDeviceCode}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
@@ -58,6 +59,18 @@ public class AppShell {
 
     @State
     var authMessage: String = ""
+
+    @State
+    var authVerificationUri: String = ""
+
+    @State
+    var authUserCode: String = ""
+
+    @State
+    var authDeviceCode: String = ""
+
+    @State
+    var authAccessToken: String = ""
 
     protected override func aboutToAppear(): Unit {
         this.ensureInitialSelection()
@@ -154,21 +167,60 @@ public class AppShell {
     func beginAuth(): Unit {
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authStage = "credentials"
-            this.authMessage = this.t("auth_subtitle")
+            this.authMessage = "Requesting a GitHub device code..."
+            this.authVerificationUri = ""
+            this.authUserCode = ""
+            this.authDeviceCode = ""
         })
+        requestGitHubDeviceCode(
+            { snapshot => this.applyDeviceCode(snapshot) },
+            { message => this.applyAuthFailure(message) }
+        )
     }
 
     func returnToAuthWelcome(): Unit {
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authStage = "welcome"
             this.authMessage = ""
+            this.authVerificationUri = ""
+            this.authUserCode = ""
+            this.authDeviceCode = ""
         })
     }
 
     func confirmAuth(): Unit {
+        if (this.authDeviceCode == "") {
+            this.authMessage = "Device code not ready yet."
+            return
+        }
+        this.authMessage = "Checking GitHub authorization..."
+        exchangeGitHubDeviceCode(
+            this.authDeviceCode,
+            { token => this.applyAccessToken(token) },
+            { message => this.applyAuthFailure(message) }
+        )
+    }
+
+    func applyDeviceCode(snapshot: GitHubDeviceCodeSnapshot): Unit {
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
+            this.authMessage = "Open the GitHub page below and enter the code."
+            this.authVerificationUri = snapshot.verificationUri
+            this.authUserCode = snapshot.userCode
+            this.authDeviceCode = snapshot.deviceCode
+        })
+    }
+
+    func applyAccessToken(snapshot: GitHubAccessTokenSnapshot): Unit {
+        getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
+            this.authAccessToken = snapshot.accessToken
             this.authStage = "connected"
             this.authMessage = this.t("auth_connected_body")
+        })
+    }
+
+    func applyAuthFailure(message: String): Unit {
+        getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
+            this.authMessage = message
         })
     }
 
@@ -190,6 +242,10 @@ public class AppShell {
             this.isAuthenticated = false
             this.authStage = "welcome"
             this.authMessage = ""
+            this.authVerificationUri = ""
+            this.authUserCode = ""
+            this.authDeviceCode = ""
+            this.authAccessToken = ""
         })
     }
 
@@ -295,6 +351,12 @@ public class AppShell {
     func accountCaption(): String {
         let account = activeAccountSnapshot()
         "${this.t("profile_account_prefix")}: ${this.t(account.providerKey)} / ${account.accountLabel}"
+    }
+    func authVerificationHint(): String {
+        if (this.authVerificationUri == "") { "Waiting for GitHub..." } else { this.authVerificationUri }
+    }
+    func authUserCodeValue(): String {
+        if (this.authUserCode == "") { "---- ----" } else { this.authUserCode }
     }
     func applyRootPreference(kind: String, value: String): Unit {
         getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>

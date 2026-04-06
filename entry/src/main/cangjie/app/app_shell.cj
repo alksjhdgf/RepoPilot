@@ -388,6 +388,7 @@ public class AppShell {
             this.authRequestState = ""
             this.authCheckingToken = false
             logDebug("AppShell", "Access token state applied on UI thread.")
+            this.enterWorkspace()
             this.refreshGitHubProfile()
         })
     }

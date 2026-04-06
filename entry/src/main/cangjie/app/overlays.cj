@@ -87,30 +87,29 @@ func buildFloatingNavigation(shell: AppShell) {
         buildNavItem(shell, "explore", shell.t("explore"), shell.t("explore_short"))
         buildNavItem(shell, "profile", shell.t("profile"), shell.t("profile_short"))
     }
-    .width(100.percent)
-    .padding(left: 12, right: 12, top: 10, bottom: 10)
-    .backgroundColor(shell.navBarColor())
-    .borderRadius(26)
+    .width(84.percent)
+    .padding(left: 8, right: 8, top: 8, bottom: 8)
+    .backgroundColor(shell.navBarOverlayColor())
+    .borderRadius(22)
     .shadow(radius: 22.0, color: shell.shadowColor(), offsetX: 0.0, offsetY: 12.0)
-    .margin(left: 18, right: 18, bottom: 22)
+    .margin(bottom: 8)
 }
 
 @Builder
 func buildNavItem(shell: AppShell, id: String, title: String, shortTitle: String) {
     Button() {
-        Column(space: 6) {
-            Text(shortTitle).fontSize(13).fontWeight(FontWeight.Medium)
-                .fontColor(if (shell.isActiveTab(id)) { shell.primaryTextColor() } else { shell.secondaryTextColor() })
-            Text(title).fontSize(10)
+        Column(space: 4) {
+            Text(shortTitle).fontSize(14).fontWeight(FontWeight.Medium)
                 .fontColor(if (shell.isActiveTab(id)) { shell.primaryTextColor() } else { shell.secondaryTextColor() })
         }
         .width(100.percent)
+        .justifyContent(FlexAlign.Center)
     }
     .width(0)
     .layoutWeight(1)
-    .height(56)
-    .backgroundColor(if (shell.isActiveTab(id)) { shell.navSelectionColor() } else { 0x00000000 })
-    .borderRadius(20)
+    .height(50)
+    .backgroundColor(if (shell.isActiveTab(id)) { shell.navSelectionColor() } else { shell.navBarColor() })
+    .borderRadius(16)
     .onClick({ _ => shell.handleTabTap(id) })
 }
 
@@ -126,7 +125,7 @@ func buildWorkplacePicker(shell: AppShell) {
     .backgroundColor(shell.surfaceColor())
     .borderRadius(24)
     .shadow(radius: 24.0, color: shell.shadowColor(), offsetX: 0.0, offsetY: 16.0)
-    .margin(left: 18, right: 18, top: 140)
+    .margin(left: 18, right: 18)
 }
 
 @Builder

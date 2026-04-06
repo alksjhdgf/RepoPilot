@@ -67,6 +67,12 @@ public class AppShell {
     @Provide
     var draftPrStatusKey: String = "draft_pr_pending"
 
+    @Provide
+    var pendingPageTitle: String = "Pending"
+
+    @Provide
+    var pendingPageMessage: String = "该页面待开发"
+
     @State
     var authMessage: String = ""
 
@@ -90,6 +96,9 @@ public class AppShell {
 
     @State
     var viewerDisplayName: String = ""
+
+    @State
+    var viewerAvatarUrl: String = ""
 
     @State
     var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
@@ -175,20 +184,26 @@ public class AppShell {
     func buildMainScene() {
         Navigation(this.stack) {
             Stack(alignContent: Alignment.Bottom) {
-                Stack() {
+                Stack(alignContent: Alignment.Top) {
                     this.buildRootBackground()
 
                     Scroll {
                         Column(space: 18) {
-                            buildTopBar(this)
                             buildActiveTabContent(this)
                         }
                         .width(100.percent)
-                        .padding(left: 18, right: 18, top: 16, bottom: 132)
+                        .padding(left: 18, right: 18, top: 84, bottom: 100)
                     }
                     .width(100.percent)
                     .height(100.percent)
                     .scrollBar(BarState.Off)
+
+                    Row() {
+                        buildTopBar(this)
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 16, bottom: 12)
+                    .backgroundColor(this.topBarOverlayColor())
 
                     if (this.showWorkplacePicker) {
                         Column() {}
@@ -196,19 +211,24 @@ public class AppShell {
                             .height(100.percent)
                             .backgroundColor(0x33000000)
                             .onClick({ _ => this.toggleWorkplacePicker(false) })
-
-                        buildWorkplacePicker(this)
                     }
                 }
                 .width(100.percent)
                 .height(100.percent)
 
-                Row() {
-                    buildFloatingNavigation(this)
+                Column(space: 10) {
+                    if (this.showWorkplacePicker) {
+                        buildWorkplacePicker(this)
+                    }
+                    Row() {
+                        buildFloatingNavigation(this)
+                    }
+                    .width(100.percent)
+                    .justifyContent(FlexAlign.Center)
                 }
                 .width(100.percent)
                 .align(Alignment.Bottom)
-                .padding(bottom: 6)
+                .padding(bottom: 2)
             }
             .width(100.percent)
             .height(100.percent)
@@ -259,11 +279,13 @@ public class AppShell {
     @Builder
     func buildRootBackground() {
         Column() {
-            Column() {}
-                .width(100.percent)
-                .height(260)
-                .backgroundColor(this.heroStartColor())
-                .opacity(0.96)
+            if (!this.isActiveTab("home")) {
+                Column() {}
+                    .width(100.percent)
+                    .height(260)
+                    .backgroundColor(this.heroStartColor())
+                    .opacity(0.96)
+            }
 
             Blank()
         }
@@ -462,6 +484,7 @@ public class AppShell {
                 this.authCheckingToken = false
                 this.viewerLogin = ""
                 this.viewerDisplayName = ""
+                this.viewerAvatarUrl = ""
                 this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
                 this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
                 this.liveIssues = ArrayList<GitHubIssueSnapshot>()
@@ -500,6 +523,7 @@ public class AppShell {
             this.authCheckingToken = false
             this.viewerLogin = ""
             this.viewerDisplayName = ""
+            this.viewerAvatarUrl = ""
             this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
             this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
             this.liveIssues = ArrayList<GitHubIssueSnapshot>()
@@ -693,6 +717,9 @@ public class AppShell {
     }
 
     func currentWorkplaceTitle(): String { this.t(workplaceSnapshot(this.currentWorkplace).titleKey) }
+    func currentHeaderWorkplaceTitle(): String {
+        if (this.currentWorkplace == "unified") { "All Workplaces" } else { "GitHub Workplace" }
+    }
     func currentWorkplaceSummary(): String { this.t(workplaceSnapshot(this.currentWorkplace).summaryKey) }
     func currentWorkplaceHeroTitle(): String { this.t(workplaceSnapshot(this.currentWorkplace).heroTitleKey) }
     func primaryHomeRepository(): RepositorySnapshot { repositorySnapshot(primaryRepositoryId(this.currentWorkplace)) }
@@ -746,6 +773,9 @@ public class AppShell {
         let account = activeAccountSnapshot()
         "${this.t("profile_account_prefix")}: ${this.t(account.providerKey)} / ${account.accountLabel}"
     }
+    func hasViewerAvatar(): Bool { this.viewerAvatarUrl != "" }
+    func viewerAvatarUrlValue(): String { this.viewerAvatarUrl }
+    func canCreateFromCurrentWorkplace(): Bool { this.currentWorkplace != "unified" }
     func hasLiveRepositories(): Bool { this.liveRepositories.size > 0 }
     func visibleLiveRepositories(): ArrayList<GitHubRepositoryCardSnapshot> { this.liveRepositories }
     func hasLiveIssues(): Bool { this.liveIssues.size > 0 }
@@ -804,6 +834,7 @@ public class AppShell {
             logInfo("AppShell", "Viewer applied: ${snapshot.login}")
             this.viewerLogin = snapshot.login
             this.viewerDisplayName = snapshot.displayName
+            this.viewerAvatarUrl = snapshot.avatarUrl
             logDebug("AppShell", "Viewer state applied on UI thread.")
         })
     }
@@ -945,7 +976,9 @@ public class AppShell {
     func heroTextColor(): Int64 { appThemeColor("heroText", this.isDarkTheme()) }
     func heroSubTextColor(): Int64 { appThemeColor("heroSubText", this.isDarkTheme()) }
     func navBarColor(): Int64 { appThemeColor("navBar", this.isDarkTheme()) }
+    func navBarOverlayColor(): Int64 { if (this.isDarkTheme()) { 0xD911151C } else { 0xDDF7F8FB } }
     func navSelectionColor(): Int64 { appThemeColor("navSelection", this.isDarkTheme()) }
+    func topBarOverlayColor(): Int64 { if (this.isDarkTheme()) { 0xE0090B10 } else { 0xEAF2F3F7 } }
     func shadowColor(): Int64 { appThemeColor("shadow", this.isDarkTheme()) }
 
     func openRepository(repositoryId: String): Unit {
@@ -1003,5 +1036,15 @@ public class AppShell {
 
     func openSettings(): Unit {
         this.stack.pushPath(NavPathInfo(name: "settings", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    /**
+     * 将未完成功能统一导向占位页，避免跳转到语义不匹配的现有页面。
+     * Routes unfinished interactions into a shared placeholder page.
+     */
+    func openPendingPage(title: String, message: String): Unit {
+        this.pendingPageTitle = title
+        this.pendingPageMessage = message
+        this.stack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
     }
 }

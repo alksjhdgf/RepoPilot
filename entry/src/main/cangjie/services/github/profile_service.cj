@@ -88,7 +88,8 @@ public func fetchGitHubViewer(
                 GitHubViewerSnapshot(
                     login,
                     if (displayName == "") { login } else { displayName },
-                    extractJsonStringField(body, "html_url")
+                    extractJsonStringField(body, "html_url"),
+                    extractJsonStringField(body, "avatar_url")
                 )
             )
         },

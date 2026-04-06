@@ -7,15 +7,70 @@ import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubPullRequestSnap
 @Builder
 func buildTopBar(shell: AppShell) {
     Row() {
-        Column(space: 4) {
-            Text(shell.mainTitle()).fontSize(34).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-            Text(shell.mainSubtitle()).fontSize(13).fontColor(shell.secondaryTextColor())
+        if (shell.isActiveTab("home")) {
+            Row(space: 12) {
+                if (shell.isCurrentWorkplace("github")) {
+                    Button() {
+                        if (shell.hasViewerAvatar()) {
+                            Image(shell.viewerAvatarUrlValue())
+                                .width(100.percent)
+                                .height(100.percent)
+                                .borderRadius(20)
+                                .objectFit(ImageFit.Cover)
+                        } else {
+                            Row() {
+                                Text("GH")
+                                    .fontSize(15)
+                                    .fontWeight(FontWeight.Bold)
+                                    .fontColor(shell.primaryTextColor())
+                            }
+                            .width(100.percent)
+                            .height(100.percent)
+                            .justifyContent(FlexAlign.Center)
+                        }
+                    }
+                    .width(40)
+                    .height(40)
+                    .backgroundColor(shell.surfaceColor())
+                    .borderRadius(20)
+                    .onClick({ _ => shell.handleTabTap("profile") })
+                } else {
+                    Row() {
+                        Text("RP")
+                            .fontSize(14)
+                            .fontWeight(FontWeight.Bold)
+                            .fontColor(shell.primaryTextColor())
+                    }
+                    .width(40)
+                    .height(40)
+                    .backgroundColor(shell.surfaceColor())
+                    .borderRadius(20)
+                    .justifyContent(FlexAlign.Center)
+                }
+                Column(space: 2) {
+                    Text(shell.currentHeaderWorkplaceTitle())
+                        .fontSize(18)
+                        .fontWeight(FontWeight.Bold)
+                        .fontColor(shell.primaryTextColor())
+                }
+                .alignItems(HorizontalAlign.Start)
+            }
+        } else {
+            Column(space: 4) {
+                Text(shell.mainTitle())
+                    .fontSize(30)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor(shell.primaryTextColor())
+                Text(shell.mainSubtitle()).fontSize(12).fontColor(shell.secondaryTextColor())
+            }
+            .alignItems(HorizontalAlign.Start)
         }
-        .alignItems(HorizontalAlign.Start)
         Blank()
-        Row(space: 10) {
-            buildCircleAction(shell, shell.t("add_short"))
-            buildCircleAction(shell, shell.t("find_short"))
+        Row(space: 8) {
+            if (shell.canCreateFromCurrentWorkplace()) {
+                buildCircleAction(shell, shell.t("add_short"), { => shell.openPendingPage("Create", "该页面待开发") })
+            }
+            buildCircleAction(shell, shell.t("find_short"), { => shell.openPendingPage("Search", "该页面待开发") })
         }
     }
     .width(100.percent)
@@ -35,51 +90,14 @@ func buildActiveTabContent(shell: AppShell) {
 @Builder
 func buildHomeTab(shell: AppShell) {
     Column(space: 18) {
-        Column(space: 12) {
-            Text(shell.currentWorkplaceTitle()).fontSize(14).fontColor(shell.accentStrongColor())
-            Text(shell.currentWorkplaceHeroTitle()).fontSize(28).fontWeight(FontWeight.Bold).fontColor(shell.heroTextColor())
-            Text(shell.currentWorkplaceSummary()).fontSize(13).fontColor(shell.heroSubTextColor())
-            Row(space: 12) {
-                buildStatChip(shell, "12", shell.t("inbox"))
-                buildStatChip(shell, "06", shell.t("running_tasks"))
-                buildStatChip(shell, "09", shell.t("reviews"))
-            }
-        }
-        .width(100.percent)
-        .padding(22)
-        .backgroundColor(shell.heroCardColor())
-        .borderRadius(30)
-        .shadow(radius: 28.0, color: shell.shadowColor(), offsetX: 0.0, offsetY: 16.0)
-
-        buildSectionHeader(shell, shell.t("recent_repositories"), shell.t("see_all"))
-        if (shell.hasLiveRepositories()) {
-            ForEach(
-                shell.visibleLiveRepositories(),
-                itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
-                    buildLiveRepositoryCard(shell, item)
-                }
-            )
-        } else {
-            buildRepositoryCard(shell, shell.primaryHomeRepository())
-            buildRepositoryCard(shell, shell.secondaryHomeRepository())
-            buildRepositoryCard(shell, shell.tertiaryHomeRepository())
-        }
-
-        buildSectionHeader(shell, shell.t("pull_requests"), shell.t("see_all"))
-        if (shell.hasLivePullRequests()) {
-            ForEach(
-                shell.visibleLivePullRequests(),
-                itemGeneratorFunc: { item: GitHubPullRequestSnapshot, _: Int64 =>
-                    buildLivePullRequestCard(shell, item)
-                }
-            )
-        } else {
-            buildPullRequestCard(shell, shell.highlightedPullRequest())
-        }
-
-        buildSectionHeader(shell, shell.t("recent_tasks"), shell.t("focus_label"))
-        buildTaskPreviewCard(shell, shell.focusedTask())
-        buildTaskPreviewCard(shell, shell.reviewTask())
+        buildHomeSectionHeader(shell, "My Work")
+        buildHomeWorkPanel(shell)
+        buildHomeSectionHeader(shell, "Favorites")
+        buildHomeFavoritesPanel(shell)
+        buildHomeSectionHeader(shell, "Shortcuts")
+        buildHomeShortcutsPanel(shell)
+        buildHomeSectionHeader(shell, "Recent")
+        buildHomeRecentPanel(shell)
     }
     .width(100.percent)
 }
@@ -186,9 +204,195 @@ func buildSectionHeader(shell: AppShell, title: String, action: String) {
 }
 
 @Builder
-func buildCircleAction(shell: AppShell, label: String) {
+func buildHomeSectionHeader(shell: AppShell, title: String) {
+    Row() {
+        Text(title).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Blank()
+        Text("...").fontSize(16).fontWeight(FontWeight.Bold).fontColor(shell.secondaryTextColor())
+    }
+    .width(100.percent)
+}
+
+@Builder
+func buildHomeWorkPanel(shell: AppShell) {
+    Column() {
+        buildHomeWorkRow(shell, 0x68D968, "◎", "Issues", {
+            =>
+            if (shell.hasLiveIssues()) {
+                shell.openSelectedIssue()
+            } else {
+                shell.openPendingPage("Issues", "该页面待开发")
+            }
+        })
+        buildHomeDivider(shell)
+        buildHomeWorkRow(shell, 0x4B88FF, "⎇", "Pull Requests", {
+            =>
+            if (shell.hasLivePullRequests()) {
+                shell.openSelectedPullRequest()
+            } else {
+                shell.openPendingPage("Pull Requests", "该页面待开发")
+            }
+        })
+        buildHomeDivider(shell)
+        buildHomeWorkRow(shell, 0x7B56E8, "◫", "Discussions", { => shell.openPendingPage("Discussions", "该页面待开发") })
+        buildHomeDivider(shell)
+        buildHomeWorkRow(shell, 0xB0B4C0, "□", "Projects", { => shell.openPendingPage("Projects", "该页面待开发") })
+        buildHomeDivider(shell)
+        buildHomeWorkRow(shell, 0x4B4F5C, "⌘", "Top Repositories", { => shell.openPendingPage("Top Repositories", "该页面待开发") })
+        buildHomeDivider(shell)
+        buildHomeWorkRow(shell, 0xF4A24B, "⌂", "Organizations", { => shell.openPendingPage("Organizations", "该页面待开发") })
+        buildHomeDivider(shell)
+        buildHomeWorkRow(shell, 0xFFD54A, "☆", "Starred", { => shell.openPendingPage("Starred", "该页面待开发") })
+    }
+    .width(100.percent)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(22)
+    .padding(top: 4, bottom: 4)
+}
+
+@Builder
+func buildHomeWorkRow(shell: AppShell, accentColor: Int64, iconText: String, title: String, onTap: () -> Unit) {
+    Row(space: 16) {
+        Row() {
+            Text(iconText).fontSize(16).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor(accentColor)
+        .borderRadius(10)
+        .justifyContent(FlexAlign.Center)
+
+        Text(title).fontSize(16).fontColor(shell.primaryTextColor())
+        Blank()
+        Text("›").fontSize(22).fontColor(shell.secondaryTextColor())
+    }
+    .width(100.percent)
+    .height(64)
+    .padding(left: 14, right: 14)
+    .backgroundColor(shell.surfaceColor())
+    .onClick({ _ => onTap() })
+}
+
+@Builder
+func buildHomeDivider(shell: AppShell) {
+    Column() {}
+        .width(100.percent)
+        .height(1)
+        .margin(left: 70, right: 14)
+        .backgroundColor(shell.mutedSurfaceColor())
+}
+
+@Builder
+func buildHomeFavoritesPanel(shell: AppShell) {
+    Column(space: 14) {
+        Text("Add favorite repositories here to have quick access at any time, without having to search")
+            .fontSize(14)
+            .lineHeight(22)
+            .fontColor(shell.primaryTextColor())
+        Button("Add Favorites")
+            .width(100.percent)
+            .height(48)
+            .backgroundColor(shell.mutedSurfaceColor())
+            .fontColor(shell.accentStrongColor())
+            .fontSize(16)
+            .borderRadius(14)
+            .onClick({ _ => shell.openPendingPage("Favorites", "该页面待开发") })
+    }
+    .width(100.percent)
+    .padding(20)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(22)
+}
+
+@Builder
+func buildHomeShortcutsPanel(shell: AppShell) {
+    Column(space: 14) {
+        Row(space: 8) {
+            buildShortcutDot(0x3D404B, "⚡")
+            buildShortcutDot(0x3E6D46, "◎")
+            buildShortcutDot(0x35599A, "⎇")
+            buildShortcutDot(0x5B46A3, "◫")
+            buildShortcutDot(0x80573A, "⌂")
+            buildShortcutDot(0x7A4854, "⌘")
+            buildShortcutDot(0x5A4C79, "□")
+            buildShortcutDot(0x42454D, "+")
+        }
+        .width(100.percent)
+        .justifyContent(FlexAlign.Center)
+
+        Text("The things you need, one tap away").fontSize(16).fontWeight(FontWeight.Bold).textAlign(TextAlign.Center).fontColor(shell.primaryTextColor())
+        Text("Fast access to your lists of Issues, Pull Requests, or Discussions.")
+            .fontSize(14)
+            .lineHeight(22)
+            .textAlign(TextAlign.Center)
+            .fontColor(shell.secondaryTextColor())
+        Button("Get started")
+            .width(100.percent)
+            .height(48)
+            .backgroundColor(shell.mutedSurfaceColor())
+            .fontColor(shell.accentStrongColor())
+            .fontSize(16)
+            .borderRadius(14)
+            .onClick({ _ => shell.openPendingPage("Shortcuts", "该页面待开发") })
+    }
+    .width(100.percent)
+    .padding(20)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(22)
+}
+
+@Builder
+func buildShortcutDot(color: Int64, text: String) {
+    Row() {
+        Text(text).fontSize(13).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
+    }
+    .width(34)
+    .height(34)
+    .backgroundColor(color)
+    .borderRadius(17)
+    .justifyContent(FlexAlign.Center)
+}
+
+@Builder
+func buildHomeRecentPanel(shell: AppShell) {
+    Column(space: 10) {
+        if (shell.hasLiveIssues()) {
+            Text("Recent activity from GitHub will surface here. Open issues and pull requests you touched last appear first.")
+                .fontSize(14)
+                .lineHeight(22)
+                .fontColor(shell.secondaryTextColor())
+            buildHomeRecentItem(shell, shell.visibleLiveIssues()[0].title, shell.visibleLiveIssues()[0].summary)
+            if (shell.hasLivePullRequests()) {
+                buildHomeRecentItem(shell, shell.visibleLivePullRequests()[0].title, shell.visibleLivePullRequests()[0].summary)
+            }
+        } else {
+            Text("Issues and Pull Requests that you've interacted with recently will appear here.")
+                .fontSize(14)
+                .lineHeight(22)
+                .fontColor(shell.primaryTextColor())
+                .textAlign(TextAlign.Center)
+        }
+    }
+    .width(100.percent)
+    .padding(20)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(22)
+}
+
+@Builder
+func buildHomeRecentItem(shell: AppShell, title: String, summary: String) {
+    Column(space: 8) {
+        Text(title).fontSize(15).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Text(summary).fontSize(12).lineHeight(18).fontColor(shell.secondaryTextColor())
+    }
+    .width(100.percent)
+}
+
+@Builder
+func buildCircleAction(shell: AppShell, label: String, onTap: () -> Unit) {
     Button(label)
-        .width(42).height(42).borderRadius(21).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor())
+        .width(40).height(40).borderRadius(20).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor()).fontSize(16)
+        .onClick({ _ => onTap() })
 }
 
 @Builder

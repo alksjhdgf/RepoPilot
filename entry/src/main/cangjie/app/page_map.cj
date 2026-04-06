@@ -4,6 +4,7 @@ import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
 import ohos_app_cangjie_entry.pages.repository.{IssueDetailPage, PullRequestDetailPage, RepositoryDetailPage}
 import ohos_app_cangjie_entry.pages.agent.{CreateTaskPage, DiffReviewPage, TaskDetailPage}
+import ohos_app_cangjie_entry.pages.common.PlaceholderPage
 import ohos_app_cangjie_entry.pages.settings.SettingsPage
 
 @Builder
@@ -20,6 +21,8 @@ public func pageMap(name: String, detailParam: Any) {
         TaskDetailPage()
     } else if (name == "diffReview") {
         DiffReviewPage()
+    } else if (name == "placeholder") {
+        PlaceholderPage()
     } else {
         SettingsPage()
     }

@@ -164,7 +164,7 @@ func localizedEn(key: String): String {
     else if (key == "draft_pr_body") { "Draft PR body" }
     else if (key == "empty_state") { "No items yet." }
     else if (key == "add_short") { "+" }
-    else if (key == "find_short") { "Search" }
+    else if (key == "find_short") { "⌕" }
     else if (key == "draft_pr_pending") { "Draft pull request is still pending." }
     else { key }
 }

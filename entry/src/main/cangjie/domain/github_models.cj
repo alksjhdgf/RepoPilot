@@ -76,11 +76,13 @@ public class GitHubViewerSnapshot {
     public let login: String
     public let displayName: String
     public let profileUrl: String
+    public let avatarUrl: String
 
-    public init(login: String, displayName: String, profileUrl: String) {
+    public init(login: String, displayName: String, profileUrl: String, avatarUrl: String) {
         this.login = login
         this.displayName = displayName
         this.profileUrl = profileUrl
+        this.avatarUrl = avatarUrl
     }
 }
 

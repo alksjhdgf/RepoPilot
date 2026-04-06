@@ -48,7 +48,12 @@ public func requestGitHubDeviceCode(
                 }
                 let deviceCode = extractJsonStringField(payload, "device_code")
                 let userCode = extractJsonStringField(payload, "user_code")
-                let verificationUri = extractJsonStringField(payload, "verification_uri")
+                let completeVerificationUri = extractJsonStringField(payload, "verification_uri_complete")
+                let verificationUri = if (completeVerificationUri != "") {
+                    completeVerificationUri
+                } else {
+                    extractJsonStringField(payload, "verification_uri")
+                }
                 if (deviceCode == "" || userCode == "" || verificationUri == "") {
                     logError("AuthService", "Device code payload parse failed: ${payload}")
                     onFailure("Unable to parse GitHub device code response.")

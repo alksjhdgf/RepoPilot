@@ -6,7 +6,7 @@ import kit.AbilityKit.UIAbility
 import kit.AbilityKit.LaunchParam
 import kit.AbilityKit.LaunchReason
 import kit.ArkUI.WindowStage
-import ohos_app_cangjie_entry.infra.runtime.setAppAbilityContext
+import ohos_app_cangjie_entry.infra.runtime.{notifyAppForeground, setAppAbilityContext}
 
 class MainAbility <: UIAbility {
     public init() {
@@ -26,5 +26,14 @@ class MainAbility <: UIAbility {
         Hilog.info(1, "Cangjie", "MainAbility onWindowStageCreate.")
         setAppAbilityContext(this.context)
         windowStage.loadContent("EntryView")
+    }
+
+    /**
+     * 应用回到前台时转发通知给 UI 壳层，让认证流程执行一次补偿检查。
+     * Forwards foreground lifecycle events so the shell can re-check auth completion.
+     */
+    public override func onForeground(): Unit {
+        Hilog.info(1, "Cangjie", "MainAbility onForeground.")
+        notifyAppForeground()
     }
 }

@@ -6,12 +6,12 @@ import ohos.business_exception.BusinessException
 import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, exchangeGitHubWebCode, extractUrlQueryParameter}
-import ohos_app_cangjie_entry.services.github.{fetchGitHubRepositories, fetchGitHubViewer}
+import ohos_app_cangjie_entry.services.github.{fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubViewer}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
@@ -86,6 +86,23 @@ public class AppShell {
 
     @State
     var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
+
+    @Provide
+    var liveRepositoryDetail: GitHubRepositoryDetailSnapshot = GitHubRepositoryDetailSnapshot(
+        "",
+        "Connect GitHub to load repository details.",
+        "",
+        "",
+        "0",
+        "0",
+        "main"
+    )
+
+    @Provide
+    var liveIssues: ArrayList<GitHubIssueSnapshot> = ArrayList<GitHubIssueSnapshot>()
+
+    @Provide
+    var livePullRequests: ArrayList<GitHubPullRequestSnapshot> = ArrayList<GitHubPullRequestSnapshot>()
 
     @State
     var authCheckingToken: Bool = false
@@ -412,10 +429,10 @@ public class AppShell {
             this.isAuthenticated = true
             this.activeTab = "home"
             this.showWorkplacePicker = false
-            this.selectedRepository = primaryRepositoryId(this.currentWorkplace)
-            this.selectedIssue = repositorySnapshot(this.selectedRepository).primaryIssueId
-            this.selectedPullRequest = repositorySnapshot(this.selectedRepository).primaryPullRequestId
-            this.selectedTask = taskIdForIssue(this.selectedIssue)
+            this.selectedRepository = ""
+            this.selectedIssue = ""
+            this.selectedPullRequest = ""
+            this.selectedTask = ""
             this.draftPrStatusKey = "draft_pr_pending"
         })
     }
@@ -434,6 +451,9 @@ public class AppShell {
             this.viewerLogin = ""
             this.viewerDisplayName = ""
             this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
+            this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
+            this.liveIssues = ArrayList<GitHubIssueSnapshot>()
+            this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
         })
     }
 
@@ -459,10 +479,17 @@ public class AppShell {
         let repository = repositorySnapshot(repositoryId)
         getUIContext().animateTo(AnimateParam(duration: 200, curve: Curve.Ease), { =>
             this.currentWorkplace = workplaceId
-            this.selectedRepository = repositoryId
-            this.selectedIssue = repository.primaryIssueId
-            this.selectedPullRequest = repository.primaryPullRequestId
-            this.selectedTask = taskIdForIssue(repository.primaryIssueId)
+            if (this.authAccessToken == "") {
+                this.selectedRepository = repositoryId
+                this.selectedIssue = repository.primaryIssueId
+                this.selectedPullRequest = repository.primaryPullRequestId
+                this.selectedTask = taskIdForIssue(repository.primaryIssueId)
+            } else {
+                this.selectedRepository = ""
+                this.selectedIssue = ""
+                this.selectedPullRequest = ""
+                this.selectedTask = ""
+            }
             this.showWorkplacePicker = false
         })
     }
@@ -476,13 +503,19 @@ public class AppShell {
             this.currentWorkplace = defaultWorkplace()
         }
         if (this.selectedRepository == "") {
-            this.selectedRepository = primaryRepositoryId(this.currentWorkplace)
+            if (this.authAccessToken == "" || this.liveRepositories.size == 0) {
+                this.selectedRepository = primaryRepositoryId(this.currentWorkplace)
+            }
         }
         if (this.selectedIssue == "") {
-            this.selectedIssue = repositorySnapshot(this.selectedRepository).primaryIssueId
+            if (this.authAccessToken == "" || this.liveIssues.size == 0) {
+                this.selectedIssue = repositorySnapshot(this.selectedRepository).primaryIssueId
+            }
         }
         if (this.selectedPullRequest == "") {
-            this.selectedPullRequest = repositorySnapshot(this.selectedRepository).primaryPullRequestId
+            if (this.authAccessToken == "" || this.livePullRequests.size == 0) {
+                this.selectedPullRequest = repositorySnapshot(this.selectedRepository).primaryPullRequestId
+            }
         }
         if (this.selectedTask == "") {
             this.selectedTask = taskIdForIssue(this.selectedIssue)
@@ -545,6 +578,27 @@ public class AppShell {
     }
     func hasLiveRepositories(): Bool { this.liveRepositories.size > 0 }
     func visibleLiveRepositories(): ArrayList<GitHubRepositoryCardSnapshot> { this.liveRepositories }
+    func hasLiveIssues(): Bool { this.liveIssues.size > 0 }
+    func visibleLiveIssues(): ArrayList<GitHubIssueSnapshot> { this.liveIssues }
+    func hasLivePullRequests(): Bool { this.livePullRequests.size > 0 }
+    func visibleLivePullRequests(): ArrayList<GitHubPullRequestSnapshot> { this.livePullRequests }
+    func selectedLiveRepositoryDetail(): GitHubRepositoryDetailSnapshot { this.liveRepositoryDetail }
+    func currentLiveIssue(): GitHubIssueSnapshot {
+        for (item in this.liveIssues) {
+            if (item.id == this.selectedIssue) {
+                return item
+            }
+        }
+        GitHubIssueSnapshot("", "Issue not loaded", "Select a repository issue to continue.", "", "", "")
+    }
+    func currentLivePullRequest(): GitHubPullRequestSnapshot {
+        for (item in this.livePullRequests) {
+            if (item.id == this.selectedPullRequest) {
+                return item
+            }
+        }
+        GitHubPullRequestSnapshot("", "Pull request not loaded", "Select a repository pull request to continue.", "", "", "")
+    }
     func applyRootPreference(kind: String, value: String): Unit {
         getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
             if (kind == "theme") {
@@ -592,7 +646,106 @@ public class AppShell {
             =>
             logInfo("AppShell", "Applied ${repositories.size} live repositories.")
             this.liveRepositories = repositories
+            if (repositories.size > 0) {
+                let first = repositories[0]
+                if (this.selectedRepository == "") {
+                    this.selectedRepository = first.name
+                }
+                this.refreshSelectedRepositoryData()
+            }
             logDebug("AppShell", "Live repository state applied on UI thread.")
+        })
+    }
+
+    /**
+     * 刷新当前选中仓库的真实详情、Issue 与 Pull Request 列表。
+     * Refreshes the selected repository detail plus live issues and pull requests.
+     */
+    func refreshSelectedRepositoryData(): Unit {
+        if (this.authAccessToken == "" || this.selectedRepository == "") {
+            return
+        }
+        let repositoryName = this.selectedRepository
+        logInfo("AppShell", "Refreshing selected repository data for ${repositoryName}.")
+        fetchGitHubRepositoryDetail(
+            this.authAccessToken,
+            repositoryName,
+            { snapshot => this.applyLiveRepositoryDetail(repositoryName, snapshot) },
+            { message => this.applyAuthFailure(message) }
+        )
+        fetchGitHubRepositoryIssues(
+            this.authAccessToken,
+            repositoryName,
+            { items => this.applyLiveIssues(repositoryName, items) },
+            { message => this.applyAuthFailure(message) }
+        )
+        fetchGitHubRepositoryPullRequests(
+            this.authAccessToken,
+            repositoryName,
+            { items => this.applyLivePullRequests(repositoryName, items) },
+            { message => this.applyAuthFailure(message) }
+        )
+    }
+
+    /**
+     * 更新当前仓库的真实详情卡片。
+     * Updates the selected live repository detail card.
+     */
+    func applyLiveRepositoryDetail(repositoryName: String, snapshot: GitHubRepositoryDetailSnapshot): Unit {
+        this.runOnUi({
+            =>
+            if (repositoryName != this.selectedRepository) {
+                return
+            }
+            this.liveRepositoryDetail = snapshot
+            logInfo("AppShell", "Applied live repository detail for ${repositoryName}.")
+        })
+    }
+
+    /**
+     * 更新当前仓库的真实 Issue 列表，并同步默认选中项。
+     * Updates the live issue list for the selected repository and syncs the default selection.
+     */
+    func applyLiveIssues(repositoryName: String, items: ArrayList<GitHubIssueSnapshot>): Unit {
+        this.runOnUi({
+            =>
+            if (repositoryName != this.selectedRepository) {
+                return
+            }
+            this.liveIssues = items
+            if (items.size > 0 && (this.selectedIssue == "" || this.currentLiveIssue().id == "")) {
+                this.selectedIssue = items[0].id
+                this.selectedTask = taskIdForIssue(this.selectedIssue)
+            }
+            logInfo("AppShell", "Applied ${items.size} live issues for ${repositoryName}.")
+        })
+    }
+
+    /**
+     * 更新当前仓库的真实 Pull Request 列表，并同步默认选中项。
+     * Updates the live pull request list for the selected repository and syncs the default selection.
+     */
+    func applyLivePullRequests(repositoryName: String, items: ArrayList<GitHubPullRequestSnapshot>): Unit {
+        this.runOnUi({
+            =>
+            if (repositoryName != this.selectedRepository) {
+                return
+            }
+            this.livePullRequests = items
+            let nextDetail = this.liveRepositoryDetail
+            this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot(
+                nextDetail.name,
+                nextDetail.summary,
+                nextDetail.repoUrl,
+                nextDetail.visibilityLabel,
+                nextDetail.issueCount,
+                "${items.size}",
+                nextDetail.defaultBranch
+            )
+            if (items.size > 0 && (this.selectedPullRequest == "" || this.currentLivePullRequest().id == "")) {
+                this.selectedPullRequest = items[0].id
+            }
+            logInfo("AppShell", "Applied ${items.size} live pull requests for ${repositoryName}.")
         })
     }
     func preferenceLabel(kind: String, value: String): String {
@@ -627,10 +780,28 @@ public class AppShell {
 
     func openRepository(repositoryId: String): Unit {
         this.selectedRepository = repositoryId
-        let repository = repositorySnapshot(repositoryId)
-        this.selectedIssue = repository.primaryIssueId
-        this.selectedPullRequest = repository.primaryPullRequestId
-        this.selectedTask = taskIdForIssue(this.selectedIssue)
+        if (this.authAccessToken == "") {
+            let repository = repositorySnapshot(repositoryId)
+            this.selectedIssue = repository.primaryIssueId
+            this.selectedPullRequest = repository.primaryPullRequestId
+            this.selectedTask = taskIdForIssue(this.selectedIssue)
+        } else {
+            this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot(
+                repositoryId,
+                "Loading repository details...",
+                "",
+                "",
+                "0",
+                "0",
+                "main"
+            )
+            this.liveIssues = ArrayList<GitHubIssueSnapshot>()
+            this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
+            this.selectedIssue = ""
+            this.selectedPullRequest = ""
+            this.selectedTask = ""
+            this.refreshSelectedRepositoryData()
+        }
         this.stack.pushPath(NavPathInfo(name: "repositoryDetail", param: ""), options: NavigationOptions(animated: true))
     }
 
@@ -640,6 +811,11 @@ public class AppShell {
 
     func openSelectedPullRequest(): Unit {
         this.stack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openLivePullRequest(pullRequestId: String): Unit {
+        this.selectedPullRequest = pullRequestId
+        this.openSelectedPullRequest()
     }
 
     func openCreateTask(): Unit {

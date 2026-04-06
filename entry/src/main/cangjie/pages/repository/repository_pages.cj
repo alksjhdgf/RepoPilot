@@ -2,9 +2,9 @@ package ohos_app_cangjie_entry.pages.repository
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{IssueSnapshot, PullRequestSnapshot, RepositorySnapshot}
+import std.collection.ArrayList
+import ohos_app_cangjie_entry.domain.{GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryDetailSnapshot}
 import ohos_app_cangjie_entry.pages.common.{detailCardCommon, detailHeaderCommon}
-import ohos_app_cangjie_entry.services.platform.{issueSnapshot, pullRequestSnapshot, repositorySnapshot}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
@@ -18,6 +18,9 @@ public class RepositoryDetailPage {
     @Consume var selectedTask: String
     @Consume var themePreference: String
     @Consume var languagePreference: String
+    @Consume var liveRepositoryDetail: GitHubRepositoryDetailSnapshot
+    @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
+    @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -30,11 +33,24 @@ public class RepositoryDetailPage {
             Scroll {
                 Column(space: 16) {
                     detailHeaderCommon(this.stack, this.t("back"), this.t("repository_detail"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t(this.currentRepository().titleKey), this.t(this.currentRepository().summaryKey))
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "${this.currentRepository().issueCount} ${this.t("issues")} / ${this.currentRepository().reviewCount} ${this.t("pull_requests")}")
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentRepository().name, this.currentRepository().summary)
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "${this.currentRepository().issueCount} ${this.t("issues")} / ${this.currentRepository().pullRequestCount} ${this.t("pull_requests")}")
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentRepository().visibilityLabel} / ${this.currentRepository().defaultBranch}")
                     buildRepositoryActionGrid(this)
-                    buildIssueStrip(this, this.currentIssuePreview())
-                    buildPullRequestStrip(this, this.currentPullRequestPreview())
+                    if (this.currentIssues().size > 0) {
+                        ForEach(this.currentIssues(), itemGeneratorFunc: { item: GitHubIssueSnapshot, _: Int64 =>
+                            buildIssueStrip(this, item)
+                        })
+                    } else {
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "No open issues.")
+                    }
+                    if (this.currentPullRequests().size > 0) {
+                        ForEach(this.currentPullRequests(), itemGeneratorFunc: { item: GitHubPullRequestSnapshot, _: Int64 =>
+                            buildPullRequestStrip(this, item)
+                        })
+                    } else {
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("pull_requests"), "No open pull requests.")
+                    }
                 }
                 .width(100.percent)
                 .padding(left: 18, right: 18, top: 18, bottom: 32)
@@ -47,9 +63,9 @@ public class RepositoryDetailPage {
         .backgroundColor(this.pageBackgroundColor())
     }
 
-    func currentRepository(): RepositorySnapshot { repositorySnapshot(this.selectedRepository) }
-    func currentIssuePreview(): IssueSnapshot { issueSnapshot(this.currentRepository().primaryIssueId) }
-    func currentPullRequestPreview(): PullRequestSnapshot { pullRequestSnapshot(this.currentRepository().primaryPullRequestId) }
+    func currentRepository(): GitHubRepositoryDetailSnapshot { this.liveRepositoryDetail }
+    func currentIssues(): ArrayList<GitHubIssueSnapshot> { this.liveIssues }
+    func currentPullRequests(): ArrayList<GitHubPullRequestSnapshot> { this.livePullRequests }
     func openIssue(issueId: String): Unit {
         this.selectedIssue = issueId
         this.selectedTask = taskIdForIssue(issueId)
@@ -80,13 +96,21 @@ func buildRepositoryActionGrid(page: RepositoryDetailPage) {
             .height(48)
             .backgroundColor(page.surfaceColor())
             .fontColor(page.primaryTextColor())
-            .onClick({ _ => page.openIssue(page.currentRepository().primaryIssueId) })
+            .onClick({ _ =>
+                if (page.currentIssues().size > 0) {
+                    page.openIssue(page.currentIssues()[0].id)
+                }
+            })
         Button(page.t("review_pr"))
             .width(100.percent)
             .height(48)
             .backgroundColor(page.surfaceColor())
             .fontColor(page.primaryTextColor())
-            .onClick({ _ => page.openPullRequest(page.currentRepository().primaryPullRequestId) })
+            .onClick({ _ =>
+                if (page.currentPullRequests().size > 0) {
+                    page.openPullRequest(page.currentPullRequests()[0].id)
+                }
+            })
         Button(page.t("create_task"))
             .width(100.percent)
             .height(48)
@@ -97,11 +121,12 @@ func buildRepositoryActionGrid(page: RepositoryDetailPage) {
 }
 
 @Builder
-func buildIssueStrip(page: RepositoryDetailPage, item: IssueSnapshot) {
+func buildIssueStrip(page: RepositoryDetailPage, item: GitHubIssueSnapshot) {
     Button() {
         Column(space: 6) {
-            Text(page.t(item.titleKey)).fontSize(16).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
-            Text(page.t(item.summaryKey)).fontSize(12).fontColor(page.secondaryTextColor())
+            Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
+            Text(item.summary).fontSize(12).fontColor(page.secondaryTextColor())
+            Text("${item.status} / @${item.authorLogin}").fontSize(12).fontColor(page.accentStrongColor())
         }
         .alignItems(HorizontalAlign.Start)
         .width(100.percent)
@@ -114,12 +139,12 @@ func buildIssueStrip(page: RepositoryDetailPage, item: IssueSnapshot) {
 }
 
 @Builder
-func buildPullRequestStrip(page: RepositoryDetailPage, item: PullRequestSnapshot) {
+func buildPullRequestStrip(page: RepositoryDetailPage, item: GitHubPullRequestSnapshot) {
     Button() {
         Column(space: 6) {
-            Text(page.t(item.titleKey)).fontSize(16).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
-            Text(page.t(item.summaryKey)).fontSize(12).fontColor(page.secondaryTextColor())
-            Text(page.t(item.statusKey)).fontSize(12).fontColor(page.accentStrongColor())
+            Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
+            Text(item.summary).fontSize(12).fontColor(page.secondaryTextColor())
+            Text("${item.status} / @${item.authorLogin}").fontSize(12).fontColor(page.accentStrongColor())
         }
         .alignItems(HorizontalAlign.Start)
         .width(100.percent)
@@ -138,6 +163,7 @@ public class IssueDetailPage {
     @Consume var selectedTask: String
     @Consume var themePreference: String
     @Consume var languagePreference: String
+    @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -152,8 +178,8 @@ public class IssueDetailPage {
             Scroll {
                 Column(space: 16) {
                     detailHeaderCommon(this.stack, this.t("back"), this.t("issue_detail"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t(this.currentIssue().titleKey), this.t(this.currentIssue().summaryKey))
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("context"), this.t(this.currentIssue().contextKey))
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentIssue().title, this.currentIssue().summary)
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentIssue().status} / @${this.currentIssue().authorLogin}")
                     if (this.actionMessage != "") {
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.actionMessage)
                     }
@@ -162,20 +188,20 @@ public class IssueDetailPage {
                         .height(48)
                         .backgroundColor(this.surfaceColor())
                         .fontColor(this.primaryTextColor())
-                        .onClick({ _ => this.actionMessage = this.t("close_issue_mock") })
+                        .onClick({ _ => this.actionMessage = "Close action still uses mock mutation." })
                     Button(this.t("comment_issue"))
                         .width(100.percent)
                         .height(48)
                         .backgroundColor(this.surfaceColor())
                         .fontColor(this.primaryTextColor())
-                        .onClick({ _ => this.actionMessage = this.t("comment_issue_mock") })
+                        .onClick({ _ => this.actionMessage = "Comment action still uses mock mutation." })
                     Button(this.t("ask_agent"))
                         .width(100.percent)
                         .height(48)
                         .backgroundColor(this.primaryTextColor())
                         .fontColor(this.surfaceColor())
                         .onClick({ _ =>
-                            this.selectedTask = this.currentIssue().suggestedTaskId
+                            this.selectedTask = taskIdForIssue(this.currentIssue().id)
                             this.stack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
                         })
                 }
@@ -190,7 +216,14 @@ public class IssueDetailPage {
         .backgroundColor(this.pageBackgroundColor())
     }
 
-    func currentIssue(): IssueSnapshot { issueSnapshot(this.selectedIssue) }
+    func currentIssue(): GitHubIssueSnapshot {
+        for (item in this.liveIssues) {
+            if (item.id == this.selectedIssue) {
+                return item
+            }
+        }
+        GitHubIssueSnapshot("", "Issue not loaded", "Open a repository issue first.", "", "", "")
+    }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
@@ -205,6 +238,7 @@ public class PullRequestDetailPage {
     @Consume var selectedPullRequest: String
     @Consume var themePreference: String
     @Consume var languagePreference: String
+    @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -219,8 +253,8 @@ public class PullRequestDetailPage {
             Scroll {
                 Column(space: 16) {
                     detailHeaderCommon(this.stack, this.t("back"), this.t("pull_request_detail"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t(this.currentPullRequest().titleKey), this.t(this.currentPullRequest().summaryKey))
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.t(this.currentPullRequest().statusKey))
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentPullRequest().title, this.currentPullRequest().summary)
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentPullRequest().status} / @${this.currentPullRequest().authorLogin}")
                     if (this.actionMessage != "") {
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("review_summary"), this.actionMessage)
                     }
@@ -229,13 +263,13 @@ public class PullRequestDetailPage {
                         .height(48)
                         .backgroundColor(this.primaryTextColor())
                         .fontColor(this.surfaceColor())
-                        .onClick({ _ => this.actionMessage = this.t("approve_pr_mock") })
+                        .onClick({ _ => this.actionMessage = "Approve action still uses mock mutation." })
                     Button(this.t("request_changes"))
                         .width(100.percent)
                         .height(48)
                         .backgroundColor(this.surfaceColor())
                         .fontColor(this.primaryTextColor())
-                        .onClick({ _ => this.actionMessage = this.t("request_changes_mock") })
+                        .onClick({ _ => this.actionMessage = "Request changes action still uses mock mutation." })
                 }
                 .width(100.percent)
                 .padding(left: 18, right: 18, top: 18, bottom: 32)
@@ -248,7 +282,14 @@ public class PullRequestDetailPage {
         .backgroundColor(this.pageBackgroundColor())
     }
 
-    func currentPullRequest(): PullRequestSnapshot { pullRequestSnapshot(this.selectedPullRequest) }
+    func currentPullRequest(): GitHubPullRequestSnapshot {
+        for (item in this.livePullRequests) {
+            if (item.id == this.selectedPullRequest) {
+                return item
+            }
+        }
+        GitHubPullRequestSnapshot("", "Pull request not loaded", "Open a repository pull request first.", "", "", "")
+    }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }

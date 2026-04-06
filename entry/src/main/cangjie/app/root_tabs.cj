@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.app
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubRepositoryCardSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 
 @Builder
 func buildTopBar(shell: AppShell) {
@@ -52,12 +52,30 @@ func buildHomeTab(shell: AppShell) {
         .shadow(radius: 28.0, color: shell.shadowColor(), offsetX: 0.0, offsetY: 16.0)
 
         buildSectionHeader(shell, shell.t("recent_repositories"), shell.t("see_all"))
-        buildRepositoryCard(shell, shell.primaryHomeRepository())
-        buildRepositoryCard(shell, shell.secondaryHomeRepository())
-        buildRepositoryCard(shell, shell.tertiaryHomeRepository())
+        if (shell.hasLiveRepositories()) {
+            ForEach(
+                shell.visibleLiveRepositories(),
+                itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
+                    buildLiveRepositoryCard(shell, item)
+                }
+            )
+        } else {
+            buildRepositoryCard(shell, shell.primaryHomeRepository())
+            buildRepositoryCard(shell, shell.secondaryHomeRepository())
+            buildRepositoryCard(shell, shell.tertiaryHomeRepository())
+        }
 
         buildSectionHeader(shell, shell.t("pull_requests"), shell.t("see_all"))
-        buildPullRequestCard(shell, shell.highlightedPullRequest())
+        if (shell.hasLivePullRequests()) {
+            ForEach(
+                shell.visibleLivePullRequests(),
+                itemGeneratorFunc: { item: GitHubPullRequestSnapshot, _: Int64 =>
+                    buildLivePullRequestCard(shell, item)
+                }
+            )
+        } else {
+            buildPullRequestCard(shell, shell.highlightedPullRequest())
+        }
 
         buildSectionHeader(shell, shell.t("recent_tasks"), shell.t("focus_label"))
         buildTaskPreviewCard(shell, shell.focusedTask())
@@ -139,6 +157,22 @@ func buildLiveRepositoryCard(shell: AppShell, snapshot: GitHubRepositoryCardSnap
     .padding(18)
     .backgroundColor(shell.surfaceColor())
     .borderRadius(24)
+    .onClick({ _ => shell.openRepository(snapshot.name) })
+}
+
+@Builder
+func buildLivePullRequestCard(shell: AppShell, snapshot: GitHubPullRequestSnapshot) {
+    Column(space: 8) {
+        Text(snapshot.title).fontSize(17).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Text(snapshot.summary).fontSize(12).fontColor(shell.secondaryTextColor())
+        Text("${snapshot.status} / @${snapshot.authorLogin}")
+            .fontSize(11).fontColor(shell.accentStrongColor())
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(24)
+    .onClick({ _ => shell.openLivePullRequest(snapshot.id) })
 }
 
 @Builder

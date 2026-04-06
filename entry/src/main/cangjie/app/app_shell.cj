@@ -2,19 +2,23 @@ package ohos_app_cangjie_entry.app
 
 import kit.ArkUI.*
 import kit.AbilityKit.Want
+import kit.BasicServicesKit.SystemDateTime
 import ohos.business_exception.BusinessException
 import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.infra.databoard.{dataBoardDelete, dataBoardGet, dataBoardSet}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
-import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, exchangeGitHubWebCode, extractUrlQueryParameter}
-import ohos_app_cangjie_entry.services.github.{fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubViewer}
+import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, deserializeGitHubStoredSession, exchangeGitHubWebCode, extractUrlQueryParameter, refreshGitHubWebToken, serializeGitHubStoredSession}
+import ohos_app_cangjie_entry.services.github.{createGitHubRepository, fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubViewer}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
+
+let GITHUB_SESSION_STORE_KEY = "github_auth_session"
 
 @Component
 public class AppShell {
@@ -78,6 +82,9 @@ public class AppShell {
     @State
     var authAccessToken: String = ""
 
+    @Provide
+    var sharedAuthAccessToken: String = ""
+
     @State
     var viewerLogin: String = ""
 
@@ -107,6 +114,9 @@ public class AppShell {
     @State
     var authCheckingToken: Bool = false
 
+    @State
+    var hasAttemptedSessionRestore: Bool = false
+
     var authRequestSequence: Int64 = 0
 
     /**
@@ -120,6 +130,7 @@ public class AppShell {
             this.handleAuthCallbackUri(pendingUri)
         }
         this.ensureInitialSelection()
+        this.restorePersistedAuthSessionIfNeeded()
     }
 
     /**
@@ -163,37 +174,41 @@ public class AppShell {
     @Builder
     func buildMainScene() {
         Navigation(this.stack) {
-            Stack() {
-                this.buildRootBackground()
+            Stack(alignContent: Alignment.Bottom) {
+                Stack() {
+                    this.buildRootBackground()
 
-                Scroll {
-                    Column(space: 18) {
-                        buildTopBar(this)
-                        buildActiveTabContent(this)
+                    Scroll {
+                        Column(space: 18) {
+                            buildTopBar(this)
+                            buildActiveTabContent(this)
+                        }
+                        .width(100.percent)
+                        .padding(left: 18, right: 18, top: 16, bottom: 132)
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 16, bottom: 132)
+                    .height(100.percent)
+                    .scrollBar(BarState.Off)
+
+                    if (this.showWorkplacePicker) {
+                        Column() {}
+                            .width(100.percent)
+                            .height(100.percent)
+                            .backgroundColor(0x33000000)
+                            .onClick({ _ => this.toggleWorkplacePicker(false) })
+
+                        buildWorkplacePicker(this)
+                    }
                 }
                 .width(100.percent)
                 .height(100.percent)
-                .scrollBar(BarState.Off)
 
-                if (this.showWorkplacePicker) {
-                    Column() {}
-                        .width(100.percent)
-                        .height(100.percent)
-                        .backgroundColor(0x33000000)
-                        .onClick({ _ => this.toggleWorkplacePicker(false) })
-
-                    buildWorkplacePicker(this)
-                }
-
-                Column() {
-                    Blank()
+                Row() {
                     buildFloatingNavigation(this)
                 }
                 .width(100.percent)
-                .height(100.percent)
+                .align(Alignment.Bottom)
+                .padding(bottom: 6)
             }
             .width(100.percent)
             .height(100.percent)
@@ -400,11 +415,13 @@ public class AppShell {
             =>
             logInfo("AppShell", "GitHub access token stored in memory.")
             this.authAccessToken = snapshot.accessToken
+            this.sharedAuthAccessToken = snapshot.accessToken
             this.authStage = "connected"
             this.authMessage = this.t("auth_connected_body")
             this.authRequestState = ""
             this.authCheckingToken = false
             logDebug("AppShell", "Access token state applied on UI thread.")
+            this.persistAuthSession(snapshot)
             this.enterWorkspace()
             this.refreshGitHubProfile()
         })
@@ -424,6 +441,37 @@ public class AppShell {
         })
     }
 
+    /**
+     * 统一处理 GitHub API 失败；401 会清理持久化会话并退回登录态，其余错误只更新提示。
+     * Handles GitHub API failures centrally; 401 clears the stored session and falls back to sign-in.
+     */
+    func handleGitHubApiFailure(message: String): Unit {
+        if (message.contains("401")) {
+            spawn { => dataBoardDelete(GITHUB_SESSION_STORE_KEY) }
+            this.runOnUi({
+                =>
+                logWarn("AppShell", "GitHub session expired.")
+                this.isAuthenticated = false
+                this.authStage = "welcome"
+                this.authMessage = "GitHub session expired. Please sign in again."
+                this.authVerificationUri = ""
+                this.authUserCode = ""
+                this.authRequestState = ""
+                this.authAccessToken = ""
+                this.sharedAuthAccessToken = ""
+                this.authCheckingToken = false
+                this.viewerLogin = ""
+                this.viewerDisplayName = ""
+                this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
+                this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
+                this.liveIssues = ArrayList<GitHubIssueSnapshot>()
+                this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
+            })
+            return
+        }
+        this.applyAuthFailure(message)
+    }
+
     func enterWorkspace(): Unit {
         getUIContext().animateTo(AnimateParam(duration: 240, curve: Curve.Ease), { =>
             this.isAuthenticated = true
@@ -439,6 +487,7 @@ public class AppShell {
 
     func signOut(): Unit {
         logInfo("AppShell", "Signing out and clearing live GitHub state.")
+        spawn { => dataBoardDelete(GITHUB_SESSION_STORE_KEY) }
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.isAuthenticated = false
             this.authStage = "welcome"
@@ -447,6 +496,7 @@ public class AppShell {
             this.authUserCode = ""
             this.authRequestState = ""
             this.authAccessToken = ""
+            this.sharedAuthAccessToken = ""
             this.authCheckingToken = false
             this.viewerLogin = ""
             this.viewerDisplayName = ""
@@ -454,7 +504,107 @@ public class AppShell {
             this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
             this.liveIssues = ArrayList<GitHubIssueSnapshot>()
             this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
+            this.hasAttemptedSessionRestore = true
         })
+    }
+
+    /**
+     * 将成功登录后的 GitHub 会话异步持久化到 databoard，供下次启动自动恢复。
+     * Persists the GitHub session into databoard so the next launch can restore sign-in.
+     */
+    func persistAuthSession(snapshot: GitHubAccessTokenSnapshot): Unit {
+        let issuedAtMillis = SystemDateTime.getTime()
+        let accessExpiresAt =
+            if (snapshot.accessTokenExpiresInSeconds > 0) {
+                issuedAtMillis + snapshot.accessTokenExpiresInSeconds * 1000
+            } else {
+                0
+            }
+        let refreshExpiresAt =
+            if (snapshot.refreshTokenExpiresInSeconds > 0) {
+                issuedAtMillis + snapshot.refreshTokenExpiresInSeconds * 1000
+            } else {
+                0
+            }
+        let serialized = serializeGitHubStoredSession(
+            GitHubStoredSessionSnapshot(
+                snapshot.accessToken,
+                snapshot.tokenType,
+                snapshot.scope,
+                snapshot.refreshToken,
+                accessExpiresAt,
+                refreshExpiresAt
+            )
+        )
+        spawn {
+            =>
+            dataBoardSet(GITHUB_SESSION_STORE_KEY, serialized)
+        }
+    }
+
+    /**
+     * 首次挂载时从 databoard 恢复登录态；若 access token 已过期，则尝试 refresh token。
+     * Restores the persisted login session on first mount and refreshes it when needed.
+     */
+    func restorePersistedAuthSessionIfNeeded(): Unit {
+        if (this.hasAttemptedSessionRestore) {
+            return
+        }
+        this.hasAttemptedSessionRestore = true
+        spawn {
+            =>
+            let rawSession = dataBoardGet(GITHUB_SESSION_STORE_KEY)
+            if (rawSession == "") {
+                logInfo("AppShell", "No persisted GitHub session found.")
+                return
+            }
+            if (let Some(session) <- deserializeGitHubStoredSession(rawSession)) {
+                this.resumeStoredAuthSession(session)
+                return
+            }
+            logWarn("AppShell", "Persisted GitHub session payload was invalid and has been cleared.")
+            dataBoardDelete(GITHUB_SESSION_STORE_KEY)
+        }
+    }
+
+    /**
+     * 根据持久化会话决定直接恢复、刷新 token，或清理无效状态。
+     * Decides whether to restore, refresh, or discard the persisted GitHub session.
+     */
+    func resumeStoredAuthSession(session: GitHubStoredSessionSnapshot): Unit {
+        let nowMillis = SystemDateTime.getTime()
+        if (session.accessTokenExpiresAtMillis == 0 || nowMillis < session.accessTokenExpiresAtMillis) {
+            this.runOnUi({
+                =>
+                logInfo("AppShell", "Restoring persisted GitHub session.")
+                this.authAccessToken = session.accessToken
+                this.sharedAuthAccessToken = session.accessToken
+                this.authStage = "connected"
+                this.authMessage = this.t("auth_connected_body")
+                this.enterWorkspace()
+                this.refreshGitHubProfile()
+            })
+            return
+        }
+        if (
+            session.refreshToken != "" &&
+            (session.refreshTokenExpiresAtMillis == 0 || nowMillis < session.refreshTokenExpiresAtMillis)
+        ) {
+            logInfo("AppShell", "Refreshing persisted GitHub session.")
+            refreshGitHubWebToken(
+                session.refreshToken,
+                { snapshot => this.applyAccessToken(snapshot) },
+                {
+                    message =>
+                    logWarn("AppShell", "Stored session refresh failed: ${message}")
+                    dataBoardDelete(GITHUB_SESSION_STORE_KEY)
+                    this.applyAuthFailure("GitHub sign-in expired. Please sign in again.")
+                }
+            )
+            return
+        }
+        logWarn("AppShell", "Persisted GitHub session expired and no refresh token remained.")
+        dataBoardDelete(GITHUB_SESSION_STORE_KEY)
     }
 
     func handleTabTap(tab: String): Unit {
@@ -495,7 +645,27 @@ public class AppShell {
     }
 
     func createScratchRepository(): Unit {
-        this.authMessage = this.t("draft_pr_pending")
+        if (this.authAccessToken == "") {
+            this.authMessage = "Sign in to GitHub before creating a repository."
+            return
+        }
+        let timestamp = SystemDateTime.getTime()
+        let repositoryName = "repopilot-scratch-${timestamp}"
+        createGitHubRepository(
+            this.authAccessToken,
+            repositoryName,
+            "Scratch repository created from RepoPilot.",
+            {
+                =>
+                this.runOnUi({
+                    =>
+                    this.authMessage = "Created ${repositoryName}."
+                    this.activeTab = "profile"
+                    this.refreshGitHubProfile()
+                })
+            },
+            { message => this.applyAuthFailure(message) }
+        )
     }
 
     func ensureInitialSelection(): Unit {
@@ -589,7 +759,7 @@ public class AppShell {
                 return item
             }
         }
-        GitHubIssueSnapshot("", "Issue not loaded", "Select a repository issue to continue.", "", "", "")
+        GitHubIssueSnapshot("", "", "Issue not loaded", "Select a repository issue to continue.", "", "", "")
     }
     func currentLivePullRequest(): GitHubPullRequestSnapshot {
         for (item in this.livePullRequests) {
@@ -616,12 +786,12 @@ public class AppShell {
         fetchGitHubViewer(
             this.authAccessToken,
             { snapshot => this.applyViewer(snapshot) },
-            { message => this.applyAuthFailure(message) }
+            { message => this.handleGitHubApiFailure(message) }
         )
         fetchGitHubRepositories(
             this.authAccessToken,
             { repositories => this.applyLiveRepositories(repositories) },
-            { message => this.applyAuthFailure(message) }
+            { message => this.handleGitHubApiFailure(message) }
         )
     }
     /**
@@ -671,19 +841,19 @@ public class AppShell {
             this.authAccessToken,
             repositoryName,
             { snapshot => this.applyLiveRepositoryDetail(repositoryName, snapshot) },
-            { message => this.applyAuthFailure(message) }
+            { message => this.handleGitHubApiFailure(message) }
         )
         fetchGitHubRepositoryIssues(
             this.authAccessToken,
             repositoryName,
             { items => this.applyLiveIssues(repositoryName, items) },
-            { message => this.applyAuthFailure(message) }
+            { message => this.handleGitHubApiFailure(message) }
         )
         fetchGitHubRepositoryPullRequests(
             this.authAccessToken,
             repositoryName,
             { items => this.applyLivePullRequests(repositoryName, items) },
-            { message => this.applyAuthFailure(message) }
+            { message => this.handleGitHubApiFailure(message) }
         )
     }
 

@@ -27,6 +27,7 @@ public class GitHubAccessTokenSnapshot {
     public let tokenType: String
     public let scope: String
     public let refreshToken: String
+    public let accessTokenExpiresInSeconds: Int64
     public let refreshTokenExpiresInSeconds: Int64
 
     public init(
@@ -34,13 +35,40 @@ public class GitHubAccessTokenSnapshot {
         tokenType: String,
         scope: String,
         refreshToken: String,
+        accessTokenExpiresInSeconds: Int64,
         refreshTokenExpiresInSeconds: Int64
     ) {
         this.accessToken = accessToken
         this.tokenType = tokenType
         this.scope = scope
         this.refreshToken = refreshToken
+        this.accessTokenExpiresInSeconds = accessTokenExpiresInSeconds
         this.refreshTokenExpiresInSeconds = refreshTokenExpiresInSeconds
+    }
+}
+
+public class GitHubStoredSessionSnapshot {
+    public let accessToken: String
+    public let tokenType: String
+    public let scope: String
+    public let refreshToken: String
+    public let accessTokenExpiresAtMillis: Int64
+    public let refreshTokenExpiresAtMillis: Int64
+
+    public init(
+        accessToken: String,
+        tokenType: String,
+        scope: String,
+        refreshToken: String,
+        accessTokenExpiresAtMillis: Int64,
+        refreshTokenExpiresAtMillis: Int64
+    ) {
+        this.accessToken = accessToken
+        this.tokenType = tokenType
+        this.scope = scope
+        this.refreshToken = refreshToken
+        this.accessTokenExpiresAtMillis = accessTokenExpiresAtMillis
+        this.refreshTokenExpiresAtMillis = refreshTokenExpiresAtMillis
     }
 }
 
@@ -102,19 +130,35 @@ public class GitHubRepositoryDetailSnapshot {
 
 public class GitHubIssueSnapshot {
     public let id: String
+    public let nodeId: String
     public let title: String
     public let summary: String
     public let status: String
     public let authorLogin: String
     public let issueUrl: String
 
-    public init(id: String, title: String, summary: String, status: String, authorLogin: String, issueUrl: String) {
+    public init(id: String, nodeId: String, title: String, summary: String, status: String, authorLogin: String, issueUrl: String) {
         this.id = id
+        this.nodeId = nodeId
         this.title = title
         this.summary = summary
         this.status = status
         this.authorLogin = authorLogin
         this.issueUrl = issueUrl
+    }
+}
+
+public class GitHubCommentSnapshot {
+    public let id: String
+    public let body: String
+    public let authorLogin: String
+    public let commentUrl: String
+
+    public init(id: String, body: String, authorLogin: String, commentUrl: String) {
+        this.id = id
+        this.body = body
+        this.authorLogin = authorLogin
+        this.commentUrl = commentUrl
     }
 }
 

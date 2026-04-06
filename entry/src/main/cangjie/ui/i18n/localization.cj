@@ -147,8 +147,11 @@ func localizedEn(key: String): String {
     else if (key == "comment_issue_mock") { "Issue comment drafted locally." }
     else if (key == "approve_pr") { "Approve review" }
     else if (key == "request_changes") { "Request changes" }
+    else if (key == "comment_pr") { "Comment on pull request" }
     else if (key == "approve_pr_mock") { "Approval note drafted locally." }
     else if (key == "request_changes_mock") { "Change request note drafted locally." }
+    else if (key == "fork_repository") { "Fork repository" }
+    else if (key == "delete_repository") { "Delete repository" }
     else if (key == "prompt_draft") { "Prompt draft" }
     else if (key == "execution_mode") { "Execution mode" }
     else if (key == "validation_scope") { "Validation scope" }

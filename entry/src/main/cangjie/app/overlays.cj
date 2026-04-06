@@ -56,39 +56,6 @@ func buildAuthWelcome(shell: AppShell) {
 }
 
 @Builder
-func buildAuthCredentials(shell: AppShell) {
-    Column() {
-        Row() {
-            Button("X")
-                .width(40).height(40).backgroundColor(0x1E232C).fontColor(0xF8FAFC).borderRadius(20)
-                .onClick({ _ => shell.returnToAuthWelcome() })
-            Blank()
-            Text(shell.t("auth_web_title")).fontSize(20).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
-            Blank()
-            Button("...").width(40).height(40).backgroundColor(0x1E232C).fontColor(0xF8FAFC).borderRadius(20)
-        }
-        .width(100.percent)
-        .padding(left: 18, right: 18, top: 16)
-
-        Column(space: 18) {
-            Blank().height(32)
-            Text(shell.t("auth_web_subtitle")).fontSize(16).fontColor(0xE5E7EB).textAlign(TextAlign.Center)
-            Text(shell.authMessageText()).fontSize(14).fontColor(0x98A2B3).textAlign(TextAlign.Center)
-            buildVerificationField(shell)
-            buildUserCodeField(shell)
-            Button(shell.t("sign_in_github"))
-                .width(100.percent).height(48).backgroundColor(0x458D45).fontColor(0xF8FAFC).fontSize(18).borderRadius(10)
-                .onClick({ _ => shell.confirmAuth() })
-        }
-        .width(100.percent)
-        .padding(left: 18, right: 18, top: 24)
-    }
-    .width(100.percent)
-    .height(100.percent)
-    .backgroundColor(0x11151B)
-}
-
-@Builder
 func buildAuthConnected(shell: AppShell) {
     Column(space: 18) {
         Blank()
@@ -110,38 +77,6 @@ func buildAuthConnected(shell: AppShell) {
     .width(100.percent)
     .height(100.percent)
     .padding(left: 18, right: 18, top: 48, bottom: 42)
-}
-
-@Builder
-func buildAuthField(label: String, value: String) {
-    Column(space: 8) {
-        Text(label).fontSize(14).fontWeight(FontWeight.Medium).fontColor(0xE5E7EB)
-        Row() {
-            Text(value).fontSize(15).fontColor(0xF8FAFC)
-            Blank()
-        }
-            .width(100.percent).height(56).padding(left: 14, right: 14)
-            .borderRadius(10).backgroundColor(0x151A21).opacity(0.92)
-    }
-    .width(100.percent)
-}
-
-/**
- * Reads the verification URI inside its own builder on every rerender.
- * This avoids freezing the auth field value inside a nested builder call.
- */
-@Builder
-func buildVerificationField(shell: AppShell) {
-    buildAuthField("Verification URL", shell.authVerificationHint())
-}
-
-/**
- * Reads the user code inside its own builder on every rerender.
- * This keeps the code label reactive after the device-flow callback returns.
- */
-@Builder
-func buildUserCodeField(shell: AppShell) {
-    buildAuthField("User Code", shell.authUserCodeValue())
 }
 
 @Builder

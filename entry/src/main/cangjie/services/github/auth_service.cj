@@ -3,7 +3,7 @@ package ohos_app_cangjie_entry.services.github
 import std.collection.HashMap
 import kit.NetworkKit.*
 import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
-import ohos_app_cangjie_entry.domain.GitHubAccessTokenSnapshot
+import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubStoredSessionSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
 let GITHUB_APP_CLIENT_ID = "Iv23lidHotlwYwAflJsH"
@@ -12,29 +12,15 @@ let GITHUB_APP_REDIRECT_URI = "repopilot://auth/callback"
 let AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 let ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
 
-/**
- * 构建 GitHub App Web 授权页链接，供客户端直接拉起网页登录与授权。
- * Builds the GitHub App web authorization URL for direct browser sign-in and consent.
- */
-public func buildGitHubAuthorizationUri(state: String): String {
-    "${AUTHORIZE_URL}?client_id=${GITHUB_APP_CLIENT_ID}&redirect_uri=${GITHUB_APP_REDIRECT_URI}&state=${state}"
-}
-
-/**
- * 使用 GitHub 授权回调中的 code 交换用户访问令牌。
- * Exchanges the callback code from GitHub web auth for a user access token.
- */
-public func exchangeGitHubWebCode(
-    code: String,
+func exchangeGitHubTokenPayload(
+    payload: String,
     onSuccess: (GitHubAccessTokenSnapshot) -> Unit,
     onFailure: (String) -> Unit
 ): Unit {
-    logInfo("AuthService", "Exchanging GitHub callback code for access token.")
     let httpRequest = createHttp()
     let headers = HashMap<String, String>()
     headers.add("Accept", "application/json")
     headers.add("Content-Type", "application/x-www-form-urlencoded")
-    let payload = "client_id=${GITHUB_APP_CLIENT_ID}&client_secret=${GITHUB_APP_CLIENT_SECRET}&code=${code}&redirect_uri=${GITHUB_APP_REDIRECT_URI}"
     let options = HttpRequestOptions(
         method: RequestMethod.Post,
         header: headers,
@@ -68,6 +54,7 @@ public func exchangeGitHubWebCode(
                     } else {
                         onFailure("GitHub web token exchange did not return an access token.")
                     }
+                    httpRequest.destroy()
                     return
                 }
                 onSuccess(
@@ -76,6 +63,7 @@ public func exchangeGitHubWebCode(
                         extractJsonStringField(body, "token_type"),
                         extractJsonStringField(body, "scope"),
                         extractJsonStringField(body, "refresh_token"),
+                        extractJsonIntField(body, "expires_in"),
                         extractJsonIntField(body, "refresh_token_expires_in")
                     )
                 )
@@ -87,6 +75,82 @@ public func exchangeGitHubWebCode(
             logWarn("AuthService", "Web token exchange returned no response.")
             onFailure("GitHub returned no response.")
         }
+    )
+}
+
+/**
+ * 构建 GitHub App Web 授权页链接，供客户端直接拉起网页登录与授权。
+ * Builds the GitHub App web authorization URL for direct browser sign-in and consent.
+ */
+public func buildGitHubAuthorizationUri(state: String): String {
+    "${AUTHORIZE_URL}?client_id=${GITHUB_APP_CLIENT_ID}&redirect_uri=${GITHUB_APP_REDIRECT_URI}&state=${state}"
+}
+
+/**
+ * 使用 GitHub 授权回调中的 code 交换用户访问令牌。
+ * Exchanges the callback code from GitHub web auth for a user access token.
+ */
+public func exchangeGitHubWebCode(
+    code: String,
+    onSuccess: (GitHubAccessTokenSnapshot) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    logInfo("AuthService", "Exchanging GitHub callback code for access token.")
+    let payload = "client_id=${GITHUB_APP_CLIENT_ID}&client_secret=${GITHUB_APP_CLIENT_SECRET}&code=${code}&redirect_uri=${GITHUB_APP_REDIRECT_URI}"
+    exchangeGitHubTokenPayload(payload, onSuccess, onFailure)
+}
+
+/**
+ * 使用 refresh token 获取新的 GitHub 用户访问令牌，避免每次启动都重新登录。
+ * Refreshes a GitHub user access token so the app can restore sign-in across launches.
+ */
+public func refreshGitHubWebToken(
+    refreshToken: String,
+    onSuccess: (GitHubAccessTokenSnapshot) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    logInfo("AuthService", "Refreshing GitHub access token.")
+    let payload =
+        "client_id=${GITHUB_APP_CLIENT_ID}&client_secret=${GITHUB_APP_CLIENT_SECRET}" +
+        "&grant_type=refresh_token&refresh_token=${refreshToken}"
+    exchangeGitHubTokenPayload(payload, onSuccess, onFailure)
+}
+
+func escapeJsonString(value: String): String {
+    value.replace("\\", "\\\\").replace("\"", "\\\"")
+}
+
+/**
+ * 将 GitHub token 快照转换为 databoard 使用的 JSON 字符串。
+ * Serializes a GitHub token snapshot into the databoard JSON payload format.
+ */
+public func serializeGitHubStoredSession(snapshot: GitHubStoredSessionSnapshot): String {
+    "{\"access_token\":\"${escapeJsonString(snapshot.accessToken)}\"," +
+    "\"token_type\":\"${escapeJsonString(snapshot.tokenType)}\"," +
+    "\"scope\":\"${escapeJsonString(snapshot.scope)}\"," +
+    "\"refresh_token\":\"${escapeJsonString(snapshot.refreshToken)}\"," +
+    "\"access_expires_at\":${snapshot.accessTokenExpiresAtMillis}," +
+    "\"refresh_expires_at\":${snapshot.refreshTokenExpiresAtMillis}}"
+}
+
+/**
+ * 从 databoard 的 JSON 字符串恢复 GitHub 会话；缺失 access token 时返回空。
+ * Restores a GitHub session snapshot from databoard JSON and rejects empty sessions.
+ */
+public func deserializeGitHubStoredSession(payload: String): ?GitHubStoredSessionSnapshot {
+    let accessToken = extractJsonStringField(payload, "access_token")
+    if (accessToken == "") {
+        return None
+    }
+    Some(
+        GitHubStoredSessionSnapshot(
+            accessToken,
+            extractJsonStringField(payload, "token_type"),
+            extractJsonStringField(payload, "scope"),
+            extractJsonStringField(payload, "refresh_token"),
+            extractJsonIntField(payload, "access_expires_at"),
+            extractJsonIntField(payload, "refresh_expires_at")
+        )
     )
 }
 

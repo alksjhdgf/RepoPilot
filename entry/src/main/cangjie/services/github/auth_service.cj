@@ -3,98 +3,38 @@ package ohos_app_cangjie_entry.services.github
 import std.collection.HashMap
 import kit.NetworkKit.*
 import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
-import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubDeviceCodeSnapshot}
+import ohos_app_cangjie_entry.domain.GitHubAccessTokenSnapshot
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
 let GITHUB_APP_CLIENT_ID = "Iv23lidHotlwYwAflJsH"
-let DEVICE_CODE_URL = "https://github.com/login/device/code"
+let GITHUB_APP_CLIENT_SECRET = "c8863007758b40df8c156dd9db829902032d3861"
+let GITHUB_APP_REDIRECT_URI = "repopilot://auth/callback"
+let AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 let ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
 
 /**
- * 发起 GitHub Device Flow 的第一步请求，获取 device code 与 user code。
- * Requests the first GitHub Device Flow payload and returns device and user codes.
+ * 构建 GitHub App Web 授权页链接，供客户端直接拉起网页登录与授权。
+ * Builds the GitHub App web authorization URL for direct browser sign-in and consent.
  */
-public func requestGitHubDeviceCode(
-    onSuccess: (GitHubDeviceCodeSnapshot) -> Unit,
-    onFailure: (String) -> Unit
-): Unit {
-    logInfo("AuthService", "Requesting GitHub device code.")
-    let httpRequest = createHttp()
-    let headers = HashMap<String, String>()
-    headers.add("Accept", "application/json")
-    headers.add("Content-Type", "application/x-www-form-urlencoded")
-    let options = HttpRequestOptions(
-        method: RequestMethod.Post,
-        header: headers,
-        extraData: HttpData.StringData("client_id=${GITHUB_APP_CLIENT_ID}"),
-        expectDataType: HttpDataType.StringValue
-    )
-    httpRequest.request(
-        DEVICE_CODE_URL,
-        options,
-        {
-            err, resp =>
-            if (let Some(networkError) <- err) {
-                httpRequest.destroy()
-                logError("AuthService", "Device code request failed: ${networkError.code} ${networkError.message}")
-                onFailure("Network error ${networkError.code}: ${networkError.message}")
-                return
-            }
-            if (let Some(response) <- resp) {
-                logDebug("AuthService", "Device code response code: ${response.responseCode}")
-                let payload = match (response.result) {
-                    case HttpData.StringData(content) => content
-                    case _ => ""
-                }
-                let deviceCode = extractJsonStringField(payload, "device_code")
-                let userCode = extractJsonStringField(payload, "user_code")
-                let completeVerificationUri = extractJsonStringField(payload, "verification_uri_complete")
-                let verificationUri = if (completeVerificationUri != "") {
-                    completeVerificationUri
-                } else {
-                    extractJsonStringField(payload, "verification_uri")
-                }
-                if (deviceCode == "" || userCode == "" || verificationUri == "") {
-                    logError("AuthService", "Device code payload parse failed: ${payload}")
-                    onFailure("Unable to parse GitHub device code response.")
-                    return
-                }
-                logInfo("AuthService", "Device code acquired. verificationUri=${verificationUri}")
-                onSuccess(
-                    GitHubDeviceCodeSnapshot(
-                        deviceCode,
-                        userCode,
-                        verificationUri,
-                        extractJsonIntField(payload, "expires_in"),
-                        extractJsonIntField(payload, "interval")
-                    )
-                )
-                httpRequest.destroy()
-                return
-            }
-            httpRequest.destroy()
-            logWarn("AuthService", "Device code request returned no response.")
-            onFailure("GitHub returned no response.")
-        }
-    )
+public func buildGitHubAuthorizationUri(state: String): String {
+    "${AUTHORIZE_URL}?client_id=${GITHUB_APP_CLIENT_ID}&redirect_uri=${GITHUB_APP_REDIRECT_URI}&state=${state}"
 }
 
 /**
- * 使用 device code 轮询 GitHub，尝试换取用户访问令牌。
- * Exchanges a device code for a user access token through GitHub polling.
+ * 使用 GitHub 授权回调中的 code 交换用户访问令牌。
+ * Exchanges the callback code from GitHub web auth for a user access token.
  */
-public func exchangeGitHubDeviceCode(
-    deviceCode: String,
+public func exchangeGitHubWebCode(
+    code: String,
     onSuccess: (GitHubAccessTokenSnapshot) -> Unit,
-    onPending: (String, String) -> Unit,
     onFailure: (String) -> Unit
 ): Unit {
-    logInfo("AuthService", "Polling GitHub access token.")
+    logInfo("AuthService", "Exchanging GitHub callback code for access token.")
     let httpRequest = createHttp()
     let headers = HashMap<String, String>()
     headers.add("Accept", "application/json")
     headers.add("Content-Type", "application/x-www-form-urlencoded")
-    let payload = "client_id=${GITHUB_APP_CLIENT_ID}&device_code=${deviceCode}&grant_type=urn:ietf:params:oauth:grant-type:device_code"
+    let payload = "client_id=${GITHUB_APP_CLIENT_ID}&client_secret=${GITHUB_APP_CLIENT_SECRET}&code=${code}&redirect_uri=${GITHUB_APP_REDIRECT_URI}"
     let options = HttpRequestOptions(
         method: RequestMethod.Post,
         header: headers,
@@ -113,7 +53,7 @@ public func exchangeGitHubDeviceCode(
                 return
             }
             if (let Some(response) <- resp) {
-                logDebug("AuthService", "Token exchange response code: ${response.responseCode}")
+                logDebug("AuthService", "Web token exchange response code: ${response.responseCode}")
                 let body = match (response.result) {
                     case HttpData.StringData(content) => content
                     case _ => ""
@@ -122,13 +62,11 @@ public func exchangeGitHubDeviceCode(
                 if (accessToken == "") {
                     let errorCode = extractJsonStringField(body, "error")
                     let errorDescription = extractJsonStringField(body, "error_description")
-                    logWarn("AuthService", "Token exchange incomplete: ${errorCode} ${errorDescription}")
-                    if (errorCode == "authorization_pending" || errorCode == "slow_down") {
-                        onPending(errorCode, errorDescription)
-                    } else if (errorCode != "") {
+                    logWarn("AuthService", "Web token exchange failed: ${errorCode} ${errorDescription}")
+                    if (errorCode != "") {
                         onFailure("${errorCode}: ${errorDescription}")
                     } else {
-                        onFailure("GitHub token exchange did not return an access token.")
+                        onFailure("GitHub web token exchange did not return an access token.")
                     }
                     return
                 }
@@ -141,13 +79,31 @@ public func exchangeGitHubDeviceCode(
                         extractJsonIntField(body, "refresh_token_expires_in")
                     )
                 )
-                logInfo("AuthService", "GitHub access token acquired.")
+                logInfo("AuthService", "GitHub access token acquired through web authorization.")
                 httpRequest.destroy()
                 return
             }
             httpRequest.destroy()
-            logWarn("AuthService", "Token exchange returned no response.")
+            logWarn("AuthService", "Web token exchange returned no response.")
             onFailure("GitHub returned no response.")
         }
     )
+}
+
+/**
+ * 从回调 URL 中提取 query 参数，用于读取 GitHub 回传的 code、state 或 error。
+ * Extracts query parameters from the callback URL for code, state, or error values.
+ */
+public func extractUrlQueryParameter(url: String, key: String): String {
+    let marker = "${key}="
+    match (url.indexOf(marker)) {
+        case Some(start) =>
+            let valueStart = Int64(start + marker.size)
+            let tail = url[valueStart..url.size]
+            match (tail.indexOf("&")) {
+                case Some(endOffset) => tail[0..Int64(endOffset)]
+                case None => tail
+            }
+        case None => ""
+    }
 }

@@ -6,7 +6,8 @@ import kit.AbilityKit.UIAbility
 import kit.AbilityKit.LaunchParam
 import kit.AbilityKit.LaunchReason
 import kit.ArkUI.WindowStage
-import ohos_app_cangjie_entry.infra.runtime.{notifyAppForeground, setAppAbilityContext}
+import ohos_app_cangjie_entry.infra.logging.logInfo
+import ohos_app_cangjie_entry.infra.runtime.{notifyAppAuthCallback, notifyAppForeground, setAppAbilityContext}
 
 class MainAbility <: UIAbility {
     public init() {
@@ -16,6 +17,7 @@ class MainAbility <: UIAbility {
 
     public override func onCreate(want: Want, launchParam: LaunchParam): Unit {
         Hilog.info(1, "Cangjie", "MainAbility OnCreated.${want.abilityName}")
+        this.handleIncomingWant(want)
         match (launchParam.launchReason) {
             case LaunchReason.StartAbility => Hilog.info(1, "Cangjie", "START_ABILITY")
             case _ => ()
@@ -35,5 +37,30 @@ class MainAbility <: UIAbility {
     public override func onForeground(): Unit {
         Hilog.info(1, "Cangjie", "MainAbility onForeground.")
         notifyAppForeground()
+    }
+
+    /**
+     * 处理热启动 deep link，接住 GitHub 授权回调的 code。
+     * Handles hot-start deep links and forwards GitHub auth callback codes.
+     */
+    public override func onNewWant(want: Want, launchParam: LaunchParam): Unit {
+        Hilog.info(1, "Cangjie", "MainAbility onNewWant.")
+        this.handleIncomingWant(want)
+    }
+
+    /**
+     * 识别回调 scheme 并把完整 URI 转发给应用壳层。
+     * Detects the auth callback scheme and forwards the full URI into the app shell.
+     */
+    func handleIncomingWant(want: Want): Unit {
+        if (want.uri == "") {
+            return
+        }
+        let uri = want.uri
+        if (!uri.startsWith("repopilot://auth/callback")) {
+            return
+        }
+        logInfo("MainAbility", "Received GitHub auth callback URI.")
+        notifyAppAuthCallback(uri)
     }
 }

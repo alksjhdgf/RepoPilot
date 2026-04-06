@@ -12,8 +12,8 @@ import ohos_app_cangjie_entry.infra.databoard.{dataBoardDelete, dataBoardGet, da
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
-import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, deserializeGitHubStoredSession, exchangeGitHubWebCode, extractUrlQueryParameter, refreshGitHubWebToken, serializeGitHubStoredSession}
-import ohos_app_cangjie_entry.services.github.{createGitHubRepository, fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubViewer}
+import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
+import ohos_app_cangjie_entry.services.github.{deserializeGitHubStoredSession, extractUrlQueryParameter, serializeGitHubStoredSession}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
@@ -301,14 +301,13 @@ public class AppShell {
     func beginAuth(): Unit {
         logInfo("AppShell", "Begin GitHub authentication flow.")
         this.authRequestSequence += 1
-        let authState = "repopilot-auth-${this.authRequestSequence}"
-        let authorizationUri = buildGitHubAuthorizationUri(authState)
+        let launchSnapshot = buildGitHubAuthLaunchSnapshot(this.authRequestSequence)
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.authStage = "credentials"
             this.authMessage = "Opening GitHub sign-in..."
-            this.authVerificationUri = authorizationUri
+            this.authVerificationUri = launchSnapshot.authorizationUri
             this.authUserCode = ""
-            this.authRequestState = authState
+            this.authRequestState = launchSnapshot.authState
             this.authCheckingToken = false
         })
         this.reopenGitHubVerification()
@@ -421,7 +420,7 @@ public class AppShell {
         this.authCheckingToken = true
         this.authMessage = "Finishing GitHub authorization..."
         logInfo("AppShell", "Exchanging GitHub callback code.")
-        exchangeGitHubWebCode(
+        exchangeGitHubAuthCode(
             authCode,
             { token => this.applyAccessToken(token) },
             { message => this.applyAuthFailure(message) }
@@ -537,29 +536,7 @@ public class AppShell {
      * Persists the GitHub session into databoard so the next launch can restore sign-in.
      */
     func persistAuthSession(snapshot: GitHubAccessTokenSnapshot): Unit {
-        let issuedAtMillis = SystemDateTime.getTime()
-        let accessExpiresAt =
-            if (snapshot.accessTokenExpiresInSeconds > 0) {
-                issuedAtMillis + snapshot.accessTokenExpiresInSeconds * 1000
-            } else {
-                0
-            }
-        let refreshExpiresAt =
-            if (snapshot.refreshTokenExpiresInSeconds > 0) {
-                issuedAtMillis + snapshot.refreshTokenExpiresInSeconds * 1000
-            } else {
-                0
-            }
-        let serialized = serializeGitHubStoredSession(
-            GitHubStoredSessionSnapshot(
-                snapshot.accessToken,
-                snapshot.tokenType,
-                snapshot.scope,
-                snapshot.refreshToken,
-                accessExpiresAt,
-                refreshExpiresAt
-            )
-        )
+        let serialized = serializeGitHubStoredSession(buildPersistedGitHubStoredSession(snapshot, SystemDateTime.getTime()))
         spawn {
             =>
             dataBoardSet(GITHUB_SESSION_STORE_KEY, serialized)
@@ -596,13 +573,13 @@ public class AppShell {
      * Decides whether to restore, refresh, or discard the persisted GitHub session.
      */
     func resumeStoredAuthSession(session: GitHubStoredSessionSnapshot): Unit {
-        let nowMillis = SystemDateTime.getTime()
-        if (session.accessTokenExpiresAtMillis == 0 || nowMillis < session.accessTokenExpiresAtMillis) {
+        let restorePlan = planStoredGitHubSession(session, SystemDateTime.getTime())
+        if (restorePlan.action == "restore") {
             this.runOnUi({
                 =>
                 logInfo("AppShell", "Restoring persisted GitHub session.")
-                this.authAccessToken = session.accessToken
-                this.sharedAuthAccessToken = session.accessToken
+                this.authAccessToken = restorePlan.accessToken
+                this.sharedAuthAccessToken = restorePlan.accessToken
                 this.authStage = "connected"
                 this.authMessage = this.t("auth_connected_body")
                 this.enterWorkspace()
@@ -610,13 +587,10 @@ public class AppShell {
             })
             return
         }
-        if (
-            session.refreshToken != "" &&
-            (session.refreshTokenExpiresAtMillis == 0 || nowMillis < session.refreshTokenExpiresAtMillis)
-        ) {
+        if (restorePlan.action == "refresh") {
             logInfo("AppShell", "Refreshing persisted GitHub session.")
-            refreshGitHubWebToken(
-                session.refreshToken,
+            refreshStoredGitHubSession(
+                restorePlan.refreshToken,
                 { snapshot => this.applyAccessToken(snapshot) },
                 {
                     message =>
@@ -649,15 +623,14 @@ public class AppShell {
     }
 
     func switchWorkplace(workplaceId: String): Unit {
-        let repositoryId = primaryRepositoryId(workplaceId)
-        let repository = repositorySnapshot(repositoryId)
+        let nextSelection = restoreMockWorkplaceSelection(workplaceId)
         getUIContext().animateTo(AnimateParam(duration: 200, curve: Curve.Ease), { =>
             this.currentWorkplace = workplaceId
             if (this.authAccessToken == "") {
-                this.selectedRepository = repositoryId
-                this.selectedIssue = repository.primaryIssueId
-                this.selectedPullRequest = repository.primaryPullRequestId
-                this.selectedTask = taskIdForIssue(repository.primaryIssueId)
+                this.selectedRepository = nextSelection.repositoryId
+                this.selectedIssue = nextSelection.issueId
+                this.selectedPullRequest = nextSelection.pullRequestId
+                this.selectedTask = nextSelection.taskId
             } else {
                 this.selectedRepository = ""
                 this.selectedIssue = ""
@@ -673,14 +646,9 @@ public class AppShell {
             this.authMessage = "Sign in to GitHub before creating a repository."
             return
         }
-        let timestamp = SystemDateTime.getTime()
-        let repositoryName = "repopilot-scratch-${timestamp}"
-        createGitHubRepository(
+        createScratchGitHubRepository(
             this.authAccessToken,
-            repositoryName,
-            "Scratch repository created from RepoPilot.",
-            {
-                =>
+            { repositoryName =>
                 this.runOnUi({
                     =>
                     this.authMessage = "Created ${repositoryName}."
@@ -696,24 +664,21 @@ public class AppShell {
         if (this.currentWorkplace == "") {
             this.currentWorkplace = defaultWorkplace()
         }
-        if (this.selectedRepository == "") {
-            if (this.authAccessToken == "" || this.liveRepositories.size == 0) {
-                this.selectedRepository = primaryRepositoryId(this.currentWorkplace)
-            }
-        }
-        if (this.selectedIssue == "") {
-            if (this.authAccessToken == "" || this.liveIssues.size == 0) {
-                this.selectedIssue = repositorySnapshot(this.selectedRepository).primaryIssueId
-            }
-        }
-        if (this.selectedPullRequest == "") {
-            if (this.authAccessToken == "" || this.livePullRequests.size == 0) {
-                this.selectedPullRequest = repositorySnapshot(this.selectedRepository).primaryPullRequestId
-            }
-        }
-        if (this.selectedTask == "") {
-            this.selectedTask = taskIdForIssue(this.selectedIssue)
-        }
+        let nextSelection = ensureSelectionSnapshot(
+            this.currentWorkplace,
+            this.authAccessToken != "",
+            this.selectedRepository,
+            this.selectedIssue,
+            this.selectedPullRequest,
+            this.selectedTask,
+            this.liveRepositories.size > 0,
+            this.liveIssues.size > 0,
+            this.livePullRequests.size > 0
+        )
+        this.selectedRepository = nextSelection.repositoryId
+        this.selectedIssue = nextSelection.issueId
+        this.selectedPullRequest = nextSelection.pullRequestId
+        this.selectedTask = nextSelection.taskId
     }
 
     func currentWorkplaceTitle(): String { this.t(workplaceSnapshot(this.currentWorkplace).titleKey) }
@@ -813,13 +778,9 @@ public class AppShell {
             return
         }
         logInfo("AppShell", "Refreshing GitHub viewer and repository summaries.")
-        fetchGitHubViewer(
+        refreshGitHubProfileData(
             this.authAccessToken,
             { snapshot => this.applyViewer(snapshot) },
-            { message => this.handleGitHubApiFailure(message) }
-        )
-        fetchGitHubRepositories(
-            this.authAccessToken,
             { repositories => this.applyLiveRepositories(repositories) },
             { message => this.handleGitHubApiFailure(message) }
         )
@@ -847,11 +808,8 @@ public class AppShell {
             =>
             logInfo("AppShell", "Applied ${repositories.size} live repositories.")
             this.liveRepositories = repositories
-            if (repositories.size > 0) {
-                let first = repositories[0]
-                if (this.selectedRepository == "") {
-                    this.selectedRepository = first.name
-                }
+            this.selectedRepository = resolveSelectedRepositoryId(this.selectedRepository, repositories)
+            if (repositories.size > 0 && this.selectedRepository != "") {
                 this.refreshSelectedRepositoryData()
             }
             logDebug("AppShell", "Live repository state applied on UI thread.")
@@ -868,21 +826,11 @@ public class AppShell {
         }
         let repositoryName = this.selectedRepository
         logInfo("AppShell", "Refreshing selected repository data for ${repositoryName}.")
-        fetchGitHubRepositoryDetail(
+        refreshGitHubRepositoryBundle(
             this.authAccessToken,
             repositoryName,
             { snapshot => this.applyLiveRepositoryDetail(repositoryName, snapshot) },
-            { message => this.handleGitHubApiFailure(message) }
-        )
-        fetchGitHubRepositoryIssues(
-            this.authAccessToken,
-            repositoryName,
             { items => this.applyLiveIssues(repositoryName, items) },
-            { message => this.handleGitHubApiFailure(message) }
-        )
-        fetchGitHubRepositoryPullRequests(
-            this.authAccessToken,
-            repositoryName,
             { items => this.applyLivePullRequests(repositoryName, items) },
             { message => this.handleGitHubApiFailure(message) }
         )
@@ -914,9 +862,10 @@ public class AppShell {
                 return
             }
             this.liveIssues = items
-            if (items.size > 0 && (this.selectedIssue == "" || this.currentLiveIssue().id == "")) {
-                this.selectedIssue = items[0].id
-                this.selectedTask = taskIdForIssue(this.selectedIssue)
+            let nextSelection = resolveSelectedIssueState(this.selectedIssue, items)
+            if (nextSelection.issueId != "") {
+                this.selectedIssue = nextSelection.issueId
+                this.selectedTask = nextSelection.taskId
             }
             logInfo("AppShell", "Applied ${items.size} live issues for ${repositoryName}.")
         })
@@ -943,9 +892,7 @@ public class AppShell {
                 "${items.size}",
                 nextDetail.defaultBranch
             )
-            if (items.size > 0 && (this.selectedPullRequest == "" || this.currentLivePullRequest().id == "")) {
-                this.selectedPullRequest = items[0].id
-            }
+            this.selectedPullRequest = resolveSelectedPullRequestId(this.selectedPullRequest, items)
             logInfo("AppShell", "Applied ${items.size} live pull requests for ${repositoryName}.")
         })
     }

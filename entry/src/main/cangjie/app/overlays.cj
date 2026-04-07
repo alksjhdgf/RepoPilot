@@ -132,15 +132,15 @@ func buildWorkplacePicker(shell: AppShell) {
 func buildWorkplaceOption(shell: AppShell, workplaceId: String) {
     Button() {
         Row() {
-            Column(space: 4) {
+            Column() {
                 Text(shell.t(workplaceSnapshot(workplaceId).titleKey)).fontSize(16).fontWeight(FontWeight.Medium).fontColor(shell.primaryTextColor())
-                Text(shell.t(workplaceSnapshot(workplaceId).summaryKey)).fontSize(12).fontColor(shell.secondaryTextColor())
             }
             .alignItems(HorizontalAlign.Start)
             Blank()
             Text(if (shell.isCurrentWorkplace(workplaceId)) { "ON" } else { "" }).fontSize(12).fontColor(shell.accentStrongColor())
         }
         .width(100.percent)
+        .padding(left: 14, right: 14)
     }
     .width(100.percent)
     .height(64)

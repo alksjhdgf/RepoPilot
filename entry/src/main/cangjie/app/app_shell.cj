@@ -197,6 +197,7 @@ public class AppShell {
                     .width(100.percent)
                     .height(100.percent)
                     .scrollBar(BarState.Off)
+                    .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
 
                     Row() {
                         buildTopBar(this)
@@ -228,7 +229,7 @@ public class AppShell {
                 }
                 .width(100.percent)
                 .align(Alignment.Bottom)
-                .padding(bottom: 2)
+                .padding(bottom: 0)
             }
             .width(100.percent)
             .height(100.percent)
@@ -292,6 +293,7 @@ public class AppShell {
         .width(100.percent)
         .height(100.percent)
         .backgroundColor(this.pageBackgroundColor())
+        .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
     }
 
     /**

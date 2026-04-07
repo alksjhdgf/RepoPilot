@@ -89,7 +89,7 @@ func buildActiveTabContent(shell: AppShell) {
 
 @Builder
 func buildHomeTab(shell: AppShell) {
-    Column(space: 18) {
+    Column(space: 16) {
         buildHomeSectionHeader(shell, "My Work")
         buildHomeWorkPanel(shell)
         buildHomeSectionHeader(shell, "Favorites")
@@ -206,9 +206,9 @@ func buildSectionHeader(shell: AppShell, title: String, action: String) {
 @Builder
 func buildHomeSectionHeader(shell: AppShell, title: String) {
     Row() {
-        Text(title).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Text(title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
         Blank()
-        Text("...").fontSize(16).fontWeight(FontWeight.Bold).fontColor(shell.secondaryTextColor())
+        Text("...").fontSize(14).fontWeight(FontWeight.Bold).fontColor(shell.secondaryTextColor())
     }
     .width(100.percent)
 }
@@ -246,29 +246,30 @@ func buildHomeWorkPanel(shell: AppShell) {
     }
     .width(100.percent)
     .backgroundColor(shell.surfaceColor())
-    .borderRadius(22)
-    .padding(top: 4, bottom: 4)
+    .borderRadius(20)
+    .padding(top: 2, bottom: 2)
 }
 
 @Builder
 func buildHomeWorkRow(shell: AppShell, accentColor: Int64, iconText: String, title: String, onTap: () -> Unit) {
-    Row(space: 16) {
+    Row(space: 14) {
         Row() {
-            Text(iconText).fontSize(16).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
+            Text(iconText).fontSize(14).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
         }
-        .width(40)
-        .height(40)
+        .width(36)
+        .height(36)
         .backgroundColor(accentColor)
-        .borderRadius(10)
+        .borderRadius(9)
         .justifyContent(FlexAlign.Center)
 
-        Text(title).fontSize(16).fontColor(shell.primaryTextColor())
+        Text(title).fontSize(15).fontColor(shell.primaryTextColor())
         Blank()
-        Text("›").fontSize(22).fontColor(shell.secondaryTextColor())
+        Text("›").fontSize(20).fontColor(shell.secondaryTextColor())
     }
     .width(100.percent)
-    .height(64)
-    .padding(left: 14, right: 14)
+    .height(58)
+    .borderRadius(20)
+    .padding(left: 13, right: 13)
     .backgroundColor(shell.surfaceColor())
     .onClick({ _ => onTap() })
 }
@@ -278,7 +279,7 @@ func buildHomeDivider(shell: AppShell) {
     Column() {}
         .width(100.percent)
         .height(1)
-        .margin(left: 70, right: 14)
+        .margin(left: 12, right: 12)
         .backgroundColor(shell.mutedSurfaceColor())
 }
 
@@ -286,27 +287,27 @@ func buildHomeDivider(shell: AppShell) {
 func buildHomeFavoritesPanel(shell: AppShell) {
     Column(space: 14) {
         Text("Add favorite repositories here to have quick access at any time, without having to search")
-            .fontSize(14)
-            .lineHeight(22)
+            .fontSize(13)
+            .lineHeight(20)
             .fontColor(shell.primaryTextColor())
         Button("Add Favorites")
             .width(100.percent)
-            .height(48)
+            .height(44)
             .backgroundColor(shell.mutedSurfaceColor())
             .fontColor(shell.accentStrongColor())
-            .fontSize(16)
-            .borderRadius(14)
+            .fontSize(15)
+            .borderRadius(12)
             .onClick({ _ => shell.openPendingPage("Favorites", "该页面待开发") })
     }
     .width(100.percent)
-    .padding(20)
+    .padding(18)
     .backgroundColor(shell.surfaceColor())
-    .borderRadius(22)
+    .borderRadius(20)
 }
 
 @Builder
 func buildHomeShortcutsPanel(shell: AppShell) {
-    Column(space: 14) {
+    Column(space: 12) {
         Row(space: 8) {
             buildShortcutDot(0x3D404B, "⚡")
             buildShortcutDot(0x3E6D46, "◎")
@@ -320,36 +321,36 @@ func buildHomeShortcutsPanel(shell: AppShell) {
         .width(100.percent)
         .justifyContent(FlexAlign.Center)
 
-        Text("The things you need, one tap away").fontSize(16).fontWeight(FontWeight.Bold).textAlign(TextAlign.Center).fontColor(shell.primaryTextColor())
+        Text("The things you need, one tap away").fontSize(15).fontWeight(FontWeight.Bold).textAlign(TextAlign.Center).fontColor(shell.primaryTextColor())
         Text("Fast access to your lists of Issues, Pull Requests, or Discussions.")
-            .fontSize(14)
-            .lineHeight(22)
+            .fontSize(13)
+            .lineHeight(20)
             .textAlign(TextAlign.Center)
             .fontColor(shell.secondaryTextColor())
         Button("Get started")
             .width(100.percent)
-            .height(48)
+            .height(44)
             .backgroundColor(shell.mutedSurfaceColor())
             .fontColor(shell.accentStrongColor())
-            .fontSize(16)
-            .borderRadius(14)
+            .fontSize(15)
+            .borderRadius(12)
             .onClick({ _ => shell.openPendingPage("Shortcuts", "该页面待开发") })
     }
     .width(100.percent)
-    .padding(20)
+    .padding(18)
     .backgroundColor(shell.surfaceColor())
-    .borderRadius(22)
+    .borderRadius(20)
 }
 
 @Builder
 func buildShortcutDot(color: Int64, text: String) {
     Row() {
-        Text(text).fontSize(13).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
+        Text(text).fontSize(12).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
     }
-    .width(34)
-    .height(34)
+    .width(30)
+    .height(30)
     .backgroundColor(color)
-    .borderRadius(17)
+    .borderRadius(15)
     .justifyContent(FlexAlign.Center)
 }
 
@@ -358,8 +359,8 @@ func buildHomeRecentPanel(shell: AppShell) {
     Column(space: 10) {
         if (shell.hasLiveIssues()) {
             Text("Recent activity from GitHub will surface here. Open issues and pull requests you touched last appear first.")
-                .fontSize(14)
-                .lineHeight(22)
+                .fontSize(13)
+                .lineHeight(20)
                 .fontColor(shell.secondaryTextColor())
             buildHomeRecentItem(shell, shell.visibleLiveIssues()[0].title, shell.visibleLiveIssues()[0].summary)
             if (shell.hasLivePullRequests()) {
@@ -367,23 +368,23 @@ func buildHomeRecentPanel(shell: AppShell) {
             }
         } else {
             Text("Issues and Pull Requests that you've interacted with recently will appear here.")
-                .fontSize(14)
-                .lineHeight(22)
+                .fontSize(13)
+                .lineHeight(20)
                 .fontColor(shell.primaryTextColor())
                 .textAlign(TextAlign.Center)
         }
     }
     .width(100.percent)
-    .padding(20)
+    .padding(18)
     .backgroundColor(shell.surfaceColor())
-    .borderRadius(22)
+    .borderRadius(20)
 }
 
 @Builder
 func buildHomeRecentItem(shell: AppShell, title: String, summary: String) {
     Column(space: 8) {
-        Text(title).fontSize(15).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-        Text(summary).fontSize(12).lineHeight(18).fontColor(shell.secondaryTextColor())
+        Text(title).fontSize(14).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Text(summary).fontSize(11).lineHeight(17).fontColor(shell.secondaryTextColor())
     }
     .width(100.percent)
 }

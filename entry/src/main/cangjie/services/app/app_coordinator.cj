@@ -2,9 +2,9 @@ package ohos_app_cangjie_entry.services.app
 
 import std.collection.ArrayList
 import kit.BasicServicesKit.SystemDateTime
-import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubAuthLaunchSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSessionRestorePlan, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, WorkspaceSelectionSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubAuthLaunchSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSessionRestorePlan, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, WorkspaceSelectionSnapshot}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
-import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, createGitHubRepository, exchangeGitHubWebCode, fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubViewer, refreshGitHubWebToken}
+import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, createGitHubRepository, exchangeGitHubWebCode, fetchGitHubProfileMetrics, fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubViewer, refreshGitHubWebToken}
 import ohos_app_cangjie_entry.services.platform.{primaryRepositoryId, repositorySnapshot}
 
 public func buildGitHubAuthLaunchSnapshot(requestSequence: Int64): GitHubAuthLaunchSnapshot {
@@ -159,10 +159,12 @@ public func refreshStoredGitHubSession(
 public func refreshGitHubProfileData(
     token: String,
     onViewerSuccess: (GitHubViewerSnapshot) -> Unit,
+    onMetricsSuccess: (GitHubProfileMetricsSnapshot) -> Unit,
     onRepositoriesSuccess: (ArrayList<GitHubRepositoryCardSnapshot>) -> Unit,
     onFailure: (String) -> Unit
 ): Unit {
     fetchGitHubViewer(token, onViewerSuccess, onFailure)
+    fetchGitHubProfileMetrics(token, onMetricsSuccess, onFailure)
     fetchGitHubRepositories(token, onRepositoriesSuccess, onFailure)
 }
 

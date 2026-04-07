@@ -33,7 +33,7 @@ func buildTopBar(shell: AppShell) {
                     .height(40)
                     .backgroundColor(shell.surfaceColor())
                     .borderRadius(20)
-                    .onClick({ _ => shell.handleTabTap("profile") })
+                    .onClick({ _ => shell.openProfilePage() })
                 } else {
                     Row() {
                         Text("RP")
@@ -82,7 +82,7 @@ func buildActiveTabContent(shell: AppShell) {
         if (shell.isActiveTab("home")) { buildHomeTab(shell) }
         if (shell.isActiveTab("inbox")) { buildInboxTab(shell) }
         if (shell.isActiveTab("explore")) { buildExploreTab(shell) }
-        if (shell.isActiveTab("profile")) { buildProfileTab(shell) }
+        if (shell.isActiveTab("copilot")) { buildCopilotTab(shell) }
     }
     .width(100.percent)
 }
@@ -122,43 +122,33 @@ func buildExploreTab(shell: AppShell) {
 }
 
 @Builder
-func buildProfileTab(shell: AppShell) {
-    // 个人页同时承载本地偏好设置和 GitHub 实时摘要信息。
-    // The profile tab hosts both local preferences and live GitHub summaries.
-    Column(space: 18) {
-        Column(space: 12) {
-            Text("RepoPilot").fontSize(24).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-            Text(shell.accountCaption()).fontSize(13).fontColor(shell.secondaryTextColor())
-            Text(shell.t("settings_subtitle")).fontSize(13).fontColor(shell.secondaryTextColor())
+func buildCopilotTab(shell: AppShell) {
+    Column(space: 16) {
+        Column(space: 10) {
+            Text(shell.t("copilot")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+            Text(shell.t("copilot_subtitle")).fontSize(13).fontColor(shell.secondaryTextColor())
         }
         .width(100.percent)
-        .padding(20)
+        .padding(18)
         .backgroundColor(shell.surfaceColor())
-        .borderRadius(28)
+        .borderRadius(24)
 
-        buildPreferenceSection(shell, shell.t("appearance"), shell.themePreferenceValue(), "theme")
-        buildPreferenceSection(shell, shell.t("language"), shell.languagePreferenceValue(), "language")
-
-        Button(shell.t("create_repository"))
-            .width(100.percent).height(48).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor())
-            .onClick({ _ => shell.createScratchRepository() })
-        if (shell.hasLiveRepositories()) {
-            buildSectionHeader(shell, "GitHub", "live")
-            ForEach(
-                shell.visibleLiveRepositories(),
-                itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
-                    buildLiveRepositoryCard(shell, item)
-                }
-            )
-        }
-        Button(shell.t("settings"))
-            .width(100.percent).height(48).backgroundColor(shell.surfaceColor()).fontColor(shell.primaryTextColor())
-            .onClick({ _ => shell.openSettings() })
-        Button(shell.t("sign_out"))
-            .width(100.percent).height(48).backgroundColor(shell.mutedSurfaceColor()).fontColor(shell.primaryTextColor())
-            .onClick({ _ => shell.signOut() })
+        detailCard(shell, shell.t("copilot_sdk"), shell.t("copilot_sdk_desc"))
+        detailCard(shell, shell.t("copilot_agent"), shell.t("copilot_agent_desc"))
     }
     .width(100.percent)
+}
+
+@Builder
+func detailCard(shell: AppShell, title: String, body: String) {
+    Column(space: 8) {
+        Text(title).fontSize(17).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Text(body).fontSize(13).fontColor(shell.secondaryTextColor())
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(22)
 }
 
 @Builder

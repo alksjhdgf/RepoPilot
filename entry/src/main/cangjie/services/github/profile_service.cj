@@ -3,7 +3,7 @@ package ohos_app_cangjie_entry.services.github
 import std.collection.{ArrayList, HashMap}
 import kit.NetworkKit.*
 import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
-import ohos_app_cangjie_entry.domain.{GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
 let GITHUB_API_ACCEPT = "application/vnd.github+json"
@@ -83,7 +83,7 @@ public func fetchGitHubViewer(
                 return
             }
             let displayName = extractJsonStringField(body, "name")
-            logInfo("GitHubApi", "Viewer loaded for ${login}")
+            logInfo("GitHubApi", "Viewer loaded for ${login} ${displayName}")
             onSuccess(
                 GitHubViewerSnapshot(
                     login,
@@ -129,6 +129,47 @@ public func fetchGitHubRepositories(
             }
             logInfo("GitHubApi", "Loaded ${repositories.size} repositories.")
             onSuccess(repositories)
+        },
+        onFailure
+    )
+}
+
+/**
+ * 获取当前用户个人页需要的真实计数信息。
+ * Fetches the live counters needed by the standalone profile page.
+ */
+public func fetchGitHubProfileMetrics(
+    token: String,
+    onSuccess: (GitHubProfileMetricsSnapshot) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestGitHubJson(
+        "https://api.github.com/user/starred?per_page=100",
+        token,
+        { starredBody =>
+            let starredCount = "${extractTopLevelObjectArray(starredBody).size}"
+            requestGitHubJson(
+                "https://api.github.com/user/orgs?per_page=100",
+                token,
+                { orgsBody =>
+                    let organizationCount = "${extractTopLevelObjectArray(orgsBody).size}"
+                    requestGitHubJson(
+                        "https://api.github.com/user/repos?sort=updated&per_page=100",
+                        token,
+                        { repositoriesBody =>
+                            onSuccess(
+                                GitHubProfileMetricsSnapshot(
+                                    "${extractTopLevelObjectArray(repositoriesBody).size}",
+                                    starredCount,
+                                    organizationCount
+                                )
+                            )
+                        },
+                        onFailure
+                    )
+                },
+                onFailure
+            )
         },
         onFailure
     )

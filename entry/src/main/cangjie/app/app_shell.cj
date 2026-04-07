@@ -7,7 +7,7 @@ import ohos.business_exception.BusinessException
 import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.infra.databoard.{dataBoardDelete, dataBoardGet, dataBoardSet}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
@@ -91,17 +91,29 @@ public class AppShell {
     @Provide
     var sharedAuthAccessToken: String = ""
 
-    @State
+    @Provide
     var viewerLogin: String = ""
 
-    @State
+    @Provide
     var viewerDisplayName: String = ""
 
-    @State
+    @Provide
     var viewerAvatarUrl: String = ""
 
-    @State
+    @Provide
+    var viewerProfileUrl: String = ""
+
+    @Provide
     var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
+
+    @Provide
+    var liveRepositoryCount: String = "0"
+
+    @Provide
+    var liveStarredCount: String = "0"
+
+    @Provide
+    var liveOrganizationCount: String = "0"
 
     @Provide
     var liveRepositoryDetail: GitHubRepositoryDetailSnapshot = GitHubRepositoryDetailSnapshot(
@@ -489,6 +501,10 @@ public class AppShell {
                 this.viewerLogin = ""
                 this.viewerDisplayName = ""
                 this.viewerAvatarUrl = ""
+                this.viewerProfileUrl = ""
+                this.liveRepositoryCount = "0"
+                this.liveStarredCount = "0"
+                this.liveOrganizationCount = "0"
                 this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
                 this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
                 this.liveIssues = ArrayList<GitHubIssueSnapshot>()
@@ -528,6 +544,10 @@ public class AppShell {
             this.viewerLogin = ""
             this.viewerDisplayName = ""
             this.viewerAvatarUrl = ""
+            this.viewerProfileUrl = ""
+            this.liveRepositoryCount = "0"
+            this.liveStarredCount = "0"
+            this.liveOrganizationCount = "0"
             this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
             this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
             this.liveIssues = ArrayList<GitHubIssueSnapshot>()
@@ -656,11 +676,11 @@ public class AppShell {
             { repositoryName =>
                 this.runOnUi({
                     =>
-                    this.authMessage = "Created ${repositoryName}."
-                    this.activeTab = "profile"
-                    this.refreshGitHubProfile()
-                })
-            },
+            this.authMessage = "Created ${repositoryName}."
+            this.activeTab = "home"
+            this.refreshGitHubProfile()
+        })
+    },
             { message => this.applyAuthFailure(message) }
         )
     }
@@ -722,7 +742,7 @@ public class AppShell {
         } else if (this.activeTab == "explore") {
             this.t("explore")
         } else {
-            this.t("profile")
+            this.t("copilot")
         }
     }
     func mainSubtitle(): String {
@@ -733,7 +753,7 @@ public class AppShell {
         } else if (this.activeTab == "explore") {
             this.t("explore_subtitle")
         } else {
-            this.t("profile_subtitle")
+            this.t("copilot_subtitle")
         }
     }
     func accountCaption(): String {
@@ -745,6 +765,8 @@ public class AppShell {
     }
     func hasViewerAvatar(): Bool { this.viewerAvatarUrl != "" }
     func viewerAvatarUrlValue(): String { this.viewerAvatarUrl }
+    func viewerDisplayNameValue(): String { if (this.viewerDisplayName == "") { this.viewerLogin } else { this.viewerDisplayName } }
+    func viewerProfileUrlValue(): String { this.viewerProfileUrl }
     func canCreateFromCurrentWorkplace(): Bool { this.currentWorkplace != "unified" }
     func hasLiveRepositories(): Bool { this.liveRepositories.size > 0 }
     func visibleLiveRepositories(): ArrayList<GitHubRepositoryCardSnapshot> { this.liveRepositories }
@@ -787,6 +809,7 @@ public class AppShell {
         refreshGitHubProfileData(
             this.authAccessToken,
             { snapshot => this.applyViewer(snapshot) },
+            { snapshot => this.applyProfileMetrics(snapshot) },
             { repositories => this.applyLiveRepositories(repositories) },
             { message => this.handleGitHubApiFailure(message) }
         )
@@ -802,7 +825,22 @@ public class AppShell {
             this.viewerLogin = snapshot.login
             this.viewerDisplayName = snapshot.displayName
             this.viewerAvatarUrl = snapshot.avatarUrl
+            this.viewerProfileUrl = snapshot.profileUrl
             logDebug("AppShell", "Viewer state applied on UI thread.")
+        })
+    }
+
+    /**
+     * 更新个人页上展示的真实计数摘要。
+     * Updates the live counters shown on the standalone profile page.
+     */
+    func applyProfileMetrics(snapshot: GitHubProfileMetricsSnapshot): Unit {
+        this.runOnUi({
+            =>
+            this.liveRepositoryCount = snapshot.repositoryCount
+            this.liveStarredCount = snapshot.starredCount
+            this.liveOrganizationCount = snapshot.organizationCount
+            logInfo("AppShell", "Applied live profile metrics.")
         })
     }
     /**
@@ -814,6 +852,7 @@ public class AppShell {
             =>
             logInfo("AppShell", "Applied ${repositories.size} live repositories.")
             this.liveRepositories = repositories
+            this.liveRepositoryCount = "${repositories.size}"
             this.selectedRepository = resolveSelectedRepositoryId(this.selectedRepository, repositories)
             if (repositories.size > 0 && this.selectedRepository != "") {
                 this.refreshSelectedRepositoryData()
@@ -989,6 +1028,10 @@ public class AppShell {
 
     func openSettings(): Unit {
         this.stack.pushPath(NavPathInfo(name: "settings", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openProfilePage(): Unit {
+        this.stack.pushPath(NavPathInfo(name: "profilePage", param: ""), options: NavigationOptions(animated: true))
     }
 
     /**

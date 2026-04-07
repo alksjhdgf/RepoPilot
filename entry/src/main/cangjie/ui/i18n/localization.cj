@@ -92,6 +92,8 @@ func localizedEn(key: String): String {
     else if (key == "explore_short") { "Explore" }
     else if (key == "profile") { "Profile" }
     else if (key == "profile_short") { "Profile" }
+    else if (key == "copilot") { "Copilot" }
+    else if (key == "copilot_short") { "Copilot" }
     else if (key == "recent_repositories") { "Recent Repositories" }
     else if (key == "recent_tasks") { "Recent Tasks" }
     else if (key == "see_all") { "See all" }
@@ -101,11 +103,20 @@ func localizedEn(key: String): String {
     else if (key == "inbox_subtitle") { "Prioritize what needs your attention next." }
     else if (key == "explore_subtitle") { "Find code, trends and queues worth opening." }
     else if (key == "profile_subtitle") { "Tune language, appearance and account posture." }
+    else if (key == "copilot_subtitle") { "Prepare agent integrations and future Copilot workflows." }
     else if (key == "settings_subtitle") { "Adjust runtime preferences and account posture." }
     else if (key == "profile_account_prefix") { "Account" }
     else if (key == "appearance") { "Appearance" }
     else if (key == "language") { "Language" }
     else if (key == "settings") { "Settings" }
+    else if (key == "repositories") { "Repositories" }
+    else if (key == "starred") { "Starred" }
+    else if (key == "organizations") { "Organizations" }
+    else if (key == "popular") { "Popular" }
+    else if (key == "copilot_sdk") { "Copilot SDK" }
+    else if (key == "copilot_sdk_desc") { "Prepare authentication, provider switching, and session handling for cloud agent access." }
+    else if (key == "copilot_agent") { "Agent Routing" }
+    else if (key == "copilot_agent_desc") { "Use this tab as the future entry for Copilot requests, task drafts, and agent output." }
     else if (key == "system") { "Automatic" }
     else if (key == "light") { "Light" }
     else if (key == "dark") { "Dark" }

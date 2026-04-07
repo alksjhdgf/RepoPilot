@@ -86,6 +86,18 @@ public class GitHubViewerSnapshot {
     }
 }
 
+public class GitHubProfileMetricsSnapshot {
+    public let repositoryCount: String
+    public let starredCount: String
+    public let organizationCount: String
+
+    public init(repositoryCount: String, starredCount: String, organizationCount: String) {
+        this.repositoryCount = repositoryCount
+        this.starredCount = starredCount
+        this.organizationCount = organizationCount
+    }
+}
+
 public class GitHubRepositoryCardSnapshot {
     public let name: String
     public let summary: String

@@ -1,8 +1,10 @@
 package ohos_app_cangjie_entry.infra.runtime
 
 import kit.AbilityKit.UIAbilityContext
+import kit.ArkUI.{SystemBarProperties, Window}
 
 var appAbilityContext: ?UIAbilityContext = None
+var appMainWindow: ?Window = None
 var appForegroundHandler: ?() -> Unit = None
 var appAuthCallbackHandler: ?(String) -> Unit = None
 var pendingAuthCallbackUri: ?String = None
@@ -12,7 +14,15 @@ var pendingAuthCallbackUri: ?String = None
  * Stores the main UIAbility context for page-level system interactions.
  */
 public func setAppAbilityContext(context: UIAbilityContext): Unit {
-    appAbilityContext = context
+    appAbilityContext = Some(context)
+}
+
+/**
+ * 保存主窗口对象，供主题切换时同步系统状态栏样式。
+ * Stores the main window so the app can refresh status bar appearance on theme changes.
+ */
+public func setAppMainWindow(window: Window): Unit {
+    appMainWindow = Some(window)
 }
 
 /**
@@ -21,6 +31,29 @@ public func setAppAbilityContext(context: UIAbilityContext): Unit {
  */
 public func getAppAbilityContext(): UIAbilityContext {
     appAbilityContext.getOrThrow()
+}
+
+/**
+ * 按当前主题刷新状态栏内容颜色，避免深色背景下状态栏图标仍为深色。
+ * Updates the status bar content colors so they stay visible across theme changes.
+ */
+public func applyAppStatusBarStyle(isDarkTheme: Bool): Unit {
+    if (let Some(window) <- appMainWindow) {
+        let systemBarProperties = if (isDarkTheme) {
+            SystemBarProperties(
+                statusBarColor: "#00000000",
+                isStatusBarLightIcon: true,
+                statusBarContentColor: "#FFFFFFFF"
+            )
+        } else {
+            SystemBarProperties(
+                statusBarColor: "#00000000",
+                isStatusBarLightIcon: false,
+                statusBarContentColor: "#FF111827"
+            )
+        }
+        window.setWindowSystemBarProperties(systemBarProperties)
+    }
 }
 
 /**

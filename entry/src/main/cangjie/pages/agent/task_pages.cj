@@ -4,7 +4,7 @@ import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.{DraftPullRequestSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryDetailSnapshot, TaskDraftSnapshot, TaskSnapshot, ValidationSnapshot}
-import ohos_app_cangjie_entry.pages.common.{detailCardCommon, detailHeaderCommon}
+import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.agent.{draftPullRequest, taskDraftForIssue, taskSnapshot, validationSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
@@ -28,26 +28,32 @@ public class CreateTaskPage {
 
     public func build() {
         NavDestination() {
-            Scroll {
-                Column(space: 16) {
-                    detailHeaderCommon(this.stack, this.t("back"), this.t("create_task"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("prompt_draft"), this.currentPromptDraft())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("execution_mode"), this.currentExecutionMode())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("validation_scope"), this.currentValidationScope())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("output_target"), this.currentOutputTarget())
-                    Button(this.t("create_task_action"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.primaryTextColor())
-                        .fontColor(this.surfaceColor())
-                        .onClick({ _ => this.stack.pushPath(NavPathInfo(name: "taskDetail", param: ""), options: NavigationOptions(animated: true)) })
+            Stack() {
+                detailBackgroundCommon(this.pageBackgroundColor())
+
+                Scroll {
+                    Column(space: 16) {
+                        detailHeaderCommon(this.stack, this.t("back"), this.t("create_task"), this.primaryTextColor(), this.surfaceColor())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("prompt_draft"), this.currentPromptDraft())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("execution_mode"), this.currentExecutionMode())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("validation_scope"), this.currentValidationScope())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("output_target"), this.currentOutputTarget())
+                        Button(this.t("create_task_action"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.primaryTextColor())
+                            .fontColor(this.surfaceColor())
+                            .onClick({ _ => this.stack.pushPath(NavPathInfo(name: "taskDetail", param: ""), options: NavigationOptions(animated: true)) })
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 32)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 18, bottom: 32)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
             }
             .width(100.percent)
             .height(100.percent)
-            .scrollBar(BarState.Off)
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
@@ -118,25 +124,31 @@ public class TaskDetailPage {
 
     public func build() {
         NavDestination() {
-            Scroll {
-                Column(space: 16) {
-                    detailHeaderCommon(this.stack, this.t("back"), this.t("task_detail"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentTaskTitle(), this.currentTaskSummary())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("context"), this.currentTaskContext())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("validation_result"), this.currentValidationSummary())
-                    Button(this.t("open_diff_review"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.primaryTextColor())
-                        .fontColor(this.surfaceColor())
-                        .onClick({ _ => this.stack.pushPath(NavPathInfo(name: "diffReview", param: ""), options: NavigationOptions(animated: true)) })
+            Stack() {
+                detailBackgroundCommon(this.pageBackgroundColor())
+
+                Scroll {
+                    Column(space: 16) {
+                        detailHeaderCommon(this.stack, this.t("back"), this.t("task_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentTaskTitle(), this.currentTaskSummary())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("context"), this.currentTaskContext())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("validation_result"), this.currentValidationSummary())
+                        Button(this.t("open_diff_review"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.primaryTextColor())
+                            .fontColor(this.surfaceColor())
+                            .onClick({ _ => this.stack.pushPath(NavPathInfo(name: "diffReview", param: ""), options: NavigationOptions(animated: true)) })
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 32)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 18, bottom: 32)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
             }
             .width(100.percent)
             .height(100.percent)
-            .scrollBar(BarState.Off)
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
@@ -204,20 +216,26 @@ public class DiffReviewPage {
 
     public func build() {
         NavDestination() {
-            Scroll {
-                Column(space: 16) {
-                    detailHeaderCommon(this.stack, this.t("back"), this.t("diff_review"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("review_summary"), this.currentReviewSummary())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("draft_pr_title"), this.currentDraftPrTitle())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("draft_pr_body"), this.currentDraftPrBody())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.currentDraftPrStatus())
+            Stack() {
+                detailBackgroundCommon(this.pageBackgroundColor())
+
+                Scroll {
+                    Column(space: 16) {
+                        detailHeaderCommon(this.stack, this.t("back"), this.t("diff_review"), this.primaryTextColor(), this.surfaceColor())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("review_summary"), this.currentReviewSummary())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("draft_pr_title"), this.currentDraftPrTitle())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("draft_pr_body"), this.currentDraftPrBody())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.currentDraftPrStatus())
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 32)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 18, bottom: 32)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
             }
             .width(100.percent)
             .height(100.percent)
-            .scrollBar(BarState.Off)
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())

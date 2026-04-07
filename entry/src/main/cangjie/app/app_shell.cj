@@ -10,7 +10,7 @@ import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.infra.databoard.{dataBoardDelete, dataBoardGet, dataBoardSet}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
-import ohos_app_cangjie_entry.infra.runtime.{clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
 import ohos_app_cangjie_entry.services.github.{deserializeGitHubStoredSession, extractUrlQueryParameter, serializeGitHubStoredSession}
@@ -135,6 +135,7 @@ public class AppShell {
     protected override func aboutToAppear(): Unit {
         setAppForegroundHandler({ => this.handleAppForeground() })
         setAppAuthCallbackHandler({ uri => this.handleAuthCallbackUri(uri) })
+        applyAppStatusBarStyle(this.isDarkTheme())
         if (let Some(pendingUri) <- consumePendingAuthCallback()) {
             this.handleAuthCallbackUri(pendingUri)
         }
@@ -166,6 +167,7 @@ public class AppShell {
                 .width(100.percent)
                 .height(100.percent)
                 .backgroundColor(0x05070A)
+                .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
 
             if (this.authStage == "welcome") {
                 buildAuthWelcome(this)
@@ -354,6 +356,7 @@ public class AppShell {
      * Keeps foreground handling lightweight because the auth callback should return through the deep link.
      */
     func handleAppForeground(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
         if (this.authStage != "credentials") {
             return
         }
@@ -770,6 +773,7 @@ public class AppShell {
         getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
             if (kind == "theme") {
                 this.themePreference = value
+                applyAppStatusBarStyle(this.isDarkTheme())
             } else {
                 this.languagePreference = value
             }

@@ -5,9 +5,9 @@ import kit.AbilityKit.Want
 import kit.AbilityKit.UIAbility
 import kit.AbilityKit.LaunchParam
 import kit.AbilityKit.LaunchReason
-import kit.ArkUI.WindowStage
+import kit.ArkUI.{Window, WindowStage}
 import ohos_app_cangjie_entry.infra.logging.logInfo
-import ohos_app_cangjie_entry.infra.runtime.{notifyAppAuthCallback, notifyAppForeground, setAppAbilityContext}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, notifyAppAuthCallback, notifyAppForeground, setAppAbilityContext, setAppMainWindow}
 
 class MainAbility <: UIAbility {
     public init() {
@@ -27,6 +27,9 @@ class MainAbility <: UIAbility {
     public override func onWindowStageCreate(windowStage: WindowStage): Unit {
         Hilog.info(1, "Cangjie", "MainAbility onWindowStageCreate.")
         setAppAbilityContext(this.context)
+        let mainWindow: Window = windowStage.getMainWindow()
+        setAppMainWindow(mainWindow)
+        applyAppStatusBarStyle(false)
         windowStage.loadContent("EntryView")
     }
 

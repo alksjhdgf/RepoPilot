@@ -4,6 +4,15 @@ import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
 
 @Builder
+public func detailBackgroundCommon(pageBackgroundColor: Int64) {
+    Column() {}
+        .width(100.percent)
+        .height(100.percent)
+        .backgroundColor(pageBackgroundColor)
+        .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
+}
+
+@Builder
 public func detailHeaderCommon(stack: NavPathStack, backLabel: String, title: String, textColor: Int64, surfaceColor: Int64) {
     Row(space: 14) {
         Button(backLabel)

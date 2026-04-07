@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.pages.settings
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.pages.common.{detailCardCommon, detailHeaderCommon}
+import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
@@ -20,20 +20,26 @@ public class SettingsPage {
 
     public func build() {
         NavDestination() {
-            Scroll {
-                Column(space: 16) {
-                    detailHeaderCommon(this.stack, this.t("back"), this.t("settings"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("appearance"), this.preferenceLabel("theme", this.themePreference))
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("language"), this.preferenceLabel("language", this.languagePreference))
-                    buildSettingsToggleRow(this, "theme")
-                    buildSettingsToggleRow(this, "language")
+            Stack() {
+                detailBackgroundCommon(this.pageBackgroundColor())
+
+                Scroll {
+                    Column(space: 16) {
+                        detailHeaderCommon(this.stack, this.t("back"), this.t("settings"), this.primaryTextColor(), this.surfaceColor())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("appearance"), this.preferenceLabel("theme", this.themePreference))
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("language"), this.preferenceLabel("language", this.languagePreference))
+                        buildSettingsToggleRow(this, "theme")
+                        buildSettingsToggleRow(this, "language")
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 32)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 18, bottom: 32)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
             }
             .width(100.percent)
             .height(100.percent)
-            .scrollBar(BarState.Off)
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())

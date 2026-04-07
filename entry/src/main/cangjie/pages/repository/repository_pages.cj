@@ -6,7 +6,7 @@ import ohos.base.UIThread
 import ohos.arkui.state_macro_manage.*
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.{GitHubCommentSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryDetailSnapshot}
-import ohos_app_cangjie_entry.pages.common.{detailCardCommon, detailHeaderCommon}
+import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.github.{closeGitHubIssue, createGitHubIssueComment, deleteGitHubRepository, fetchGitHubIssueComments, forkGitHubRepository, submitGitHubPullRequestReview}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
@@ -36,37 +36,43 @@ public class RepositoryDetailPage {
 
     public func build() {
         NavDestination() {
-            Scroll {
-                Column(space: 16) {
-                    detailHeaderCommon(this.stack, this.t("back"), this.t("repository_detail"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentRepository().name, this.currentRepository().summary)
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "${this.currentRepository().issueCount} ${this.t("issues")} / ${this.currentRepository().pullRequestCount} ${this.t("pull_requests")}")
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentRepository().visibilityLabel} / ${this.currentRepository().defaultBranch}")
-                    if (this.repositoryActionMessage != "") {
-                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.repositoryActionMessage)
+            Stack() {
+                detailBackgroundCommon(this.pageBackgroundColor())
+
+                Scroll {
+                    Column(space: 16) {
+                        detailHeaderCommon(this.stack, this.t("back"), this.t("repository_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentRepository().name, this.currentRepository().summary)
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "${this.currentRepository().issueCount} ${this.t("issues")} / ${this.currentRepository().pullRequestCount} ${this.t("pull_requests")}")
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentRepository().visibilityLabel} / ${this.currentRepository().defaultBranch}")
+                        if (this.repositoryActionMessage != "") {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.repositoryActionMessage)
+                        }
+                        buildRepositoryActionGrid(this)
+                        if (this.currentIssues().size > 0) {
+                            ForEach(this.currentIssues(), itemGeneratorFunc: { item: GitHubIssueSnapshot, _: Int64 =>
+                                buildIssueStrip(this, item)
+                            })
+                        } else {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "No open issues.")
+                        }
+                        if (this.currentPullRequests().size > 0) {
+                            ForEach(this.currentPullRequests(), itemGeneratorFunc: { item: GitHubPullRequestSnapshot, _: Int64 =>
+                                buildPullRequestStrip(this, item)
+                            })
+                        } else {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("pull_requests"), "No open pull requests.")
+                        }
                     }
-                    buildRepositoryActionGrid(this)
-                    if (this.currentIssues().size > 0) {
-                        ForEach(this.currentIssues(), itemGeneratorFunc: { item: GitHubIssueSnapshot, _: Int64 =>
-                            buildIssueStrip(this, item)
-                        })
-                    } else {
-                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "No open issues.")
-                    }
-                    if (this.currentPullRequests().size > 0) {
-                        ForEach(this.currentPullRequests(), itemGeneratorFunc: { item: GitHubPullRequestSnapshot, _: Int64 =>
-                            buildPullRequestStrip(this, item)
-                        })
-                    } else {
-                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("pull_requests"), "No open pull requests.")
-                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 32)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 18, bottom: 32)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
             }
             .width(100.percent)
             .height(100.percent)
-            .scrollBar(BarState.Off)
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
@@ -229,47 +235,53 @@ public class IssueDetailPage {
 
     public func build() {
         NavDestination() {
-            Scroll {
-                Column(space: 16) {
-                    detailHeaderCommon(this.stack, this.t("back"), this.t("issue_detail"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentIssue().title, this.currentIssue().summary)
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentIssueStatus()} / @${this.currentIssue().authorLogin}")
-                    if (this.actionMessage != "") {
-                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.actionMessage)
+            Stack() {
+                detailBackgroundCommon(this.pageBackgroundColor())
+
+                Scroll {
+                    Column(space: 16) {
+                        detailHeaderCommon(this.stack, this.t("back"), this.t("issue_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentIssue().title, this.currentIssue().summary)
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentIssueStatus()} / @${this.currentIssue().authorLogin}")
+                        if (this.actionMessage != "") {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.actionMessage)
+                        }
+                        Button(this.t("close_issue"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .onClick({ _ => this.closeIssueOnGitHub() })
+                        Button(this.t("comment_issue"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .onClick({ _ => this.commentOnIssue() })
+                        Button(this.t("ask_agent"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.primaryTextColor())
+                            .fontColor(this.surfaceColor())
+                            .onClick({ _ =>
+                                this.selectedTask = taskIdForIssue(this.currentIssue().id)
+                                this.stack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
+                            })
+                        if (this.issueComments.size > 0) {
+                            ForEach(this.issueComments, itemGeneratorFunc: { item: GitHubCommentSnapshot, _: Int64 =>
+                                buildCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
+                            })
+                        }
                     }
-                    Button(this.t("close_issue"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.surfaceColor())
-                        .fontColor(this.primaryTextColor())
-                        .onClick({ _ => this.closeIssueOnGitHub() })
-                    Button(this.t("comment_issue"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.surfaceColor())
-                        .fontColor(this.primaryTextColor())
-                        .onClick({ _ => this.commentOnIssue() })
-                    Button(this.t("ask_agent"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.primaryTextColor())
-                        .fontColor(this.surfaceColor())
-                        .onClick({ _ =>
-                            this.selectedTask = taskIdForIssue(this.currentIssue().id)
-                            this.stack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
-                        })
-                    if (this.issueComments.size > 0) {
-                        ForEach(this.issueComments, itemGeneratorFunc: { item: GitHubCommentSnapshot, _: Int64 =>
-                            buildCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
-                        })
-                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 32)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 18, bottom: 32)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
             }
             .width(100.percent)
             .height(100.percent)
-            .scrollBar(BarState.Off)
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
@@ -377,44 +389,50 @@ public class PullRequestDetailPage {
 
     public func build() {
         NavDestination() {
-            Scroll {
-                Column(space: 16) {
-                    detailHeaderCommon(this.stack, this.t("back"), this.t("pull_request_detail"), this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentPullRequest().title, this.currentPullRequest().summary)
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentPullRequest().status} / @${this.currentPullRequest().authorLogin}")
-                    if (this.actionMessage != "") {
-                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("review_summary"), this.actionMessage)
+            Stack() {
+                detailBackgroundCommon(this.pageBackgroundColor())
+
+                Scroll {
+                    Column(space: 16) {
+                        detailHeaderCommon(this.stack, this.t("back"), this.t("pull_request_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentPullRequest().title, this.currentPullRequest().summary)
+                        detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentPullRequest().status} / @${this.currentPullRequest().authorLogin}")
+                        if (this.actionMessage != "") {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("review_summary"), this.actionMessage)
+                        }
+                        Button(this.t("approve_pr"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.primaryTextColor())
+                            .fontColor(this.surfaceColor())
+                            .onClick({ _ => this.submitReview("APPROVE", "Approved from RepoPilot mobile.") })
+                        Button(this.t("request_changes"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .onClick({ _ => this.submitReview("REQUEST_CHANGES", "Please address the mobile review notes from RepoPilot.") })
+                        Button(this.t("comment_pr"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .onClick({ _ => this.submitReview("COMMENT", "RepoPilot mobile review comment @ ${SystemDateTime.getTime()}") })
+                        if (this.reviewComments.size > 0) {
+                            ForEach(this.reviewComments, itemGeneratorFunc: { item: GitHubCommentSnapshot, _: Int64 =>
+                                buildCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
+                            })
+                        }
                     }
-                    Button(this.t("approve_pr"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.primaryTextColor())
-                        .fontColor(this.surfaceColor())
-                        .onClick({ _ => this.submitReview("APPROVE", "Approved from RepoPilot mobile.") })
-                    Button(this.t("request_changes"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.surfaceColor())
-                        .fontColor(this.primaryTextColor())
-                        .onClick({ _ => this.submitReview("REQUEST_CHANGES", "Please address the mobile review notes from RepoPilot.") })
-                    Button(this.t("comment_pr"))
-                        .width(100.percent)
-                        .height(48)
-                        .backgroundColor(this.surfaceColor())
-                        .fontColor(this.primaryTextColor())
-                        .onClick({ _ => this.submitReview("COMMENT", "RepoPilot mobile review comment @ ${SystemDateTime.getTime()}") })
-                    if (this.reviewComments.size > 0) {
-                        ForEach(this.reviewComments, itemGeneratorFunc: { item: GitHubCommentSnapshot, _: Int64 =>
-                            buildCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
-                        })
-                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 32)
                 }
                 .width(100.percent)
-                .padding(left: 18, right: 18, top: 18, bottom: 32)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
             }
             .width(100.percent)
             .height(100.percent)
-            .scrollBar(BarState.Off)
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())

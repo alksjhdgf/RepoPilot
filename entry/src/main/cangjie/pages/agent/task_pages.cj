@@ -4,6 +4,7 @@ import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.{DraftPullRequestSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryDetailSnapshot, TaskDraftSnapshot, TaskSnapshot, ValidationSnapshot}
+import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
 import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.agent.{draftPullRequest, taskDraftForIssue, taskSnapshot, validationSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
@@ -25,6 +26,10 @@ public class CreateTaskPage {
 
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
 
     public func build() {
         NavDestination() {
@@ -122,6 +127,10 @@ public class TaskDetailPage {
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
 
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
+
     public func build() {
         NavDestination() {
             Stack() {
@@ -213,6 +222,10 @@ public class DiffReviewPage {
 
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
 
     public func build() {
         NavDestination() {

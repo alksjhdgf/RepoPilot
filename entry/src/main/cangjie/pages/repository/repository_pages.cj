@@ -6,6 +6,7 @@ import ohos.base.UIThread
 import ohos.arkui.state_macro_manage.*
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.{GitHubCommentSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryDetailSnapshot}
+import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
 import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.github.{closeGitHubIssue, createGitHubIssueComment, deleteGitHubRepository, fetchGitHubIssueComments, forkGitHubRepository, submitGitHubPullRequestReview}
@@ -33,6 +34,10 @@ public class RepositoryDetailPage {
     let systemLanguageCode: String = "en"
 
     @State var repositoryActionMessage: String = ""
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
 
     public func build() {
         NavDestination() {
@@ -230,6 +235,7 @@ public class IssueDetailPage {
     @State var issueStatusOverride: String = ""
 
     protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
         this.refreshIssueComments()
     }
 
@@ -384,6 +390,7 @@ public class PullRequestDetailPage {
     @State var reviewComments: ArrayList<GitHubCommentSnapshot> = ArrayList<GitHubCommentSnapshot>()
 
     protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
         this.refreshPullRequestComments()
     }
 

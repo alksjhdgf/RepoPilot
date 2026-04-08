@@ -109,6 +109,20 @@ func localizedEn(key: String): String {
     else if (key == "appearance") { "Appearance" }
     else if (key == "language") { "Language" }
     else if (key == "settings") { "Settings" }
+    else if (key == "app_language") { "App Language" }
+    else if (key == "app_icon") { "App Icon" }
+    else if (key == "default_option") { "Default" }
+    else if (key == "notifications") { "Notifications" }
+    else if (key == "setup_needed") { "Setup Needed" }
+    else if (key == "code_options") { "Code Options" }
+    else if (key == "external_links") { "External Links" }
+    else if (key == "share_feedback") { "Share Feedback" }
+    else if (key == "terms_of_service") { "Terms of Service" }
+    else if (key == "privacy_policy") { "Privacy Policy & Analytics" }
+    else if (key == "feature_preview") { "Feature Preview" }
+    else if (key == "manage_accounts") { "Manage Accounts" }
+    else if (key == "app_lock") { "App Lock" }
+    else if (key == "clear_cache") { "Clear cache" }
     else if (key == "repositories") { "Repositories" }
     else if (key == "starred") { "Starred" }
     else if (key == "organizations") { "Organizations" }
@@ -180,4 +194,101 @@ func localizedEn(key: String): String {
     else { key }
 }
 
-func localizedZh(key: String): String { localizedEn(key) }
+func localizedZh(key: String): String {
+    if (key == "workplace_github") { "GitHub 工作区" }
+    else if (key == "workplace_github_desc") { "聚焦仓库、Issue 和 Pull Request。" }
+    else if (key == "workplace_unified") { "统一工作区" }
+    else if (key == "workplace_unified_desc") { "统一查看仓库工作与 Agent 任务。" }
+    else if (key == "home") { "首页" }
+    else if (key == "home_short") { "首页" }
+    else if (key == "inbox") { "收件箱" }
+    else if (key == "inbox_short") { "收件箱" }
+    else if (key == "explore") { "探索" }
+    else if (key == "explore_short") { "探索" }
+    else if (key == "profile") { "个人页" }
+    else if (key == "profile_short") { "个人页" }
+    else if (key == "copilot") { "Copilot" }
+    else if (key == "copilot_short") { "Copilot" }
+    else if (key == "inbox_subtitle") { "优先处理下一步最值得关注的事项。" }
+    else if (key == "explore_subtitle") { "发现值得打开的代码、趋势和队列。" }
+    else if (key == "profile_subtitle") { "调整语言、外观和账号设置。" }
+    else if (key == "copilot_subtitle") { "为后续 Agent 与 Copilot 工作流做准备。" }
+    else if (key == "settings_subtitle") { "调整运行时偏好和账号姿态。" }
+    else if (key == "appearance") { "外观" }
+    else if (key == "language") { "语言" }
+    else if (key == "app_language") { "应用语言" }
+    else if (key == "settings") { "设置" }
+    else if (key == "system") { "跟随系统" }
+    else if (key == "light") { "浅色" }
+    else if (key == "dark") { "深色" }
+    else if (key == "lang_en") { "英语" }
+    else if (key == "lang_zh") { "中文" }
+    else if (key == "sign_in_github") { "登录 GitHub.com" }
+    else if (key == "sign_in_enterprise") { "登录 GitHub Enterprise" }
+    else if (key == "auth_enterprise_hint") { "需要 3.10.0 或更高版本服务端。" }
+    else if (key == "auth_terms") { "登录即表示你接受我们的使用条款和隐私政策。" }
+    else if (key == "auth_subtitle") { "使用你的账号继续使用 RepoPilot。" }
+    else if (key == "auth_web_title") { "github.com" }
+    else if (key == "auth_web_subtitle") { "登录 GitHub 以继续使用 RepoPilot。" }
+    else if (key == "auth_connected_title") { "连接已就绪" }
+    else if (key == "auth_connected_body") { "你的工作区已经可以打开。" }
+    else if (key == "auth_review_access") { "在运行任务前检查授权范围。" }
+    else if (key == "continue_to_workplace") { "继续进入工作区" }
+    else if (key == "create_repository") { "创建仓库" }
+    else if (key == "sign_out") { "退出登录" }
+    else if (key == "workplace") { "工作区" }
+    else if (key == "back") { "返回" }
+    else if (key == "repository_detail") { "仓库详情" }
+    else if (key == "issue_detail") { "Issue 详情" }
+    else if (key == "pull_request_detail") { "Pull Request" }
+    else if (key == "create_task") { "创建任务" }
+    else if (key == "task_detail") { "任务详情" }
+    else if (key == "diff_review") { "差异审阅" }
+    else if (key == "issues") { "Issues" }
+    else if (key == "pull_requests") { "Pull Requests" }
+    else if (key == "open_issue") { "打开 Issue" }
+    else if (key == "review_pr") { "审阅 Pull Request" }
+    else if (key == "context") { "上下文" }
+    else if (key == "status") { "状态" }
+    else if (key == "close_issue") { "关闭 Issue" }
+    else if (key == "comment_issue") { "评论 Issue" }
+    else if (key == "ask_agent") { "交给 Agent 处理" }
+    else if (key == "approve_pr") { "批准审阅" }
+    else if (key == "request_changes") { "请求修改" }
+    else if (key == "comment_pr") { "评论 Pull Request" }
+    else if (key == "fork_repository") { "Fork 仓库" }
+    else if (key == "delete_repository") { "删除仓库" }
+    else if (key == "prompt_draft") { "任务草稿" }
+    else if (key == "execution_mode") { "执行模式" }
+    else if (key == "validation_scope") { "验证范围" }
+    else if (key == "output_target") { "输出目标" }
+    else if (key == "create_task_action") { "创建任务" }
+    else if (key == "validation_result") { "验证结果" }
+    else if (key == "open_diff_review") { "打开差异审阅" }
+    else if (key == "review_summary") { "审阅摘要" }
+    else if (key == "draft_pr_title") { "Draft PR 标题" }
+    else if (key == "draft_pr_body") { "Draft PR 内容" }
+    else if (key == "empty_state") { "暂无内容。" }
+    else if (key == "repositories") { "仓库" }
+    else if (key == "starred") { "已收藏" }
+    else if (key == "organizations") { "组织" }
+    else if (key == "popular") { "热门" }
+    else if (key == "app_icon") { "应用图标" }
+    else if (key == "default_option") { "默认" }
+    else if (key == "notifications") { "通知" }
+    else if (key == "setup_needed") { "待设置" }
+    else if (key == "code_options") { "代码选项" }
+    else if (key == "external_links") { "外部链接" }
+    else if (key == "share_feedback") { "分享反馈" }
+    else if (key == "terms_of_service") { "服务条款" }
+    else if (key == "privacy_policy") { "隐私政策与分析" }
+    else if (key == "feature_preview") { "功能预览" }
+    else if (key == "manage_accounts") { "管理账号" }
+    else if (key == "app_lock") { "应用锁" }
+    else if (key == "clear_cache") { "清理缓存" }
+    else if (key == "copilot_sdk") { "Copilot SDK" }
+    else if (key == "copilot_sdk_desc") { "为云端 Agent 接入准备认证、Provider 切换和会话处理。" }
+    else if (key == "copilot_agent") { "Agent 路由" }
+    else if (key == "copilot_agent_desc") { "后续从这里进入 Copilot 请求、任务草稿和 Agent 输出。" }
+    else { localizedEn(key) }
+}

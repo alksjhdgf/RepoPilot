@@ -6,8 +6,7 @@ import ohos.arkui.state_macro_manage.*
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.GitHubRepositoryCardSnapshot
-import ohos_app_cangjie_entry.infra.runtime.getAppAbilityContext
-import ohos_app_cangjie_entry.pages.common.detailBackgroundCommon
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -24,6 +23,8 @@ public class ProfilePage {
     @Consume var liveStarredCount: String
     @Consume var liveOrganizationCount: String
     @Consume var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot>
+    @Consume var pendingPageTitle: String
+    @Consume var pendingPageMessage: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -31,10 +32,14 @@ public class ProfilePage {
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
 
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
+
     public func build() {
         NavDestination() {
             Stack() {
-                detailBackgroundCommon(this.pageBackgroundColor())
+                buildProfileBackground(this)
 
                 Scroll {
                     Column(space: 24) {
@@ -81,6 +86,19 @@ public class ProfilePage {
         "GitHub"
     }
 
+    func openPlaceholder(title: String, message: String): Unit {
+        this.pendingPageTitle = title
+        this.pendingPageMessage = message
+        this.stack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openRepositories(): Unit { this.openPlaceholder(this.t("repositories"), "Repository list is not fully implemented yet.") }
+    func openStarred(): Unit { this.openPlaceholder(this.t("starred"), "Starred repositories page is not implemented yet.") }
+    func openOrganizations(): Unit { this.openPlaceholder(this.t("organizations"), "Organizations page is not implemented yet.") }
+    func openRepositoryCard(snapshot: GitHubRepositoryCardSnapshot): Unit {
+        this.openPlaceholder(snapshot.name, "Repository actions from profile are not implemented yet.")
+    }
+
     func hasViewerAvatar(): Bool { this.viewerAvatarUrl != "" }
     func viewerAvatarUrlValue(): String { this.viewerAvatarUrl }
     func viewerLoginValue(): String { this.viewerLogin }
@@ -98,6 +116,23 @@ public class ProfilePage {
     func shadowColor(): Int64 { appThemeColor("shadow", this.isDarkTheme()) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
+}
+
+@Builder
+func buildProfileBackground(page: ProfilePage) {
+    if (page.isDarkTheme()) {
+        Column() {}
+            .width(100.percent)
+            .height(100.percent)
+            .backgroundColor(page.pageBackgroundColor())
+            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
+    } else {
+        Column() {}
+            .width(100.percent)
+            .height(100.percent)
+            .backgroundColor(page.pageBackgroundColor())
+            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
+    }
 }
 
 @Builder
@@ -167,11 +202,11 @@ func buildProfileIdentity(page: ProfilePage) {
 @Builder
 func buildProfileStats(page: ProfilePage) {
     Column() {
-        buildProfileStatRow(page, 0x4B4F5C, "⌘", page.t("repositories"), page.repositoryCountValue())
+        buildProfileStatRow(page, 0x4B4F5C, "⌘", "repositories", page.repositoryCountValue(), { => page.openRepositories() })
         buildProfileDivider(page)
-        buildProfileStatRow(page, 0xFFD54A, "☆", page.t("starred"), page.starredCountValue())
+        buildProfileStatRow(page, 0xFFD54A, "☆", "starred", page.starredCountValue(), { => page.openStarred() })
         buildProfileDivider(page)
-        buildProfileStatRow(page, 0xF4A24B, "⌂", page.t("organizations"), page.organizationCountValue())
+        buildProfileStatRow(page, 0xF4A24B, "⌂", "organizations", page.organizationCountValue(), { => page.openOrganizations() })
     }
     .width(100.percent)
     .backgroundColor(page.surfaceColor())
@@ -180,7 +215,7 @@ func buildProfileStats(page: ProfilePage) {
 }
 
 @Builder
-func buildProfileStatRow(page: ProfilePage, accentColor: Int64, iconText: String, title: String, count: String) {
+func buildProfileStatRow(page: ProfilePage, accentColor: Int64, iconText: String, titleKey: String, count: String, onTap: () -> Unit) {
     Row(space: 14) {
         Row() {
             Text(iconText).fontSize(15).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
@@ -191,7 +226,7 @@ func buildProfileStatRow(page: ProfilePage, accentColor: Int64, iconText: String
         .borderRadius(12)
         .justifyContent(FlexAlign.Center)
 
-        Text(title).fontSize(18).fontWeight(FontWeight.Medium).fontColor(page.primaryTextColor())
+        Text(page.t(titleKey)).fontSize(18).fontWeight(FontWeight.Medium).fontColor(page.primaryTextColor())
         Blank()
         Text(count).fontSize(17).fontColor(page.secondaryTextColor())
         Text("›").fontSize(24).fontColor(page.secondaryTextColor())
@@ -199,6 +234,7 @@ func buildProfileStatRow(page: ProfilePage, accentColor: Int64, iconText: String
     .width(100.percent)
     .height(72)
     .padding(left: 18, right: 18)
+    .onClick({ _ => onTap() })
 }
 
 @Builder
@@ -256,4 +292,5 @@ func buildProfileRepositoryCard(page: ProfilePage, snapshot: GitHubRepositoryCar
     .padding(18)
     .backgroundColor(page.surfaceColor())
     .borderRadius(28)
+    .onClick({ _ => page.openRepositoryCard(snapshot) })
 }

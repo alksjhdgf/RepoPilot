@@ -269,6 +269,7 @@ public class AppShell {
                 Text(this.t("auth_web_title")).fontSize(20).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
                 Blank()
                 Button("...").width(40).height(40).backgroundColor(0x1E232C).fontColor(0xF8FAFC).borderRadius(20)
+                    .onClick({ _ => this.setAuthMessage("More sign-in actions are not implemented yet.") })
             }
             .width(100.percent)
             .padding(left: 18, right: 18, top: 16)
@@ -351,6 +352,10 @@ public class AppShell {
      */
     func confirmAuth(): Unit {
         this.reopenGitHubVerification()
+    }
+
+    func setAuthMessage(message: String): Unit {
+        this.authMessage = message
     }
 
     /**

@@ -133,14 +133,14 @@ func buildCopilotTab(shell: AppShell) {
         .backgroundColor(shell.surfaceColor())
         .borderRadius(24)
 
-        detailCard(shell, shell.t("copilot_sdk"), shell.t("copilot_sdk_desc"))
-        detailCard(shell, shell.t("copilot_agent"), shell.t("copilot_agent_desc"))
+        detailCard(shell, shell.t("copilot_sdk"), shell.t("copilot_sdk_desc"), { => shell.openPendingPage(shell.t("copilot_sdk"), "Copilot SDK integration is not implemented yet.") })
+        detailCard(shell, shell.t("copilot_agent"), shell.t("copilot_agent_desc"), { => shell.openPendingPage(shell.t("copilot_agent"), "Copilot agent routing is not implemented yet.") })
     }
     .width(100.percent)
 }
 
 @Builder
-func detailCard(shell: AppShell, title: String, body: String) {
+func detailCard(shell: AppShell, title: String, body: String, onTap: () -> Unit) {
     Column(space: 8) {
         Text(title).fontSize(17).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
         Text(body).fontSize(13).fontColor(shell.secondaryTextColor())
@@ -149,6 +149,7 @@ func detailCard(shell: AppShell, title: String, body: String) {
     .padding(18)
     .backgroundColor(shell.surfaceColor())
     .borderRadius(22)
+    .onClick({ _ => onTap() })
 }
 
 @Builder

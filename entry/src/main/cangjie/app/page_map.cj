@@ -6,7 +6,7 @@ import ohos_app_cangjie_entry.pages.repository.{IssueDetailPage, PullRequestDeta
 import ohos_app_cangjie_entry.pages.agent.{CreateTaskPage, DiffReviewPage, TaskDetailPage}
 import ohos_app_cangjie_entry.pages.common.PlaceholderPage
 import ohos_app_cangjie_entry.pages.profile.ProfilePage
-import ohos_app_cangjie_entry.pages.settings.SettingsPage
+import ohos_app_cangjie_entry.pages.settings.{AppearanceSettingsPage, LanguageSettingsPage, SettingsPage}
 
 @Builder
 public func pageMap(name: String, detailParam: Any) {
@@ -26,6 +26,10 @@ public func pageMap(name: String, detailParam: Any) {
         PlaceholderPage()
     } else if (name == "profilePage") {
         ProfilePage()
+    } else if (name == "appearanceSettings") {
+        AppearanceSettingsPage()
+    } else if (name == "languageSettings") {
+        LanguageSettingsPage()
     } else {
         SettingsPage()
     }

@@ -2,6 +2,7 @@ package ohos_app_cangjie_entry.pages.common
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
+import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
@@ -18,6 +19,10 @@ public class PlaceholderPage {
 
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
 
     public func build() {
         NavDestination() {

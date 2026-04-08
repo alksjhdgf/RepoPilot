@@ -126,6 +126,21 @@ func localizedEn(key: String): String {
     else if (key == "repositories") { "Repositories" }
     else if (key == "starred") { "Starred" }
     else if (key == "organizations") { "Organizations" }
+    else if (key == "my_work") { "My Work" }
+    else if (key == "favorites") { "Favorites" }
+    else if (key == "shortcuts") { "Shortcuts" }
+    else if (key == "recent") { "Recent" }
+    else if (key == "discussions") { "Discussions" }
+    else if (key == "projects") { "Projects" }
+    else if (key == "top_repositories") { "Top Repositories" }
+    else if (key == "all_workplaces") { "All Workplaces" }
+    else if (key == "favorites_empty") { "Add favorite repositories here to have quick access at any time, without having to search" }
+    else if (key == "add_favorites") { "Add Favorites" }
+    else if (key == "shortcuts_title") { "The things you need, one tap away" }
+    else if (key == "shortcuts_desc") { "Fast access to your lists of Issues, Pull Requests, or Discussions." }
+    else if (key == "get_started") { "Get started" }
+    else if (key == "recent_desc") { "Recent activity from GitHub will surface here. Open issues and pull requests you touched last appear first." }
+    else if (key == "recent_empty") { "Issues and Pull Requests that you've interacted with recently will appear here." }
     else if (key == "popular") { "Popular" }
     else if (key == "copilot_sdk") { "Copilot SDK" }
     else if (key == "copilot_sdk_desc") { "Prepare authentication, provider switching, and session handling for cloud agent access." }
@@ -272,6 +287,21 @@ func localizedZh(key: String): String {
     else if (key == "repositories") { "仓库" }
     else if (key == "starred") { "已收藏" }
     else if (key == "organizations") { "组织" }
+    else if (key == "my_work") { "我的工作" }
+    else if (key == "favorites") { "收藏" }
+    else if (key == "shortcuts") { "快捷入口" }
+    else if (key == "recent") { "最近" }
+    else if (key == "discussions") { "讨论" }
+    else if (key == "projects") { "项目" }
+    else if (key == "top_repositories") { "重点仓库" }
+    else if (key == "all_workplaces") { "全部工作区" }
+    else if (key == "favorites_empty") { "将常用仓库加入收藏后，就能随时快速进入，无需再次搜索。" }
+    else if (key == "add_favorites") { "添加收藏" }
+    else if (key == "shortcuts_title") { "常用内容，一键直达" }
+    else if (key == "shortcuts_desc") { "快速访问你的 Issues、Pull Requests 或 Discussions 列表。" }
+    else if (key == "get_started") { "开始使用" }
+    else if (key == "recent_desc") { "GitHub 上最近的活动会显示在这里，你最近接触过的 Issue 和 Pull Request 会优先出现。" }
+    else if (key == "recent_empty") { "你最近交互过的 Issues 和 Pull Requests 会显示在这里。" }
     else if (key == "popular") { "热门" }
     else if (key == "app_icon") { "应用图标" }
     else if (key == "default_option") { "默认" }

@@ -19,6 +19,8 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
 let GITHUB_SESSION_STORE_KEY = "github_auth_session"
+let THEME_PREFERENCE_STORE_KEY = "theme_preference"
+let LANGUAGE_PREFERENCE_STORE_KEY = "language_preference"
 
 @Component
 public class AppShell {
@@ -138,6 +140,8 @@ public class AppShell {
     @State
     var hasAttemptedSessionRestore: Bool = false
 
+    var hasRestoredPreferences: Bool = false
+
     var authRequestSequence: Int64 = 0
 
     /**
@@ -145,6 +149,7 @@ public class AppShell {
      * Initializes top-level selections so the first render does not depend on empty state.
      */
     protected override func aboutToAppear(): Unit {
+        this.restorePersistedPreferencesIfNeeded()
         setAppForegroundHandler({ => this.handleAppForeground() })
         setAppAuthCallbackHandler({ uri => this.handleAuthCallbackUri(uri) })
         applyAppStatusBarStyle(this.isDarkTheme())
@@ -635,6 +640,27 @@ public class AppShell {
         dataBoardDelete(GITHUB_SESSION_STORE_KEY)
     }
 
+    /**
+     * 首次挂载时同步恢复主题和语言偏好，避免页面先按默认值渲染再跳变。
+     * Restores theme and language preferences synchronously on first mount to avoid a flash of defaults.
+     */
+    func restorePersistedPreferencesIfNeeded(): Unit {
+        if (this.hasRestoredPreferences) {
+            return
+        }
+        this.hasRestoredPreferences = true
+
+        let storedTheme = dataBoardGet(THEME_PREFERENCE_STORE_KEY)
+        if (storedTheme == "system" || storedTheme == "light" || storedTheme == "dark") {
+            this.themePreference = storedTheme
+        }
+
+        let storedLanguage = dataBoardGet(LANGUAGE_PREFERENCE_STORE_KEY)
+        if (storedLanguage == "system" || storedLanguage == "en" || storedLanguage == "zh") {
+            this.languagePreference = storedLanguage
+        }
+    }
+
     func handleTabTap(tab: String): Unit {
         if (tab == "home" && this.activeTab == "home") {
             this.toggleWorkplacePicker(!this.showWorkplacePicker)
@@ -713,7 +739,7 @@ public class AppShell {
 
     func currentWorkplaceTitle(): String { this.t(workplaceSnapshot(this.currentWorkplace).titleKey) }
     func currentHeaderWorkplaceTitle(): String {
-        if (this.currentWorkplace == "unified") { "All Workplaces" } else { "GitHub Workplace" }
+        if (this.currentWorkplace == "unified") { this.t("all_workplaces") } else { this.t("workplace_github") }
     }
     func currentWorkplaceSummary(): String { this.t(workplaceSnapshot(this.currentWorkplace).summaryKey) }
     func currentWorkplaceHeroTitle(): String { this.t(workplaceSnapshot(this.currentWorkplace).heroTitleKey) }
@@ -801,8 +827,10 @@ public class AppShell {
             if (kind == "theme") {
                 this.themePreference = value
                 applyAppStatusBarStyle(this.isDarkTheme())
+                spawn { => dataBoardSet(THEME_PREFERENCE_STORE_KEY, value) }
             } else {
                 this.languagePreference = value
+                spawn { => dataBoardSet(LANGUAGE_PREFERENCE_STORE_KEY, value) }
             }
         })
     }

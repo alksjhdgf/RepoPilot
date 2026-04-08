@@ -90,13 +90,13 @@ func buildActiveTabContent(shell: AppShell) {
 @Builder
 func buildHomeTab(shell: AppShell) {
     Column(space: 16) {
-        buildHomeSectionHeader(shell, "My Work")
+        buildHomeSectionHeader(shell, shell.t("my_work"))
         buildHomeWorkPanel(shell)
-        buildHomeSectionHeader(shell, "Favorites")
+        buildHomeSectionHeader(shell, shell.t("favorites"))
         buildHomeFavoritesPanel(shell)
-        buildHomeSectionHeader(shell, "Shortcuts")
+        buildHomeSectionHeader(shell, shell.t("shortcuts"))
         buildHomeShortcutsPanel(shell)
-        buildHomeSectionHeader(shell, "Recent")
+        buildHomeSectionHeader(shell, shell.t("recent"))
         buildHomeRecentPanel(shell)
     }
     .width(100.percent)
@@ -207,33 +207,33 @@ func buildHomeSectionHeader(shell: AppShell, title: String) {
 @Builder
 func buildHomeWorkPanel(shell: AppShell) {
     Column() {
-        buildHomeWorkRow(shell, 0x68D968, "◎", "Issues", {
+        buildHomeWorkRow(shell, 0x68D968, "◎", shell.t("issues"), {
             =>
             if (shell.hasLiveIssues()) {
                 shell.openSelectedIssue()
             } else {
-                shell.openPendingPage("Issues", "该页面待开发")
+                shell.openPendingPage(shell.t("issues"), "该页面待开发")
             }
         })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0x4B88FF, "⎇", "Pull Requests", {
+        buildHomeWorkRow(shell, 0x4B88FF, "⎇", shell.t("pull_requests"), {
             =>
             if (shell.hasLivePullRequests()) {
                 shell.openSelectedPullRequest()
             } else {
-                shell.openPendingPage("Pull Requests", "该页面待开发")
+                shell.openPendingPage(shell.t("pull_requests"), "该页面待开发")
             }
         })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0x7B56E8, "◫", "Discussions", { => shell.openPendingPage("Discussions", "该页面待开发") })
+        buildHomeWorkRow(shell, 0x7B56E8, "◫", shell.t("discussions"), { => shell.openPendingPage(shell.t("discussions"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0xB0B4C0, "□", "Projects", { => shell.openPendingPage("Projects", "该页面待开发") })
+        buildHomeWorkRow(shell, 0xB0B4C0, "□", shell.t("projects"), { => shell.openPendingPage(shell.t("projects"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0x4B4F5C, "⌘", "Top Repositories", { => shell.openPendingPage("Top Repositories", "该页面待开发") })
+        buildHomeWorkRow(shell, 0x4B4F5C, "⌘", shell.t("top_repositories"), { => shell.openPendingPage(shell.t("top_repositories"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0xF4A24B, "⌂", "Organizations", { => shell.openPendingPage("Organizations", "该页面待开发") })
+        buildHomeWorkRow(shell, 0xF4A24B, "⌂", shell.t("organizations"), { => shell.openPendingPage(shell.t("organizations"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0xFFD54A, "☆", "Starred", { => shell.openPendingPage("Starred", "该页面待开发") })
+        buildHomeWorkRow(shell, 0xFFD54A, "☆", shell.t("starred"), { => shell.openPendingPage(shell.t("starred"), "该页面待开发") })
     }
     .width(100.percent)
     .backgroundColor(shell.surfaceColor())
@@ -277,18 +277,18 @@ func buildHomeDivider(shell: AppShell) {
 @Builder
 func buildHomeFavoritesPanel(shell: AppShell) {
     Column(space: 14) {
-        Text("Add favorite repositories here to have quick access at any time, without having to search")
+        Text(shell.t("favorites_empty"))
             .fontSize(13)
             .lineHeight(20)
             .fontColor(shell.primaryTextColor())
-        Button("Add Favorites")
+        Button(shell.t("add_favorites"))
             .width(100.percent)
             .height(44)
             .backgroundColor(shell.mutedSurfaceColor())
             .fontColor(shell.accentStrongColor())
             .fontSize(15)
             .borderRadius(12)
-            .onClick({ _ => shell.openPendingPage("Favorites", "该页面待开发") })
+            .onClick({ _ => shell.openPendingPage(shell.t("favorites"), "该页面待开发") })
     }
     .width(100.percent)
     .padding(18)
@@ -312,20 +312,20 @@ func buildHomeShortcutsPanel(shell: AppShell) {
         .width(100.percent)
         .justifyContent(FlexAlign.Center)
 
-        Text("The things you need, one tap away").fontSize(15).fontWeight(FontWeight.Bold).textAlign(TextAlign.Center).fontColor(shell.primaryTextColor())
-        Text("Fast access to your lists of Issues, Pull Requests, or Discussions.")
+        Text(shell.t("shortcuts_title")).fontSize(15).fontWeight(FontWeight.Bold).textAlign(TextAlign.Center).fontColor(shell.primaryTextColor())
+        Text(shell.t("shortcuts_desc"))
             .fontSize(13)
             .lineHeight(20)
             .textAlign(TextAlign.Center)
             .fontColor(shell.secondaryTextColor())
-        Button("Get started")
+        Button(shell.t("get_started"))
             .width(100.percent)
             .height(44)
             .backgroundColor(shell.mutedSurfaceColor())
             .fontColor(shell.accentStrongColor())
             .fontSize(15)
             .borderRadius(12)
-            .onClick({ _ => shell.openPendingPage("Shortcuts", "该页面待开发") })
+            .onClick({ _ => shell.openPendingPage(shell.t("shortcuts"), "该页面待开发") })
     }
     .width(100.percent)
     .padding(18)
@@ -349,7 +349,7 @@ func buildShortcutDot(color: Int64, text: String) {
 func buildHomeRecentPanel(shell: AppShell) {
     Column(space: 10) {
         if (shell.hasLiveIssues()) {
-            Text("Recent activity from GitHub will surface here. Open issues and pull requests you touched last appear first.")
+            Text(shell.t("recent_desc"))
                 .fontSize(13)
                 .lineHeight(20)
                 .fontColor(shell.secondaryTextColor())
@@ -358,7 +358,7 @@ func buildHomeRecentPanel(shell: AppShell) {
                 buildHomeRecentItem(shell, shell.visibleLivePullRequests()[0].title, shell.visibleLivePullRequests()[0].summary)
             }
         } else {
-            Text("Issues and Pull Requests that you've interacted with recently will appear here.")
+            Text(shell.t("recent_empty"))
                 .fontSize(13)
                 .lineHeight(20)
                 .fontColor(shell.primaryTextColor())

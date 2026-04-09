@@ -61,16 +61,20 @@ func buildTopBar(shell: AppShell) {
                     .fontSize(30)
                     .fontWeight(FontWeight.Bold)
                     .fontColor(shell.primaryTextColor())
-                Text(shell.mainSubtitle()).fontSize(12).fontColor(shell.secondaryTextColor())
+                if (!shell.isActiveTab("copilot")) {
+                    Text(shell.mainSubtitle()).fontSize(12).fontColor(shell.secondaryTextColor())
+                }
             }
             .alignItems(HorizontalAlign.Start)
         }
         Blank()
-        Row(space: 8) {
-            if (shell.canCreateFromCurrentWorkplace()) {
-                buildCircleAction(shell, shell.t("add_short"), { => shell.openPendingPage("Create", "该页面待开发") })
+        if (!shell.isActiveTab("copilot")) {
+            Row(space: 8) {
+                if (shell.canCreateFromCurrentWorkplace()) {
+                    buildCircleAction(shell, shell.t("add_short"), { => shell.openPendingPage("Create", "该页面待开发") })
+                }
+                buildCircleAction(shell, shell.t("find_short"), { => shell.openPendingPage("Search", "该页面待开发") })
             }
-            buildCircleAction(shell, shell.t("find_short"), { => shell.openPendingPage("Search", "该页面待开发") })
         }
     }
     .width(100.percent)
@@ -124,8 +128,6 @@ func buildExploreTab(shell: AppShell) {
 @Builder
 func buildCursorTab(shell: AppShell) {
     Column(space: 18) {
-        Text(shell.t("cursor")).fontSize(40).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-
         buildCursorSectionHeader(shell, shell.t("agent_sessions"))
         buildCursorAgentSessionsCard(shell)
 
@@ -229,7 +231,7 @@ func buildCursorChatsCard(shell: AppShell) {
                 .fontColor(shell.accentStrongColor())
                 .fontSize(16)
                 .borderRadius(14)
-                .onClick({ _ => shell.openNewCursorConversation() })
+                .onClick({ _ => shell.startCursorConversationEntry() })
         }
         .width(100.percent)
         .alignItems(HorizontalAlign.Center)
@@ -243,7 +245,7 @@ func buildCursorChatsCard(shell: AppShell) {
             .fontSize(20)
             .borderRadius(29)
             .margin(right: 18, bottom: 18)
-            .onClick({ _ => shell.openNewCursorConversation() })
+            .onClick({ _ => shell.startCursorConversationEntry() })
     }
     .width(100.percent)
     .backgroundColor(shell.surfaceColor())
@@ -253,25 +255,21 @@ func buildCursorChatsCard(shell: AppShell) {
 @Builder
 func buildCursorConversationList(shell: AppShell) {
     Stack(alignContent: Alignment.BottomEnd) {
-        Column(space: 12) {
+        Column() {
             ForEach(
                 shell.visibleCursorConversations(),
-                itemGeneratorFunc: { item: CursorConversationSnapshot, _: Int64 =>
+                itemGeneratorFunc: { item: CursorConversationSnapshot, index: Int64 =>
                     buildCursorConversationRow(shell, item)
+                    if (index < shell.visibleCursorConversations().size - 1) {
+                        buildHomeDivider(shell)
+                    }
                 }
             )
-
-            Button(shell.t("cursor_new_chat"))
-                .width(100.percent)
-                .height(46)
-                .backgroundColor(shell.mutedSurfaceColor())
-                .fontColor(shell.accentStrongColor())
-                .fontSize(16)
-                .borderRadius(14)
-                .onClick({ _ => shell.openNewCursorConversation() })
         }
         .width(100.percent)
-        .padding(left: 20, right: 20, top: 20, bottom: 20)
+        .backgroundColor(shell.surfaceColor())
+        .borderRadius(20)
+        .padding(top: 2, bottom: 2)
 
         Button("✎")
             .width(58)
@@ -281,35 +279,57 @@ func buildCursorConversationList(shell: AppShell) {
             .fontSize(20)
             .borderRadius(29)
             .margin(right: 18, bottom: 18)
-            .onClick({ _ => shell.openNewCursorConversation() })
+            .onClick({
+                _ =>
+                shell.startCursorConversationEntry()
+            })
     }
     .width(100.percent)
-    .backgroundColor(shell.surfaceColor())
-    .borderRadius(26)
 }
 
 @Builder
 func buildCursorConversationRow(shell: AppShell, item: CursorConversationSnapshot) {
-    Column(space: 8) {
+    Row(space: 14) {
         Row() {
-            Text(item.title)
-                .fontSize(17)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(shell.primaryTextColor())
-            Blank()
-            Text(item.updatedAtLabel).fontSize(12).fontColor(shell.secondaryTextColor())
+            Text("⌘").fontSize(15).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
         }
-        .width(100.percent)
+        .width(36)
+        .height(36)
+        .backgroundColor(shell.navBarColor())
+        .borderRadius(9)
+        .justifyContent(FlexAlign.Center)
 
-        Text(item.preview)
-            .fontSize(14)
-            .fontColor(shell.secondaryTextColor())
-            .maxLines(2)
+        Column(space: 4) {
+            Row() {
+                Text(item.title)
+                    .fontSize(15)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(shell.primaryTextColor())
+            }
+            .width(100.percent)
+
+            Text(item.preview)
+                .fontSize(12)
+                .fontColor(shell.secondaryTextColor())
+                .maxLines(1)
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+        Row(space: 10) {
+            if (item.updatedAtLabel != "") {
+                Text(item.updatedAtLabel).fontSize(11).fontColor(shell.secondaryTextColor())
+            }
+            Text("›")
+                .fontSize(20)
+                .fontColor(shell.secondaryTextColor())
+        }
     }
     .width(100.percent)
-    .padding(left: 16, right: 16, top: 16, bottom: 16)
-    .backgroundColor(shell.mutedSurfaceColor())
-    .borderRadius(18)
+    .height(58)
+    .borderRadius(20)
+    .padding(left: 13, right: 13)
+    .backgroundColor(shell.surfaceColor())
     .onClick({ _ => shell.openCursorConversation(item.id) })
 }
 

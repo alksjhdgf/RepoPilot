@@ -13,7 +13,7 @@ import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
-import ohos_app_cangjie_entry.services.cursor.{defaultCursorConversations, defaultCursorModels, defaultCursorSuggestions, findCursorConversationTitle, findCursorModelTitle, messagesForCursorConversation, modelForCursorConversation}
+import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, defaultCursorSuggestions, findCursorConversationTitle, findCursorModelTitle}
 import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorAgents}
 import ohos_app_cangjie_entry.services.github.{deserializeGitHubStoredSession, extractUrlQueryParameter, serializeGitHubStoredSession}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
@@ -166,6 +166,9 @@ public class AppShell {
 
     @Provide
     var cursorApiKey: String = ""
+
+    @Provide
+    var cursorConnectionReady: Bool = false
 
     @State
     var authCheckingToken: Bool = false
@@ -850,6 +853,7 @@ public class AppShell {
     func visibleCursorSuggestions(): ArrayList<CursorPromptSuggestionSnapshot> { this.cursorSuggestions }
     func hasCursorConversations(): Bool { this.cursorConversations.size > 0 }
     func hasCursorApiKey(): Bool { this.cursorApiKey != "" }
+    func hasCursorConnectionReady(): Bool { this.cursorConnectionReady }
     func cursorApiKeyValue(): String { this.cursorApiKey }
     func currentCursorConversationTitle(): String {
         if (this.cursorConversationTitle != "") {
@@ -1075,16 +1079,6 @@ public class AppShell {
         if (this.cursorSuggestions.size == 0) {
             this.cursorSuggestions = defaultCursorSuggestions()
         }
-        if (this.cursorConversations.size == 0) {
-            this.cursorConversations = defaultCursorConversations()
-        }
-        if (this.cursorConversationId == "" && this.cursorConversations.size > 0) {
-            let first = this.cursorConversations[0]
-            this.cursorConversationId = first.id
-            this.cursorConversationTitle = first.title
-            this.cursorSelectedModelId = first.modelId
-            this.cursorMessages = messagesForCursorConversation(first.id)
-        }
     }
 
     /**
@@ -1093,6 +1087,9 @@ public class AppShell {
      */
     func refreshCursorConversations(): Unit {
         if (this.cursorApiKey == "") {
+            this.cursorConnectionReady = false
+            this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+            this.cursorMessages = ArrayList<CursorMessageSnapshot>()
             return
         }
         fetchCursorAgents(
@@ -1101,6 +1098,9 @@ public class AppShell {
             { message =>
                 this.runOnUi({
                     =>
+                    this.cursorConnectionReady = false
+                    this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+                    this.cursorMessages = ArrayList<CursorMessageSnapshot>()
                     this.cursorMenuActionMessage = message
                 })
             }
@@ -1127,11 +1127,13 @@ public class AppShell {
     func applyCursorConversations(items: ArrayList<CursorConversationSnapshot>): Unit {
         this.runOnUi({
             =>
+            this.cursorConnectionReady = true
             if (items.size > 0) {
                 this.cursorConversations = items
                 if (this.cursorConversationId == "") {
                     this.cursorConversationId = items[0].id
                     this.cursorConversationTitle = items[0].title
+                    this.cursorSelectedModelId = items[0].modelId
                 }
                 this.refreshSelectedCursorConversation()
             } else {
@@ -1156,8 +1158,12 @@ public class AppShell {
         this.ensureCursorState()
         this.cursorConversationId = conversationId
         this.cursorConversationTitle = findCursorConversationTitle(this.cursorConversations, conversationId)
-        this.cursorSelectedModelId = modelForCursorConversation(conversationId)
-        this.cursorMessages = messagesForCursorConversation(conversationId)
+        for (item in this.cursorConversations) {
+            if (item.id == conversationId) {
+                this.cursorSelectedModelId = item.modelId
+            }
+        }
+        this.cursorMessages = ArrayList<CursorMessageSnapshot>()
         this.cursorMenuActionMessage = ""
     }
 
@@ -1216,6 +1222,14 @@ public class AppShell {
     func openNewCursorConversation(): Unit {
         this.startCursorConversation()
         this.stack.pushPath(NavPathInfo(name: "cursorConversation", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func startCursorConversationEntry(): Unit {
+        if (!this.hasCursorApiKey() || !this.hasCursorConnectionReady()) {
+            this.openCursorAccountSettings()
+            return
+        }
+        this.openNewCursorConversation()
     }
 
     func openCursorConversation(conversationId: String): Unit {

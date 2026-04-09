@@ -95,7 +95,7 @@ func localizedEn(key: String): String {
     else if (key == "copilot") { "Copilot" }
     else if (key == "copilot_short") { "Copilot" }
     else if (key == "cursor") { "Cursor" }
-    else if (key == "cursor_short") { "Cursor" }
+    else if (key == "cursor_short") { "会话" }
     else if (key == "recent_repositories") { "Recent Repositories" }
     else if (key == "recent_tasks") { "Recent Tasks" }
     else if (key == "see_all") { "See all" }

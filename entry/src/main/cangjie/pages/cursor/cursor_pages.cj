@@ -5,10 +5,10 @@ import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import std.collection.ArrayList
 import kit.BasicServicesKit.SystemDateTime
-import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot, CursorModelSnapshot, CursorPromptSuggestionSnapshot}
+import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot, CursorModelSnapshot, CursorPromptSuggestionSnapshot, GitHubRepositoryDetailSnapshot}
 import ohos_app_cangjie_entry.infra.databoard.dataBoardSet
 import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
-import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorAgents, findCursorConversationTitle, findCursorModelTitle, messagesForCursorConversation, modelForCursorConversation}
+import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorAgents, findCursorConversationTitle, findCursorModelTitle, launchCursorAgent, messagesForCursorConversation, modelForCursorConversation, sendCursorAgentFollowup}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -26,7 +26,11 @@ public class CursorConversationPage {
     @Consume var cursorConversationId: String
     @Consume var cursorConversationTitle: String
     @Consume var cursorSelectedModelId: String
+    @Consume var cursorComposerDraft: String
     @Consume var cursorMenuActionMessage: String
+    @Consume var cursorApiKey: String
+    @Consume var selectedRepository: String
+    @Consume var liveRepositoryDetail: GitHubRepositoryDetailSnapshot
     @Consume var pendingPageTitle: String
     @Consume var pendingPageMessage: String
 
@@ -125,8 +129,77 @@ public class CursorConversationPage {
         this.cursorMessages.add(CursorMessageSnapshot("user_${SystemDateTime.getTime()}", "user", text))
         this.cursorMessages.add(CursorMessageSnapshot("assistant_${SystemDateTime.getTime()}", "assistant", this.t("cursor_local_agent_reply")))
     }
+    func submitPrompt(): Unit {
+        if (this.cursorComposerDraft == "") {
+            return
+        }
+        if (this.cursorApiKey == "") {
+            this.openPending(this.t("cursor_account"), this.t("cursor_api_key_missing"))
+            return
+        }
+        let prompt = this.cursorComposerDraft
+        this.cursorComposerDraft = ""
+        if (this.cursorConversationId == "") {
+            let repositoryUrl = this.currentRepositoryUrl()
+            if (repositoryUrl == "") {
+                this.openPending(this.t("cursor_new_chat"), this.t("cursor_repository_required"))
+                return
+            }
+            launchCursorAgent(
+                this.cursorApiKey,
+                prompt,
+                repositoryUrl,
+                this.currentRepositoryBranch(),
+                this.cursorSelectedModelId,
+                { snapshot =>
+                    spawn(UIThread) {
+                        this.cursorConversationId = snapshot.id
+                        this.cursorConversationTitle = snapshot.title
+                        this.cursorConversations.add(snapshot)
+                        this.cursorMessages = ArrayList<CursorMessageSnapshot>()
+                        this.cursorMessages.add(CursorMessageSnapshot("user_${SystemDateTime.getTime()}", "user", prompt))
+                        this.cursorMenuActionMessage = this.t("cursor_agent_started")
+                    }
+                },
+                { message =>
+                    spawn(UIThread) {
+                        this.cursorMenuActionMessage = message
+                    }
+                }
+            )
+            return
+        }
+        sendCursorAgentFollowup(
+            this.cursorApiKey,
+            this.cursorConversationId,
+            prompt,
+            {
+                =>
+                spawn(UIThread) {
+                    this.cursorMessages.add(CursorMessageSnapshot("user_${SystemDateTime.getTime()}", "user", prompt))
+                    this.cursorMenuActionMessage = this.t("cursor_followup_sent")
+                }
+            },
+            { message =>
+                spawn(UIThread) {
+                    this.cursorMenuActionMessage = message
+                }
+            }
+        )
+    }
     func titleText(): String {
         if (this.cursorConversationTitle == "") { this.t("cursor_new_conversation") } else { this.cursorConversationTitle }
+    }
+    func composerDraftValue(): String { this.cursorComposerDraft }
+    func updateComposerDraft(value: String): Unit { this.cursorComposerDraft = value }
+    func currentRepositoryUrl(): String {
+        if (this.selectedRepository == "") {
+            return ""
+        }
+        "https://github.com/${this.selectedRepository}"
+    }
+    func currentRepositoryBranch(): String {
+        if (this.liveRepositoryDetail.defaultBranch == "") { "main" } else { this.liveRepositoryDetail.defaultBranch }
     }
     func modelTitle(): String {
         let title = findCursorModelTitle(this.cursorModels, this.cursorSelectedModelId)
@@ -642,14 +715,15 @@ func buildCursorSuggestionCard(page: CursorConversationPage, item: CursorPromptS
 @Builder
 func buildCursorComposer(page: CursorConversationPage) {
     Row(space: 12) {
-        Button(page.t("cursor_ask"))
+        TextInput(placeholder: page.t("cursor_ask"), text: page.composerDraftValue())
             .height(54)
             .layoutWeight(1)
             .backgroundColor(page.surfaceColor())
             .fontColor(page.secondaryTextColor())
             .fontSize(16)
             .borderRadius(18)
-            .onClick({ _ => page.appendLocalPrompt(page.t("cursor_default_prompt")) })
+            .padding(left: 16, right: 16)
+            .onChange({ value => page.updateComposerDraft(value) })
 
         Button("➜")
             .width(54)
@@ -657,7 +731,7 @@ func buildCursorComposer(page: CursorConversationPage) {
             .backgroundColor(page.navBarColor())
             .fontColor(page.primaryTextColor())
             .borderRadius(27)
-            .onClick({ _ => page.appendLocalPrompt(page.t("cursor_default_prompt")) })
+            .onClick({ _ => page.submitPrompt() })
     }
     .width(100.percent)
 }

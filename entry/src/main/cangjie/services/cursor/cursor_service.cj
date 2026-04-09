@@ -214,3 +214,72 @@ public func fetchCursorAgentConversation(
         onFailure
     )
 }
+
+func escapeCursorJson(value: String): String {
+    value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+}
+
+/**
+ * 启动新的 Cursor background agent。
+ * Launches a new Cursor background agent for the selected repository.
+ */
+public func launchCursorAgent(
+    apiKey: String,
+    prompt: String,
+    repositoryUrl: String,
+    branchName: String,
+    modelId: String,
+    onSuccess: (CursorConversationSnapshot) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    let payload =
+        "{\"prompt\":{\"text\":\"${escapeCursorJson(prompt)}\"},\"source\":{\"repository\":\"${escapeCursorJson(repositoryUrl)}\",\"ref\":\"${escapeCursorJson(branchName)}\"},\"model\":\"${escapeCursorJson(modelId)}\",\"target\":{\"autoCreatePr\":false}}"
+    requestCursorJson(
+        "${CURSOR_API_BASE}/agents",
+        apiKey,
+        { body =>
+            let id = extractCursorStringField(body, "id")
+            if (id == "") {
+                onFailure("Cursor did not return an agent id.")
+                return
+            }
+            let name = extractCursorStringField(body, "name")
+            let summary = extractCursorStringField(body, "summary")
+            let createdAt = extractCursorStringField(body, "createdAt")
+            onSuccess(
+                CursorConversationSnapshot(
+                    id,
+                    if (name == "") { prompt } else { name },
+                    modelId,
+                    if (summary == "") { prompt } else { summary },
+                    if (createdAt == "") { "RUNNING" } else { createdAt }
+                )
+            )
+        },
+        onFailure,
+        method: RequestMethod.Post,
+        payload: payload
+    )
+}
+
+/**
+ * 向运行中的 Cursor agent 发送 follow-up。
+ * Sends an additional follow-up instruction to an existing Cursor background agent.
+ */
+public func sendCursorAgentFollowup(
+    apiKey: String,
+    agentId: String,
+    prompt: String,
+    onSuccess: () -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    let payload = "{\"text\":\"${escapeCursorJson(prompt)}\"}"
+    requestCursorJson(
+        "${CURSOR_API_BASE}/agents/${agentId}/followup",
+        apiKey,
+        { _ => onSuccess() },
+        onFailure,
+        method: RequestMethod.Post,
+        payload: payload
+    )
+}

@@ -183,6 +183,9 @@ func localizedEn(key: String): String {
     else if (key == "cursor_api_key_missing") { "Paste an API key first." }
     else if (key == "cursor_api_key_testing") { "Testing Cursor connection..." }
     else if (key == "cursor_api_key_valid") { "Cursor connection succeeded" }
+    else if (key == "cursor_repository_required") { "Open or select a repository before starting a Cursor agent." }
+    else if (key == "cursor_agent_started") { "Cursor agent started. You can return later to inspect progress." }
+    else if (key == "cursor_followup_sent") { "Follow-up sent to Cursor agent." }
     else if (key == "save") { "Save" }
     else if (key == "system") { "Automatic" }
     else if (key == "light") { "Light" }
@@ -395,6 +398,9 @@ func localizedZh(key: String): String {
     else if (key == "cursor_api_key_missing") { "请先粘贴 API key。" }
     else if (key == "cursor_api_key_testing") { "正在测试 Cursor 连接..." }
     else if (key == "cursor_api_key_valid") { "Cursor 连接成功" }
+    else if (key == "cursor_repository_required") { "请先打开或选中一个仓库，再启动 Cursor agent。" }
+    else if (key == "cursor_agent_started") { "Cursor agent 已启动，你可以稍后回来查看进度。" }
+    else if (key == "cursor_followup_sent") { "已向 Cursor agent 发送 follow-up。" }
     else if (key == "save") { "保存" }
     else { localizedEn(key) }
 }

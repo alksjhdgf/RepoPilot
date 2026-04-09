@@ -82,7 +82,7 @@ func buildActiveTabContent(shell: AppShell) {
         if (shell.isActiveTab("home")) { buildHomeTab(shell) }
         if (shell.isActiveTab("inbox")) { buildInboxTab(shell) }
         if (shell.isActiveTab("explore")) { buildExploreTab(shell) }
-        if (shell.isActiveTab("copilot")) { buildCopilotTab(shell) }
+        if (shell.isActiveTab("copilot")) { buildCursorTab(shell) }
     }
     .width(100.percent)
 }
@@ -122,21 +122,129 @@ func buildExploreTab(shell: AppShell) {
 }
 
 @Builder
-func buildCopilotTab(shell: AppShell) {
-    Column(space: 16) {
-        Column(space: 10) {
-            Text(shell.t("copilot")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
-            Text(shell.t("copilot_subtitle")).fontSize(13).fontColor(shell.secondaryTextColor())
-        }
-        .width(100.percent)
-        .padding(18)
-        .backgroundColor(shell.surfaceColor())
-        .borderRadius(24)
+func buildCursorTab(shell: AppShell) {
+    Column(space: 18) {
+        Text(shell.t("cursor")).fontSize(40).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
 
-        detailCard(shell, shell.t("copilot_sdk"), shell.t("copilot_sdk_desc"), { => shell.openPendingPage(shell.t("copilot_sdk"), "Copilot SDK integration is not implemented yet.") })
-        detailCard(shell, shell.t("copilot_agent"), shell.t("copilot_agent_desc"), { => shell.openPendingPage(shell.t("copilot_agent"), "Copilot agent routing is not implemented yet.") })
+        buildCursorSectionHeader(shell, shell.t("agent_sessions"))
+        buildCursorAgentSessionsCard(shell)
+
+        buildCursorSectionHeader(shell, shell.t("chats"))
+        buildCursorChatsCard(shell)
     }
     .width(100.percent)
+}
+
+@Builder
+func buildCursorSectionHeader(shell: AppShell, title: String) {
+    Row() {
+        Text(title).fontSize(18).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Blank()
+    }
+    .width(100.percent)
+}
+
+@Builder
+func buildCursorAgentSessionsCard(shell: AppShell) {
+    Column(space: 18) {
+        Row(space: 0) {
+            buildCursorSignalDot(0x31333B, "☁")
+            buildCursorSignalDot(0x243A63, "◎")
+            buildCursorSignalDot(0x27492D, "⎇")
+        }
+        .width(100.percent)
+        .justifyContent(FlexAlign.Center)
+
+        Text(shell.t("cursor_agent_title"))
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .textAlign(TextAlign.Center)
+            .fontColor(shell.primaryTextColor())
+
+        Text(shell.t("cursor_agent_desc"))
+            .fontSize(13)
+            .lineHeight(22)
+            .textAlign(TextAlign.Center)
+            .fontColor(shell.secondaryTextColor())
+
+        Button(shell.t("cursor_upgrade"))
+            .width(100.percent)
+            .height(48)
+            .backgroundColor(shell.navSelectionColor())
+            .fontColor(shell.accentStrongColor())
+            .fontSize(16)
+            .borderRadius(14)
+            .onClick({ _ => shell.openPendingPage(shell.t("cursor_upgrade"), "该页面待开发") })
+    }
+    .width(100.percent)
+    .padding(left: 20, right: 20, top: 22, bottom: 22)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(26)
+}
+
+@Builder
+func buildCursorSignalDot(color: Int64, symbol: String) {
+    Row() {
+        Text(symbol).fontSize(14).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
+    }
+    .width(52)
+    .height(52)
+    .backgroundColor(color)
+    .borderRadius(26)
+    .justifyContent(FlexAlign.Center)
+}
+
+@Builder
+func buildCursorChatsCard(shell: AppShell) {
+    Stack(alignContent: Alignment.BottomEnd) {
+        Column(space: 18) {
+            Row() {
+                Text("⌘").fontSize(20).fontColor(shell.secondaryTextColor())
+            }
+            .width(64)
+            .height(64)
+            .backgroundColor(shell.navBarColor())
+            .borderRadius(32)
+            .justifyContent(FlexAlign.Center)
+
+            Text(shell.t("cursor_no_chats"))
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(shell.primaryTextColor())
+
+            Text(shell.t("cursor_no_chats_desc"))
+                .fontSize(13)
+                .lineHeight(22)
+                .textAlign(TextAlign.Center)
+                .fontColor(shell.secondaryTextColor())
+
+            Button(shell.t("cursor_new_chat"))
+                .width(100.percent)
+                .height(46)
+                .backgroundColor(shell.mutedSurfaceColor())
+                .fontColor(shell.accentStrongColor())
+                .fontSize(16)
+                .borderRadius(14)
+                .onClick({ _ => shell.openPendingPage(shell.t("cursor_new_chat"), "该页面待开发") })
+        }
+        .width(100.percent)
+        .alignItems(HorizontalAlign.Center)
+        .padding(left: 20, right: 20, top: 22, bottom: 22)
+
+        Button("✎")
+            .width(58)
+            .height(58)
+            .backgroundColor(shell.navBarColor())
+            .fontColor(shell.primaryTextColor())
+            .fontSize(20)
+            .borderRadius(29)
+            .shadow(ShadowStyle.OUTER_DEFAULT_LG)
+            .margin(right: 18, bottom: 18)
+            .onClick({ _ => shell.openPendingPage(shell.t("cursor_new_chat"), "该页面待开发") })
+    }
+    .width(100.percent)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(26)
 }
 
 @Builder

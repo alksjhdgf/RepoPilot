@@ -94,6 +94,8 @@ func localizedEn(key: String): String {
     else if (key == "profile_short") { "Profile" }
     else if (key == "copilot") { "Copilot" }
     else if (key == "copilot_short") { "Copilot" }
+    else if (key == "cursor") { "Cursor" }
+    else if (key == "cursor_short") { "Cursor" }
     else if (key == "recent_repositories") { "Recent Repositories" }
     else if (key == "recent_tasks") { "Recent Tasks" }
     else if (key == "see_all") { "See all" }
@@ -104,6 +106,7 @@ func localizedEn(key: String): String {
     else if (key == "explore_subtitle") { "Find code, trends and queues worth opening." }
     else if (key == "profile_subtitle") { "Tune language, appearance and account posture." }
     else if (key == "copilot_subtitle") { "Prepare agent integrations and future Copilot workflows." }
+    else if (key == "cursor_subtitle") { "Use Cursor cloud agents to manage sessions and chats." }
     else if (key == "settings_subtitle") { "Adjust runtime preferences and account posture." }
     else if (key == "profile_account_prefix") { "Account" }
     else if (key == "appearance") { "Appearance" }
@@ -146,6 +149,14 @@ func localizedEn(key: String): String {
     else if (key == "copilot_sdk_desc") { "Prepare authentication, provider switching, and session handling for cloud agent access." }
     else if (key == "copilot_agent") { "Agent Routing" }
     else if (key == "copilot_agent_desc") { "Use this tab as the future entry for Copilot requests, task drafts, and agent output." }
+    else if (key == "agent_sessions") { "Agent sessions" }
+    else if (key == "chats") { "Chats" }
+    else if (key == "cursor_agent_title") { "Delegate tasks to Cursor cloud agents" }
+    else if (key == "cursor_agent_desc") { "Let Cursor work independently in the background to complete tasks, then return to review the results." }
+    else if (key == "cursor_upgrade") { "Connect Cursor account" }
+    else if (key == "cursor_no_chats") { "No chats yet" }
+    else if (key == "cursor_no_chats_desc") { "Ask Cursor anything to start your first chat." }
+    else if (key == "cursor_new_chat") { "New Chat" }
     else if (key == "system") { "Automatic" }
     else if (key == "light") { "Light" }
     else if (key == "dark") { "Dark" }
@@ -224,10 +235,13 @@ func localizedZh(key: String): String {
     else if (key == "profile_short") { "个人页" }
     else if (key == "copilot") { "Copilot" }
     else if (key == "copilot_short") { "Copilot" }
+    else if (key == "cursor") { "Cursor" }
+    else if (key == "cursor_short") { "Cursor" }
     else if (key == "inbox_subtitle") { "优先处理下一步最值得关注的事项。" }
     else if (key == "explore_subtitle") { "发现值得打开的代码、趋势和队列。" }
     else if (key == "profile_subtitle") { "调整语言、外观和账号设置。" }
     else if (key == "copilot_subtitle") { "为后续 Agent 与 Copilot 工作流做准备。" }
+    else if (key == "cursor_subtitle") { "使用 Cursor 云端 Agent 管理会话与聊天。" }
     else if (key == "settings_subtitle") { "调整运行时偏好和账号姿态。" }
     else if (key == "appearance") { "外观" }
     else if (key == "language") { "语言" }
@@ -320,5 +334,13 @@ func localizedZh(key: String): String {
     else if (key == "copilot_sdk_desc") { "为云端 Agent 接入准备认证、Provider 切换和会话处理。" }
     else if (key == "copilot_agent") { "Agent 路由" }
     else if (key == "copilot_agent_desc") { "后续从这里进入 Copilot 请求、任务草稿和 Agent 输出。" }
+    else if (key == "agent_sessions") { "Agent 会话" }
+    else if (key == "chats") { "聊天" }
+    else if (key == "cursor_agent_title") { "将任务委派给 Cursor 云端 Agent" }
+    else if (key == "cursor_agent_desc") { "让 Cursor 在后台独立完成任务，随后回到应用中查看结果。" }
+    else if (key == "cursor_upgrade") { "连接 Cursor 账号" }
+    else if (key == "cursor_no_chats") { "还没有聊天" }
+    else if (key == "cursor_no_chats_desc") { "向 Cursor 提问即可开始你的第一段对话。" }
+    else if (key == "cursor_new_chat") { "新建对话" }
     else { localizedEn(key) }
 }

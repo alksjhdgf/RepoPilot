@@ -773,7 +773,7 @@ public class AppShell {
         } else if (this.activeTab == "explore") {
             this.t("explore")
         } else {
-            this.t("copilot")
+            this.t("cursor")
         }
     }
     func mainSubtitle(): String {
@@ -784,7 +784,7 @@ public class AppShell {
         } else if (this.activeTab == "explore") {
             this.t("explore_subtitle")
         } else {
-            this.t("copilot_subtitle")
+            this.t("cursor_subtitle")
         }
     }
     func accountCaption(): String {

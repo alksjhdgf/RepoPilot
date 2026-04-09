@@ -86,7 +86,7 @@ func buildFloatingNavigation(shell: AppShell) {
         buildNavItem(shell, "home", shell.t("home"), shell.t("home_short"))
         buildNavItem(shell, "inbox", shell.t("inbox"), shell.t("inbox_short"))
         buildNavItem(shell, "explore", shell.t("explore"), shell.t("explore_short"))
-        buildNavItem(shell, "copilot", shell.t("copilot"), shell.t("copilot_short"))
+        buildNavItem(shell, "copilot", shell.t("cursor"), shell.t("cursor_short"))
     }
     .width(84.percent)
     .padding(left: 8, right: 8, top: 8, bottom: 8)

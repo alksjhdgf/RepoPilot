@@ -2,13 +2,17 @@ package ohos_app_cangjie_entry.pages.cursor
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
+import ohos.base.UIThread
 import std.collection.ArrayList
 import kit.BasicServicesKit.SystemDateTime
 import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot, CursorModelSnapshot, CursorPromptSuggestionSnapshot}
+import ohos_app_cangjie_entry.infra.databoard.dataBoardSet
 import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
-import ohos_app_cangjie_entry.services.cursor.{findCursorConversationTitle, findCursorModelTitle, messagesForCursorConversation, modelForCursorConversation}
+import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorAgents, findCursorConversationTitle, findCursorModelTitle, messagesForCursorConversation, modelForCursorConversation}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
+
+let CURSOR_API_KEY_STORE_KEY = "cursor_api_key"
 
 @Component
 public class CursorConversationPage {
@@ -320,6 +324,174 @@ public class CursorModelPickerPage {
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
     func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
+    func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
+    func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
+    func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
+}
+
+@Component
+public class CursorAccountSettingsPage {
+    @Consume var stack: NavPathStack
+    @Consume var themePreference: String
+    @Consume var languagePreference: String
+    @Consume var cursorApiKey: String
+    @Consume var cursorConversations: ArrayList<CursorConversationSnapshot>
+    @Consume var cursorMessages: ArrayList<CursorMessageSnapshot>
+    @Consume var cursorConversationId: String
+    @Consume var cursorConversationTitle: String
+    @Consume var cursorSelectedModelId: String
+
+    @StorageProp["colorMode"]
+    let systemColorMode: ColorMode = ColorMode.Light
+
+    @StorageProp["languageCode"]
+    let systemLanguageCode: String = "en"
+
+    @State
+    var cursorApiKeyDraft: String = ""
+
+    @State
+    var validationMessage: String = ""
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+        this.cursorApiKeyDraft = this.cursorApiKey
+    }
+
+    public func build() {
+        NavDestination() {
+            Stack() {
+                cursorBackgroundCommon(this.pageBackgroundColor())
+
+                Column(space: 18) {
+                    Row(space: 10) {
+                        Button("<")
+                            .width(44)
+                            .height(44)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .borderRadius(22)
+                            .onClick({ _ => this.goBack() })
+                        Text(this.t("cursor_account"))
+                            .fontSize(22)
+                            .fontWeight(FontWeight.Bold)
+                            .fontColor(this.primaryTextColor())
+                    }
+                    .width(100.percent)
+
+                    Column(space: 12) {
+                        Text(this.t("cursor_api_key_title"))
+                            .fontSize(18)
+                            .fontWeight(FontWeight.Bold)
+                            .fontColor(this.primaryTextColor())
+
+                        Text(this.t("cursor_api_key_desc"))
+                            .fontSize(14)
+                            .lineHeight(22)
+                            .fontColor(this.secondaryTextColor())
+
+                        TextInput(placeholder: this.t("cursor_api_key_placeholder"), text: this.cursorApiKeyDraft)
+                            .width(100.percent)
+                            .height(54)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .borderRadius(18)
+                            .padding(left: 16, right: 16)
+                            .onChange({ value => this.cursorApiKeyDraft = value })
+
+                        if (this.validationMessage != "") {
+                            Text(this.validationMessage)
+                                .fontSize(13)
+                                .fontColor(this.secondaryTextColor())
+                                .width(100.percent)
+                        }
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 18)
+                    .backgroundColor(this.surfaceColor())
+                    .borderRadius(24)
+
+                    Button(this.t("save"))
+                        .width(100.percent)
+                        .height(50)
+                        .backgroundColor(this.navBarColor())
+                        .fontColor(this.primaryTextColor())
+                        .fontSize(16)
+                        .borderRadius(16)
+                        .onClick({ _ => this.saveCursorApiKey() })
+
+                    Button(this.t("cursor_test_connection"))
+                        .width(100.percent)
+                        .height(50)
+                        .backgroundColor(this.mutedSurfaceColor())
+                        .fontColor(this.accentStrongColor())
+                        .fontSize(16)
+                        .borderRadius(16)
+                        .onClick({ _ => this.validateCursorApiKey() })
+                }
+                .width(100.percent)
+                .padding(left: 18, right: 18, top: 18, bottom: 32)
+            }
+            .width(100.percent)
+            .height(100.percent)
+        }
+        .hideTitleBar(true)
+        .backgroundColor(this.pageBackgroundColor())
+    }
+
+    func goBack(): Unit { this.stack.pop(animated: true) }
+    func saveCursorApiKey(): Unit {
+        this.cursorApiKey = this.cursorApiKeyDraft
+        spawn { => dataBoardSet(CURSOR_API_KEY_STORE_KEY, this.cursorApiKeyDraft) }
+        this.validationMessage = this.t("cursor_api_key_saved")
+        this.loadCursorAgents()
+    }
+    func validateCursorApiKey(): Unit {
+        if (this.cursorApiKeyDraft == "") {
+            this.validationMessage = this.t("cursor_api_key_missing")
+            return
+        }
+        this.validationMessage = this.t("cursor_api_key_testing")
+        this.loadCursorAgents()
+    }
+    func loadCursorAgents(): Unit {
+        fetchCursorAgents(
+            this.cursorApiKeyDraft,
+            { items =>
+                spawn(UIThread) {
+                    this.cursorConversations = items
+                    if (items.size > 0) {
+                        let first = items[0]
+                        this.cursorConversationId = first.id
+                        this.cursorConversationTitle = first.title
+                        this.cursorSelectedModelId = "claude-haiku-4.5"
+                        fetchCursorAgentConversation(
+                            this.cursorApiKeyDraft,
+                            first.id,
+                            { messages =>
+                                spawn(UIThread) {
+                                    this.cursorMessages = messages
+                                }
+                            },
+                            { _ => () }
+                        )
+                    }
+                    this.validationMessage = "${this.t("cursor_api_key_valid")} (${items.size})"
+                }
+            },
+            { message =>
+                spawn(UIThread) {
+                    this.validationMessage = message
+                }
+            }
+        )
+    }
+    func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
+    func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
+    func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
+    func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
+    func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
+    func navBarColor(): Int64 { appThemeColor("navBar", this.isDarkTheme()) }
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
     func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
     func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }

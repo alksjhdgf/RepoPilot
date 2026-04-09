@@ -178,7 +178,7 @@ func buildCursorAgentSessionsCard(shell: AppShell) {
             .fontColor(shell.accentStrongColor())
             .fontSize(16)
             .borderRadius(14)
-            .onClick({ _ => shell.openPendingPage(shell.t("cursor_upgrade"), shell.t("cursor_connect_pending")) })
+            .onClick({ _ => shell.openCursorAccountSettings() })
     }
     .width(100.percent)
     .padding(left: 20, right: 20, top: 22, bottom: 22)

@@ -174,6 +174,16 @@ func localizedEn(key: String): String {
     else if (key == "cursor_models_versatile_group") { "Versatile and highly intelligent" }
     else if (key == "cursor_default_model") { "Claude Haiku 4.5" }
     else if (key == "cursor_now") { "Now" }
+    else if (key == "cursor_account") { "Cursor Account" }
+    else if (key == "cursor_api_key_title") { "Cursor API key" }
+    else if (key == "cursor_api_key_desc") { "Paste the API key from your Cursor dashboard. RepoPilot stores it locally on this device and uses it to fetch your own Cursor agents." }
+    else if (key == "cursor_api_key_placeholder") { "Paste your Cursor API key" }
+    else if (key == "cursor_test_connection") { "Test connection" }
+    else if (key == "cursor_api_key_saved") { "API key saved locally." }
+    else if (key == "cursor_api_key_missing") { "Paste an API key first." }
+    else if (key == "cursor_api_key_testing") { "Testing Cursor connection..." }
+    else if (key == "cursor_api_key_valid") { "Cursor connection succeeded" }
+    else if (key == "save") { "Save" }
     else if (key == "system") { "Automatic" }
     else if (key == "light") { "Light" }
     else if (key == "dark") { "Dark" }
@@ -376,5 +386,15 @@ func localizedZh(key: String): String {
     else if (key == "cursor_models_versatile_group") { "通用且能力更强" }
     else if (key == "cursor_default_model") { "Claude Haiku 4.5" }
     else if (key == "cursor_now") { "刚刚" }
+    else if (key == "cursor_account") { "Cursor 账号" }
+    else if (key == "cursor_api_key_title") { "Cursor API key" }
+    else if (key == "cursor_api_key_desc") { "粘贴你在 Cursor Dashboard 中生成的 API key。RepoPilot 只会把它保存在当前设备上，并用它请求你自己的 Cursor agents。" }
+    else if (key == "cursor_api_key_placeholder") { "粘贴你的 Cursor API key" }
+    else if (key == "cursor_test_connection") { "测试连接" }
+    else if (key == "cursor_api_key_saved") { "API key 已保存到本地。" }
+    else if (key == "cursor_api_key_missing") { "请先粘贴 API key。" }
+    else if (key == "cursor_api_key_testing") { "正在测试 Cursor 连接..." }
+    else if (key == "cursor_api_key_valid") { "Cursor 连接成功" }
+    else if (key == "save") { "保存" }
     else { localizedEn(key) }
 }

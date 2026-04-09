@@ -1,0 +1,216 @@
+package ohos_app_cangjie_entry.services.cursor
+
+import std.collection.{ArrayList, HashMap}
+import kit.NetworkKit.*
+import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
+import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot}
+import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
+
+let CURSOR_API_BASE = "https://api.cursor.com/v0"
+
+func extractCursorStringField(payload: String, key: String): String {
+    let marker = "\"${key}\":"
+    match (payload.indexOf(marker)) {
+        case Some(start) =>
+            let afterMarker = Int64(start + marker.size)
+            let remainder = payload[afterMarker..payload.size]
+            match (remainder.indexOf("\"")) {
+                case Some(openOffset) =>
+                    let valueStart = Int64(afterMarker + openOffset + 1)
+                    let tail = payload[valueStart..payload.size]
+                    match (tail.indexOf("\"")) {
+                        case Some(closeOffset) => payload[valueStart..Int64(valueStart + closeOffset)]
+                        case None => ""
+                    }
+                case None => ""
+            }
+        case None => ""
+    }
+}
+
+func extractCursorObjectArrayField(payload: String, key: String): ArrayList<String> {
+    let items = ArrayList<String>()
+    let marker = "\"${key}\":["
+    match (payload.indexOf(marker)) {
+        case Some(start) =>
+            let begin = Int64(start + marker.size)
+            let tail = payload[begin..payload.size]
+            var objectStart = -1
+            var depth = 0
+            var inString = false
+            var escaping = false
+            for (index in 0..tail.size - 1) {
+                let current = tail[index]
+                if (escaping) {
+                    escaping = false
+                    continue
+                }
+                if (current == UInt8(UInt32(r'\\'))) {
+                    escaping = true
+                    continue
+                }
+                if (current == UInt8(UInt32(r'"'))) {
+                    inString = !inString
+                    continue
+                }
+                if (inString) {
+                    continue
+                }
+                if (current == UInt8(UInt32(r'{'))) {
+                    if (depth == 0) {
+                        objectStart = index
+                    }
+                    depth++
+                    continue
+                }
+                if (current == UInt8(UInt32(r'}'))) {
+                    depth--
+                    if (depth == 0 && objectStart >= 0) {
+                        items.add(tail[objectStart..index + 1])
+                        objectStart = -1
+                    }
+                    continue
+                }
+                if (depth == 0 && current == UInt8(UInt32(r']'))) {
+                    break
+                }
+            }
+        case None => ()
+    }
+    items
+}
+
+func requestCursorJson(
+    url: String,
+    apiKey: String,
+    onSuccess: (String) -> Unit,
+    onFailure: (String) -> Unit,
+    method!: RequestMethod = RequestMethod.Get,
+    payload!: String = ""
+): Unit {
+    logInfo("CursorApi", "Requesting ${url}")
+    let httpRequest = createHttp()
+    let headers = HashMap<String, String>()
+    headers.add("Authorization", "Bearer ${apiKey}")
+    if (payload != "") {
+        headers.add("Content-Type", "application/json")
+    }
+    let options = HttpRequestOptions(
+        method: method,
+        header: headers,
+        extraData: HttpData.StringData(payload),
+        expectDataType: HttpDataType.StringValue
+    )
+    httpRequest.request(
+        url,
+        options,
+        {
+            err, resp =>
+            if (let Some(networkError) <- err) {
+                httpRequest.destroy()
+                logError("CursorApi", "Request failed: ${networkError.code} ${networkError.message}")
+                onFailure("Cursor network error ${networkError.code}: ${networkError.message}")
+                return
+            }
+            if (let Some(response) <- resp) {
+                let body = match (response.result) {
+                    case HttpData.StringData(content) => content
+                    case _ => ""
+                }
+                httpRequest.destroy()
+                logDebug("CursorApi", "Response ${response.responseCode} from ${url}")
+                if (response.responseCode >= 200u32 && response.responseCode < 300u32) {
+                    onSuccess(body)
+                } else {
+                    let message = extractCursorStringField(body, "message")
+                    if (message == "") {
+                        onFailure("Cursor API ${response.responseCode}")
+                    } else {
+                        onFailure("Cursor API ${response.responseCode}: ${message}")
+                    }
+                }
+                return
+            }
+            httpRequest.destroy()
+            logWarn("CursorApi", "Cursor returned no response for ${url}")
+            onFailure("Cursor returned no response.")
+        }
+    )
+}
+
+/**
+ * 拉取当前账号下的 Cursor agents 列表，并映射为应用内的会话摘要。
+ * Loads Cursor background agents and maps them into conversation summaries for the client.
+ */
+public func fetchCursorAgents(
+    apiKey: String,
+    onSuccess: (ArrayList<CursorConversationSnapshot>) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestCursorJson(
+        "${CURSOR_API_BASE}/agents",
+        apiKey,
+        { body =>
+            let items = ArrayList<CursorConversationSnapshot>()
+            for (item in extractCursorObjectArrayField(body, "agents")) {
+                let id = extractCursorStringField(item, "id")
+                if (id == "") {
+                    continue
+                }
+                let name = extractCursorStringField(item, "name")
+                let summary = extractCursorStringField(item, "summary")
+                let status = extractCursorStringField(item, "status")
+                let createdAt = extractCursorStringField(item, "createdAt")
+                items.add(
+                    CursorConversationSnapshot(
+                        id,
+                        if (name == "") { id } else { name },
+                        "claude-haiku-4.5",
+                        if (summary == "") { status } else { summary },
+                        if (createdAt == "") { status } else { createdAt }
+                    )
+                )
+            }
+            logInfo("CursorApi", "Loaded ${items.size} Cursor agents.")
+            onSuccess(items)
+        },
+        onFailure
+    )
+}
+
+/**
+ * 拉取指定 Cursor agent 的对话历史。
+ * Loads the message history for a specific Cursor background agent.
+ */
+public func fetchCursorAgentConversation(
+    apiKey: String,
+    agentId: String,
+    onSuccess: (ArrayList<CursorMessageSnapshot>) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestCursorJson(
+        "${CURSOR_API_BASE}/agents/${agentId}/conversation",
+        apiKey,
+        { body =>
+            let items = ArrayList<CursorMessageSnapshot>()
+            for (item in extractCursorObjectArrayField(body, "messages")) {
+                let id = extractCursorStringField(item, "id")
+                let role = extractCursorStringField(item, "type")
+                let text = extractCursorStringField(item, "text")
+                if (id == "" || text == "") {
+                    continue
+                }
+                items.add(
+                    CursorMessageSnapshot(
+                        id,
+                        if (role == "assistant_message") { "assistant" } else { "user" },
+                        text
+                    )
+                )
+            }
+            logInfo("CursorApi", "Loaded ${items.size} Cursor messages for ${agentId}.")
+            onSuccess(items)
+        },
+        onFailure
+    )
+}

@@ -14,6 +14,7 @@ import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAut
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
 import ohos_app_cangjie_entry.services.cursor.{defaultCursorConversations, defaultCursorModels, defaultCursorSuggestions, findCursorConversationTitle, findCursorModelTitle, messagesForCursorConversation, modelForCursorConversation}
+import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorAgents}
 import ohos_app_cangjie_entry.services.github.{deserializeGitHubStoredSession, extractUrlQueryParameter, serializeGitHubStoredSession}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
@@ -22,6 +23,7 @@ import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 let GITHUB_SESSION_STORE_KEY = "github_auth_session"
 let THEME_PREFERENCE_STORE_KEY = "theme_preference"
 let LANGUAGE_PREFERENCE_STORE_KEY = "language_preference"
+let CURSOR_API_KEY_STORE_KEY = "cursor_api_key"
 
 @Component
 public class AppShell {
@@ -161,6 +163,9 @@ public class AppShell {
 
     @Provide
     var cursorMenuActionMessage: String = ""
+
+    @Provide
+    var cursorApiKey: String = ""
 
     @State
     var authCheckingToken: Bool = false
@@ -688,6 +693,8 @@ public class AppShell {
         if (storedLanguage == "system" || storedLanguage == "en" || storedLanguage == "zh") {
             this.languagePreference = storedLanguage
         }
+
+        this.cursorApiKey = dataBoardGet(CURSOR_API_KEY_STORE_KEY)
     }
 
     func handleTabTap(tab: String): Unit {
@@ -699,6 +706,9 @@ public class AppShell {
             this.activeTab = tab
             this.showWorkplacePicker = false
         })
+        if (tab == "copilot") {
+            this.refreshCursorConversations()
+        }
     }
 
     func toggleWorkplacePicker(show: Bool): Unit {
@@ -839,6 +849,8 @@ public class AppShell {
     func visibleCursorModels(): ArrayList<CursorModelSnapshot> { this.cursorModels }
     func visibleCursorSuggestions(): ArrayList<CursorPromptSuggestionSnapshot> { this.cursorSuggestions }
     func hasCursorConversations(): Bool { this.cursorConversations.size > 0 }
+    func hasCursorApiKey(): Bool { this.cursorApiKey != "" }
+    func cursorApiKeyValue(): String { this.cursorApiKey }
     func currentCursorConversationTitle(): String {
         if (this.cursorConversationTitle != "") {
             return this.cursorConversationTitle
@@ -1076,6 +1088,67 @@ public class AppShell {
     }
 
     /**
+     * 如果用户已经提供了 Cursor API key，则用真实 agents 列表覆盖本地演示会话。
+     * Replaces local demo conversations with live Cursor agents once the user has provided an API key.
+     */
+    func refreshCursorConversations(): Unit {
+        if (this.cursorApiKey == "") {
+            return
+        }
+        fetchCursorAgents(
+            this.cursorApiKey,
+            { items => this.applyCursorConversations(items) },
+            { message =>
+                this.runOnUi({
+                    =>
+                    this.cursorMenuActionMessage = message
+                })
+            }
+        )
+    }
+
+    func refreshSelectedCursorConversation(): Unit {
+        if (this.cursorApiKey == "" || this.cursorConversationId == "") {
+            return
+        }
+        fetchCursorAgentConversation(
+            this.cursorApiKey,
+            this.cursorConversationId,
+            { items => this.applyCursorConversationMessages(items) },
+            { message =>
+                this.runOnUi({
+                    =>
+                    this.cursorMenuActionMessage = message
+                })
+            }
+        )
+    }
+
+    func applyCursorConversations(items: ArrayList<CursorConversationSnapshot>): Unit {
+        this.runOnUi({
+            =>
+            if (items.size > 0) {
+                this.cursorConversations = items
+                if (this.cursorConversationId == "") {
+                    this.cursorConversationId = items[0].id
+                    this.cursorConversationTitle = items[0].title
+                }
+                this.refreshSelectedCursorConversation()
+            } else {
+                this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+                this.cursorMessages = ArrayList<CursorMessageSnapshot>()
+            }
+        })
+    }
+
+    func applyCursorConversationMessages(items: ArrayList<CursorMessageSnapshot>): Unit {
+        this.runOnUi({
+            =>
+            this.cursorMessages = items
+        })
+    }
+
+    /**
      * 切换当前会话上下文并装载对应的本地消息历史。
      * Switches the active Cursor conversation and loads its local message history.
      */
@@ -1147,6 +1220,7 @@ public class AppShell {
 
     func openCursorConversation(conversationId: String): Unit {
         this.selectCursorConversation(conversationId)
+        this.refreshSelectedCursorConversation()
         this.stack.pushPath(NavPathInfo(name: "cursorConversation", param: ""), options: NavigationOptions(animated: true))
     }
 
@@ -1156,6 +1230,10 @@ public class AppShell {
 
     func openCursorModelPicker(): Unit {
         this.stack.pushPath(NavPathInfo(name: "cursorModelPicker", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openCursorAccountSettings(): Unit {
+        this.stack.pushPath(NavPathInfo(name: "cursorAccountSettings", param: ""), options: NavigationOptions(animated: true))
     }
 
     func openRepository(repositoryId: String): Unit {

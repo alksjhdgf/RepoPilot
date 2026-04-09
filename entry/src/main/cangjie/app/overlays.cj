@@ -83,10 +83,10 @@ func buildAuthConnected(shell: AppShell) {
 @Builder
 func buildFloatingNavigation(shell: AppShell) {
     Row(space: 8) {
-        buildNavItem(shell, "home", shell.t("home"), shell.t("home_short"))
-        buildNavItem(shell, "inbox", shell.t("inbox"), shell.t("inbox_short"))
-        buildNavItem(shell, "explore", shell.t("explore"), shell.t("explore_short"))
-        buildNavItem(shell, "copilot", shell.t("cursor"), shell.t("cursor_short"))
+        buildNavItem(shell, "home", "home_short")
+        buildNavItem(shell, "inbox", "inbox_short")
+        buildNavItem(shell, "explore", "explore_short")
+        buildNavItem(shell, "copilot", "cursor_short")
     }
     .width(84.percent)
     .padding(left: 8, right: 8, top: 8, bottom: 8)
@@ -97,10 +97,10 @@ func buildFloatingNavigation(shell: AppShell) {
 }
 
 @Builder
-func buildNavItem(shell: AppShell, id: String, title: String, shortTitle: String) {
+func buildNavItem(shell: AppShell, id: String, shortTitleKey: String) {
     Button() {
         Column(space: 4) {
-            Text(shortTitle).fontSize(14).fontWeight(FontWeight.Medium)
+            Text(shell.t(shortTitleKey)).fontSize(14).fontWeight(FontWeight.Medium)
                 .fontColor(if (shell.isActiveTab(id)) { shell.primaryTextColor() } else { shell.secondaryTextColor() })
         }
         .width(100.percent)

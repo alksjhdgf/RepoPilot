@@ -19,6 +19,147 @@ func localizedEn(key: String): String {
     else if (key == "workplace_unified") { "Unified Workplace" }
     else if (key == "workplace_unified_desc") { "Blend repository work with agent tasks." }
     else if (key == "workplace_unified_hero") { "Coordinate work across repos." }
+    else if (key == "home") { "Home" }
+    else if (key == "home_short") { "Home" }
+    else if (key == "inbox") { "Inbox" }
+    else if (key == "inbox_short") { "Inbox" }
+    else if (key == "explore") { "Explore" }
+    else if (key == "explore_short") { "Explore" }
+    else if (key == "copilot") { "Copilot" }
+    else if (key == "cursor") { "Cursor" }
+    else if (key == "cursor_short") { "Cursor" }
+    else if (key == "all_workplaces") { "All Workplaces" }
+    else if (key == "my_work") { "My Work" }
+    else if (key == "favorites") { "Favorites" }
+    else if (key == "shortcuts") { "Shortcuts" }
+    else if (key == "recent") { "Recent" }
+    else if (key == "issues") { "Issues" }
+    else if (key == "pull_requests") { "Pull Requests" }
+    else if (key == "discussions") { "Discussions" }
+    else if (key == "projects") { "Projects" }
+    else if (key == "top_repositories") { "Top Repositories" }
+    else if (key == "organizations") { "Organizations" }
+    else if (key == "starred") { "Starred" }
+    else if (key == "favorites_empty") { "Add favorite repositories here to have quick access at any time, without having to search" }
+    else if (key == "add_favorites") { "Add Favorites" }
+    else if (key == "shortcuts_title") { "The things you need, one tap away" }
+    else if (key == "shortcuts_desc") { "Fast access to your lists of Issues, Pull Requests, or Discussions." }
+    else if (key == "get_started") { "Get started" }
+    else if (key == "recent_desc") { "Recent activity from GitHub will surface here. Open issues and pull requests you touched last appear first." }
+    else if (key == "recent_empty") { "Issues and Pull Requests that you've interacted with recently will appear here." }
+    else if (key == "inbox_subtitle") { "Prioritize what needs your attention next." }
+    else if (key == "explore_subtitle") { "Find code, trends and queues worth opening." }
+    else if (key == "popular") { "Popular" }
+    else if (key == "agent_sessions") { "Agent sessions" }
+    else if (key == "chats") { "Chats" }
+    else if (key == "cursor_agent_title") { "Delegate tasks to Cursor cloud agents" }
+    else if (key == "cursor_agent_desc") { "Let Cursor work independently in the background to complete tasks, then return to review the results." }
+    else if (key == "cursor_upgrade") { "Connect Cursor account" }
+    else if (key == "cursor_no_chats") { "No chats yet" }
+    else if (key == "cursor_no_chats_desc") { "Ask Cursor anything to start your first chat." }
+    else if (key == "cursor_new_chat") { "New Chat" }
+    else if (key == "cursor_new_conversation") { "New conversation" }
+    else if (key == "cursor_notice") { "uses AI. Check for mistakes." }
+    else if (key == "cursor_empty_conversation") { "Start with a suggestion below, or open a saved conversation." }
+    else if (key == "cursor_you") { "You" }
+    else if (key == "cursor_ask") { "Ask Cursor" }
+    else if (key == "cursor_local_agent_reply") { "Local demo reply: the Cursor API has not been connected yet, so this conversation is using on-device placeholder responses." }
+    else if (key == "cursor_new_agent_session") { "New Agent Session" }
+    else if (key == "cursor_new_agent_session_pending") { "Agent session creation will be connected after Cursor API access is in place." }
+    else if (key == "cursor_view_all_conversations") { "View all conversations" }
+    else if (key == "cursor_all_conversations") { "All conversations" }
+    else if (key == "cursor_models") { "Models" }
+    else if (key == "cursor_models_fast_group") { "Fast and cost-efficient" }
+    else if (key == "cursor_models_versatile_group") { "Versatile and highly intelligent" }
+    else if (key == "cursor_default_model") { "Claude Haiku 4.5" }
+    else if (key == "cursor_now") { "Now" }
+    else if (key == "cursor_account") { "Cursor Account" }
+    else if (key == "cursor_api_key_title") { "Cursor API key" }
+    else if (key == "cursor_api_key_desc") { "Paste the API key from your Cursor dashboard. RepoPilot stores it locally on this device and uses it to fetch your own Cursor agents." }
+    else if (key == "cursor_api_key_placeholder") { "Paste your Cursor API key" }
+    else if (key == "cursor_test_connection") { "Test connection" }
+    else if (key == "cursor_api_key_saved") { "API key saved locally." }
+    else if (key == "cursor_api_key_missing") { "Paste an API key first." }
+    else if (key == "cursor_api_key_testing") { "Testing Cursor connection..." }
+    else if (key == "cursor_api_key_valid") { "Cursor connection succeeded" }
+    else if (key == "cursor_repository_required") { "Open or select a repository before starting a Cursor agent." }
+    else if (key == "cursor_agent_started") { "Cursor agent started. You can return later to inspect progress." }
+    else if (key == "cursor_followup_sent") { "Follow-up sent to Cursor agent." }
+    else if (key == "cursor_subtitle") { "Use Cursor cloud agents to manage sessions and chats." }
+    else if (key == "appearance") { "Appearance" }
+    else if (key == "language") { "Language" }
+    else if (key == "settings") { "Settings" }
+    else if (key == "app_language") { "App Language" }
+    else if (key == "app_icon") { "App Icon" }
+    else if (key == "default_option") { "Default" }
+    else if (key == "notifications") { "Notifications" }
+    else if (key == "setup_needed") { "Setup Needed" }
+    else if (key == "code_options") { "Code Options" }
+    else if (key == "external_links") { "External Links" }
+    else if (key == "share_feedback") { "Share Feedback" }
+    else if (key == "terms_of_service") { "Terms of Service" }
+    else if (key == "privacy_policy") { "Privacy Policy & Analytics" }
+    else if (key == "feature_preview") { "Feature Preview" }
+    else if (key == "manage_accounts") { "Manage Accounts" }
+    else if (key == "app_lock") { "App Lock" }
+    else if (key == "clear_cache") { "Clear cache" }
+    else if (key == "repositories") { "Repositories" }
+    else if (key == "system") { "Automatic" }
+    else if (key == "light") { "Light" }
+    else if (key == "dark") { "Dark" }
+    else if (key == "lang_en") { "English" }
+    else if (key == "lang_zh") { "Chinese" }
+    else if (key == "save") { "Save" }
+    else if (key == "add_short") { "+" }
+    else if (key == "find_short") { "⌕" }
+    else if (key == "sign_in_github") { "Sign in to GitHub.com" }
+    else if (key == "sign_in_enterprise") { "Sign in with GitHub Enterprise" }
+    else if (key == "auth_enterprise_hint") { "Requires server version 3.10.0 or higher." }
+    else if (key == "auth_terms") { "By signing in you accept our Terms of Use and Privacy Policy." }
+    else if (key == "auth_subtitle") { "Use your account to continue to RepoPilot." }
+    else if (key == "auth_web_title") { "github.com" }
+    else if (key == "auth_web_subtitle") { "Sign in to GitHub to continue to RepoPilot." }
+    else if (key == "auth_connected_title") { "Connection ready" }
+    else if (key == "auth_connected_body") { "Your workplace is ready to open." }
+    else if (key == "auth_review_access") { "Review access before running tasks." }
+    else if (key == "continue_to_workplace") { "Continue to workplace" }
+    else if (key == "workplace") { "Workplace" }
+    else if (key == "back") { "Back" }
+    else if (key == "repository_detail") { "Repository Detail" }
+    else if (key == "issue_detail") { "Issue Detail" }
+    else if (key == "pull_request_detail") { "Pull Request" }
+    else if (key == "create_task") { "Create Task" }
+    else if (key == "task_detail") { "Task Detail" }
+    else if (key == "diff_review") { "Diff Review" }
+    else if (key == "open_issue") { "Open issue" }
+    else if (key == "review_pr") { "Review pull request" }
+    else if (key == "context") { "Context" }
+    else if (key == "status") { "Status" }
+    else if (key == "close_issue") { "Close issue" }
+    else if (key == "comment_issue") { "Comment on issue" }
+    else if (key == "ask_agent") { "Ask agent to handle it" }
+    else if (key == "approve_pr") { "Approve review" }
+    else if (key == "request_changes") { "Request changes" }
+    else if (key == "comment_pr") { "Comment on pull request" }
+    else if (key == "fork_repository") { "Fork repository" }
+    else if (key == "delete_repository") { "Delete repository" }
+    else if (key == "prompt_draft") { "Prompt draft" }
+    else if (key == "execution_mode") { "Execution mode" }
+    else if (key == "validation_scope") { "Validation scope" }
+    else if (key == "output_target") { "Output target" }
+    else if (key == "create_task_action") { "Create task" }
+    else if (key == "validation_result") { "Validation result" }
+    else if (key == "open_diff_review") { "Open diff review" }
+    else if (key == "review_summary") { "Review summary" }
+    else if (key == "draft_pr_title") { "Draft PR title" }
+    else if (key == "draft_pr_body") { "Draft PR body" }
+    else if (key == "draft_pr_pending") { "Draft pull request is still pending." }
+    else if (key == "provider_github") { "GitHub" }
+    else if (key == "account_ready") { "Connected" }
+    else if (key == "trending_repositories") { "Trending Repositories" }
+    else if (key == "discover_repositories") { "Discover active codebases worth watching." }
+    else if (key == "awesome_lists") { "Awesome Lists" }
+    else if (key == "curated_collections") { "Browse curated collections from the community." }
     else if (key == "repo_mobile") { "github/mobile" }
     else if (key == "repo_mobile_desc") { "Mobile client shell, sign-in flow and release polish." }
     else if (key == "repo_bff") { "github/bff" }
@@ -49,10 +190,6 @@ func localizedEn(key: String): String {
     else if (key == "executor_item_desc") { "Ready to review diff notes and draft a pull request." }
     else if (key == "restricted_item") { "Restricted repo needs a fallback route." }
     else if (key == "restricted_item_desc") { "Keep degraded access paths ready for region-limited GitHub use." }
-    else if (key == "trending_repositories") { "Trending Repositories" }
-    else if (key == "discover_repositories") { "Discover active codebases worth watching." }
-    else if (key == "awesome_lists") { "Awesome Lists" }
-    else if (key == "curated_collections") { "Browse curated collections from the community." }
     else if (key == "task_login_flow") { "Refine login flow handoff" }
     else if (key == "task_login_flow_desc") { "Polish the journey from sign-in to workplace entry." }
     else if (key == "task_login_context") { "Focus on the handoff from auth confirmation into the first useful screen." }
@@ -82,171 +219,6 @@ func localizedEn(key: String): String {
     else if (key == "draft_pr_bff_body") { "Reduce metadata noise and give primary actions a steadier reading order." }
     else if (key == "draft_pr_orchestrator_title") { "Draft PR: align execution checkpoints" }
     else if (key == "draft_pr_orchestrator_body") { "Collapse scattered execution notes into a single review-ready flow." }
-    else if (key == "provider_github") { "GitHub" }
-    else if (key == "account_ready") { "Connected" }
-    else if (key == "home") { "Home" }
-    else if (key == "home_short") { "Home" }
-    else if (key == "inbox") { "Inbox" }
-    else if (key == "inbox_short") { "Inbox" }
-    else if (key == "explore") { "Explore" }
-    else if (key == "explore_short") { "Explore" }
-    else if (key == "profile") { "Profile" }
-    else if (key == "profile_short") { "Profile" }
-    else if (key == "copilot") { "Copilot" }
-    else if (key == "copilot_short") { "Copilot" }
-    else if (key == "cursor") { "Cursor" }
-    else if (key == "cursor_short") { "会话" }
-    else if (key == "recent_repositories") { "Recent Repositories" }
-    else if (key == "recent_tasks") { "Recent Tasks" }
-    else if (key == "see_all") { "See all" }
-    else if (key == "focus_label") { "Focus" }
-    else if (key == "running_tasks") { "Running" }
-    else if (key == "reviews") { "Reviews" }
-    else if (key == "inbox_subtitle") { "Prioritize what needs your attention next." }
-    else if (key == "explore_subtitle") { "Find code, trends and queues worth opening." }
-    else if (key == "profile_subtitle") { "Tune language, appearance and account posture." }
-    else if (key == "copilot_subtitle") { "Prepare agent integrations and future Copilot workflows." }
-    else if (key == "cursor_subtitle") { "Use Cursor cloud agents to manage sessions and chats." }
-    else if (key == "settings_subtitle") { "Adjust runtime preferences and account posture." }
-    else if (key == "profile_account_prefix") { "Account" }
-    else if (key == "appearance") { "Appearance" }
-    else if (key == "language") { "Language" }
-    else if (key == "settings") { "Settings" }
-    else if (key == "app_language") { "App Language" }
-    else if (key == "app_icon") { "App Icon" }
-    else if (key == "default_option") { "Default" }
-    else if (key == "notifications") { "Notifications" }
-    else if (key == "setup_needed") { "Setup Needed" }
-    else if (key == "code_options") { "Code Options" }
-    else if (key == "external_links") { "External Links" }
-    else if (key == "share_feedback") { "Share Feedback" }
-    else if (key == "terms_of_service") { "Terms of Service" }
-    else if (key == "privacy_policy") { "Privacy Policy & Analytics" }
-    else if (key == "feature_preview") { "Feature Preview" }
-    else if (key == "manage_accounts") { "Manage Accounts" }
-    else if (key == "app_lock") { "App Lock" }
-    else if (key == "clear_cache") { "Clear cache" }
-    else if (key == "repositories") { "Repositories" }
-    else if (key == "starred") { "Starred" }
-    else if (key == "organizations") { "Organizations" }
-    else if (key == "my_work") { "My Work" }
-    else if (key == "favorites") { "Favorites" }
-    else if (key == "shortcuts") { "Shortcuts" }
-    else if (key == "recent") { "Recent" }
-    else if (key == "discussions") { "Discussions" }
-    else if (key == "projects") { "Projects" }
-    else if (key == "top_repositories") { "Top Repositories" }
-    else if (key == "all_workplaces") { "All Workplaces" }
-    else if (key == "favorites_empty") { "Add favorite repositories here to have quick access at any time, without having to search" }
-    else if (key == "add_favorites") { "Add Favorites" }
-    else if (key == "shortcuts_title") { "The things you need, one tap away" }
-    else if (key == "shortcuts_desc") { "Fast access to your lists of Issues, Pull Requests, or Discussions." }
-    else if (key == "get_started") { "Get started" }
-    else if (key == "recent_desc") { "Recent activity from GitHub will surface here. Open issues and pull requests you touched last appear first." }
-    else if (key == "recent_empty") { "Issues and Pull Requests that you've interacted with recently will appear here." }
-    else if (key == "popular") { "Popular" }
-    else if (key == "copilot_sdk") { "Copilot SDK" }
-    else if (key == "copilot_sdk_desc") { "Prepare authentication, provider switching, and session handling for cloud agent access." }
-    else if (key == "copilot_agent") { "Agent Routing" }
-    else if (key == "copilot_agent_desc") { "Use this tab as the future entry for Copilot requests, task drafts, and agent output." }
-    else if (key == "agent_sessions") { "Agent sessions" }
-    else if (key == "chats") { "Chats" }
-    else if (key == "cursor_agent_title") { "Delegate tasks to Cursor cloud agents" }
-    else if (key == "cursor_agent_desc") { "Let Cursor work independently in the background to complete tasks, then return to review the results." }
-    else if (key == "cursor_upgrade") { "Connect Cursor account" }
-    else if (key == "cursor_connect_pending") { "Cursor account connection is not implemented yet." }
-    else if (key == "cursor_no_chats") { "No chats yet" }
-    else if (key == "cursor_no_chats_desc") { "Ask Cursor anything to start your first chat." }
-    else if (key == "cursor_new_chat") { "New Chat" }
-    else if (key == "cursor_new_conversation") { "New conversation" }
-    else if (key == "cursor_notice") { "uses AI. Check for mistakes." }
-    else if (key == "cursor_empty_conversation") { "Start with a suggestion below, or open a saved conversation." }
-    else if (key == "cursor_you") { "You" }
-    else if (key == "cursor_ask") { "Ask Cursor" }
-    else if (key == "cursor_default_prompt") { "Review the current repository and list the three highest-risk changes." }
-    else if (key == "cursor_local_agent_reply") { "Local demo reply: the Cursor API has not been connected yet, so this conversation is using on-device placeholder responses." }
-    else if (key == "cursor_new_agent_session") { "New Agent Session" }
-    else if (key == "cursor_new_agent_session_pending") { "Agent session creation will be connected after Cursor API access is in place." }
-    else if (key == "cursor_view_all_conversations") { "View all conversations" }
-    else if (key == "cursor_all_conversations") { "All conversations" }
-    else if (key == "cursor_models") { "Models" }
-    else if (key == "cursor_models_fast_group") { "Fast and cost-efficient" }
-    else if (key == "cursor_models_versatile_group") { "Versatile and highly intelligent" }
-    else if (key == "cursor_default_model") { "Claude Haiku 4.5" }
-    else if (key == "cursor_now") { "Now" }
-    else if (key == "cursor_account") { "Cursor Account" }
-    else if (key == "cursor_api_key_title") { "Cursor API key" }
-    else if (key == "cursor_api_key_desc") { "Paste the API key from your Cursor dashboard. RepoPilot stores it locally on this device and uses it to fetch your own Cursor agents." }
-    else if (key == "cursor_api_key_placeholder") { "Paste your Cursor API key" }
-    else if (key == "cursor_test_connection") { "Test connection" }
-    else if (key == "cursor_api_key_saved") { "API key saved locally." }
-    else if (key == "cursor_api_key_missing") { "Paste an API key first." }
-    else if (key == "cursor_api_key_testing") { "Testing Cursor connection..." }
-    else if (key == "cursor_api_key_valid") { "Cursor connection succeeded" }
-    else if (key == "cursor_repository_required") { "Open or select a repository before starting a Cursor agent." }
-    else if (key == "cursor_agent_started") { "Cursor agent started. You can return later to inspect progress." }
-    else if (key == "cursor_followup_sent") { "Follow-up sent to Cursor agent." }
-    else if (key == "save") { "Save" }
-    else if (key == "system") { "Automatic" }
-    else if (key == "light") { "Light" }
-    else if (key == "dark") { "Dark" }
-    else if (key == "lang_en") { "English" }
-    else if (key == "lang_zh") { "Chinese" }
-    else if (key == "sign_in_github") { "Sign in to GitHub.com" }
-    else if (key == "sign_in_enterprise") { "Sign in with GitHub Enterprise" }
-    else if (key == "auth_enterprise_hint") { "Requires server version 3.10.0 or higher." }
-    else if (key == "auth_terms") { "By signing in you accept our Terms of Use and Privacy Policy." }
-    else if (key == "auth_subtitle") { "Use your account to continue to RepoPilot." }
-    else if (key == "auth_web_title") { "github.com" }
-    else if (key == "auth_web_subtitle") { "Sign in to GitHub to continue to RepoPilot." }
-    else if (key == "username_email") { "Username or email address" }
-    else if (key == "password") { "Password" }
-    else if (key == "auth_connected_title") { "Connection ready" }
-    else if (key == "auth_connected_body") { "Your workplace is ready to open." }
-    else if (key == "auth_review_access") { "Review access before running tasks." }
-    else if (key == "continue_to_workplace") { "Continue to workplace" }
-    else if (key == "create_repository") { "Create repository" }
-    else if (key == "sign_out") { "Sign out" }
-    else if (key == "workplace") { "Workplace" }
-    else if (key == "back") { "Back" }
-    else if (key == "repository_detail") { "Repository Detail" }
-    else if (key == "issue_detail") { "Issue Detail" }
-    else if (key == "pull_request_detail") { "Pull Request" }
-    else if (key == "create_task") { "Create Task" }
-    else if (key == "task_detail") { "Task Detail" }
-    else if (key == "diff_review") { "Diff Review" }
-    else if (key == "issues") { "Issues" }
-    else if (key == "pull_requests") { "Pull Requests" }
-    else if (key == "open_issue") { "Open issue" }
-    else if (key == "review_pr") { "Review pull request" }
-    else if (key == "context") { "Context" }
-    else if (key == "status") { "Status" }
-    else if (key == "close_issue") { "Close issue" }
-    else if (key == "comment_issue") { "Comment on issue" }
-    else if (key == "ask_agent") { "Ask agent to handle it" }
-    else if (key == "close_issue_mock") { "Issue close flow is mocked in this build." }
-    else if (key == "comment_issue_mock") { "Issue comment drafted locally." }
-    else if (key == "approve_pr") { "Approve review" }
-    else if (key == "request_changes") { "Request changes" }
-    else if (key == "comment_pr") { "Comment on pull request" }
-    else if (key == "approve_pr_mock") { "Approval note drafted locally." }
-    else if (key == "request_changes_mock") { "Change request note drafted locally." }
-    else if (key == "fork_repository") { "Fork repository" }
-    else if (key == "delete_repository") { "Delete repository" }
-    else if (key == "prompt_draft") { "Prompt draft" }
-    else if (key == "execution_mode") { "Execution mode" }
-    else if (key == "validation_scope") { "Validation scope" }
-    else if (key == "output_target") { "Output target" }
-    else if (key == "create_task_action") { "Create task" }
-    else if (key == "validation_result") { "Validation result" }
-    else if (key == "open_diff_review") { "Open diff review" }
-    else if (key == "review_summary") { "Review summary" }
-    else if (key == "draft_pr_title") { "Draft PR title" }
-    else if (key == "draft_pr_body") { "Draft PR body" }
-    else if (key == "empty_state") { "No items yet." }
-    else if (key == "add_short") { "+" }
-    else if (key == "find_short") { "⌕" }
-    else if (key == "draft_pr_pending") { "Draft pull request is still pending." }
     else { key }
 }
 
@@ -261,84 +233,21 @@ func localizedZh(key: String): String {
     else if (key == "inbox_short") { "收件箱" }
     else if (key == "explore") { "探索" }
     else if (key == "explore_short") { "探索" }
-    else if (key == "profile") { "个人页" }
-    else if (key == "profile_short") { "个人页" }
     else if (key == "copilot") { "Copilot" }
-    else if (key == "copilot_short") { "Copilot" }
     else if (key == "cursor") { "Cursor" }
     else if (key == "cursor_short") { "Cursor" }
-    else if (key == "inbox_subtitle") { "优先处理下一步最值得关注的事项。" }
-    else if (key == "explore_subtitle") { "发现值得打开的代码、趋势和队列。" }
-    else if (key == "profile_subtitle") { "调整语言、外观和账号设置。" }
-    else if (key == "copilot_subtitle") { "为后续 Agent 与 Copilot 工作流做准备。" }
-    else if (key == "cursor_subtitle") { "使用 Cursor 云端 Agent 管理会话与聊天。" }
-    else if (key == "settings_subtitle") { "调整运行时偏好和账号姿态。" }
-    else if (key == "appearance") { "外观" }
-    else if (key == "language") { "语言" }
-    else if (key == "app_language") { "应用语言" }
-    else if (key == "settings") { "设置" }
-    else if (key == "system") { "跟随系统" }
-    else if (key == "light") { "浅色" }
-    else if (key == "dark") { "深色" }
-    else if (key == "lang_en") { "英语" }
-    else if (key == "lang_zh") { "中文" }
-    else if (key == "sign_in_github") { "登录 GitHub.com" }
-    else if (key == "sign_in_enterprise") { "登录 GitHub Enterprise" }
-    else if (key == "auth_enterprise_hint") { "需要 3.10.0 或更高版本服务端。" }
-    else if (key == "auth_terms") { "登录即表示你接受我们的使用条款和隐私政策。" }
-    else if (key == "auth_subtitle") { "使用你的账号继续使用 RepoPilot。" }
-    else if (key == "auth_web_title") { "github.com" }
-    else if (key == "auth_web_subtitle") { "登录 GitHub 以继续使用 RepoPilot。" }
-    else if (key == "auth_connected_title") { "连接已就绪" }
-    else if (key == "auth_connected_body") { "你的工作区已经可以打开。" }
-    else if (key == "auth_review_access") { "在运行任务前检查授权范围。" }
-    else if (key == "continue_to_workplace") { "继续进入工作区" }
-    else if (key == "create_repository") { "创建仓库" }
-    else if (key == "sign_out") { "退出登录" }
-    else if (key == "workplace") { "工作区" }
-    else if (key == "back") { "返回" }
-    else if (key == "repository_detail") { "仓库详情" }
-    else if (key == "issue_detail") { "Issue 详情" }
-    else if (key == "pull_request_detail") { "Pull Request" }
-    else if (key == "create_task") { "创建任务" }
-    else if (key == "task_detail") { "任务详情" }
-    else if (key == "diff_review") { "差异审阅" }
-    else if (key == "issues") { "Issues" }
-    else if (key == "pull_requests") { "Pull Requests" }
-    else if (key == "open_issue") { "打开 Issue" }
-    else if (key == "review_pr") { "审阅 Pull Request" }
-    else if (key == "context") { "上下文" }
-    else if (key == "status") { "状态" }
-    else if (key == "close_issue") { "关闭 Issue" }
-    else if (key == "comment_issue") { "评论 Issue" }
-    else if (key == "ask_agent") { "交给 Agent 处理" }
-    else if (key == "approve_pr") { "批准审阅" }
-    else if (key == "request_changes") { "请求修改" }
-    else if (key == "comment_pr") { "评论 Pull Request" }
-    else if (key == "fork_repository") { "Fork 仓库" }
-    else if (key == "delete_repository") { "删除仓库" }
-    else if (key == "prompt_draft") { "任务草稿" }
-    else if (key == "execution_mode") { "执行模式" }
-    else if (key == "validation_scope") { "验证范围" }
-    else if (key == "output_target") { "输出目标" }
-    else if (key == "create_task_action") { "创建任务" }
-    else if (key == "validation_result") { "验证结果" }
-    else if (key == "open_diff_review") { "打开差异审阅" }
-    else if (key == "review_summary") { "审阅摘要" }
-    else if (key == "draft_pr_title") { "Draft PR 标题" }
-    else if (key == "draft_pr_body") { "Draft PR 内容" }
-    else if (key == "empty_state") { "暂无内容。" }
-    else if (key == "repositories") { "仓库" }
-    else if (key == "starred") { "已收藏" }
-    else if (key == "organizations") { "组织" }
+    else if (key == "all_workplaces") { "全部工作区" }
     else if (key == "my_work") { "我的工作" }
     else if (key == "favorites") { "收藏" }
     else if (key == "shortcuts") { "快捷入口" }
     else if (key == "recent") { "最近" }
+    else if (key == "issues") { "问题" }
+    else if (key == "pull_requests") { "拉取请求" }
     else if (key == "discussions") { "讨论" }
     else if (key == "projects") { "项目" }
     else if (key == "top_repositories") { "重点仓库" }
-    else if (key == "all_workplaces") { "全部工作区" }
+    else if (key == "organizations") { "组织" }
+    else if (key == "starred") { "已收藏" }
     else if (key == "favorites_empty") { "将常用仓库加入收藏后，就能随时快速进入，无需再次搜索。" }
     else if (key == "add_favorites") { "添加收藏" }
     else if (key == "shortcuts_title") { "常用内容，一键直达" }
@@ -346,30 +255,14 @@ func localizedZh(key: String): String {
     else if (key == "get_started") { "开始使用" }
     else if (key == "recent_desc") { "GitHub 上最近的活动会显示在这里，你最近接触过的 Issue 和 Pull Request 会优先出现。" }
     else if (key == "recent_empty") { "你最近交互过的 Issues 和 Pull Requests 会显示在这里。" }
+    else if (key == "inbox_subtitle") { "优先处理下一步最值得关注的事项。" }
+    else if (key == "explore_subtitle") { "发现值得打开的代码、趋势和队列。" }
     else if (key == "popular") { "热门" }
-    else if (key == "app_icon") { "应用图标" }
-    else if (key == "default_option") { "默认" }
-    else if (key == "notifications") { "通知" }
-    else if (key == "setup_needed") { "待设置" }
-    else if (key == "code_options") { "代码选项" }
-    else if (key == "external_links") { "外部链接" }
-    else if (key == "share_feedback") { "分享反馈" }
-    else if (key == "terms_of_service") { "服务条款" }
-    else if (key == "privacy_policy") { "隐私政策与分析" }
-    else if (key == "feature_preview") { "功能预览" }
-    else if (key == "manage_accounts") { "管理账号" }
-    else if (key == "app_lock") { "应用锁" }
-    else if (key == "clear_cache") { "清理缓存" }
-    else if (key == "copilot_sdk") { "Copilot SDK" }
-    else if (key == "copilot_sdk_desc") { "为云端 Agent 接入准备认证、Provider 切换和会话处理。" }
-    else if (key == "copilot_agent") { "Agent 路由" }
-    else if (key == "copilot_agent_desc") { "后续从这里进入 Copilot 请求、任务草稿和 Agent 输出。" }
     else if (key == "agent_sessions") { "Agent 会话" }
     else if (key == "chats") { "聊天" }
     else if (key == "cursor_agent_title") { "将任务委派给 Cursor 云端 Agent" }
     else if (key == "cursor_agent_desc") { "让 Cursor 在后台独立完成任务，随后回到应用中查看结果。" }
     else if (key == "cursor_upgrade") { "连接 Cursor 账号" }
-    else if (key == "cursor_connect_pending") { "Cursor 账号连接能力暂未实现。" }
     else if (key == "cursor_no_chats") { "还没有聊天" }
     else if (key == "cursor_no_chats_desc") { "向 Cursor 提问即可开始你的第一段对话。" }
     else if (key == "cursor_new_chat") { "新建对话" }
@@ -378,7 +271,6 @@ func localizedZh(key: String): String {
     else if (key == "cursor_empty_conversation") { "从下方建议开始，或者打开一个已保存的会话。" }
     else if (key == "cursor_you") { "你" }
     else if (key == "cursor_ask") { "向 Cursor 提问" }
-    else if (key == "cursor_default_prompt") { "审查当前仓库，并列出风险最高的三处变更。" }
     else if (key == "cursor_local_agent_reply") { "本地演示回复：当前还没有接入真实 Cursor API，所以这段对话使用的是本地占位响应。" }
     else if (key == "cursor_new_agent_session") { "新建 Agent 会话" }
     else if (key == "cursor_new_agent_session_pending") { "等接入 Cursor API 之后，这里会连接真实的 Agent 会话创建流程。" }
@@ -401,6 +293,71 @@ func localizedZh(key: String): String {
     else if (key == "cursor_repository_required") { "请先打开或选中一个仓库，再启动 Cursor agent。" }
     else if (key == "cursor_agent_started") { "Cursor agent 已启动，你可以稍后回来查看进度。" }
     else if (key == "cursor_followup_sent") { "已向 Cursor agent 发送 follow-up。" }
+    else if (key == "cursor_subtitle") { "使用 Cursor 云端 Agent 管理会话与聊天。" }
+    else if (key == "appearance") { "外观" }
+    else if (key == "language") { "语言" }
+    else if (key == "settings") { "设置" }
+    else if (key == "app_language") { "应用语言" }
+    else if (key == "app_icon") { "应用图标" }
+    else if (key == "default_option") { "默认" }
+    else if (key == "notifications") { "通知" }
+    else if (key == "setup_needed") { "待设置" }
+    else if (key == "code_options") { "代码选项" }
+    else if (key == "external_links") { "外部链接" }
+    else if (key == "share_feedback") { "分享反馈" }
+    else if (key == "terms_of_service") { "服务条款" }
+    else if (key == "privacy_policy") { "隐私政策与分析" }
+    else if (key == "feature_preview") { "功能预览" }
+    else if (key == "manage_accounts") { "管理账号" }
+    else if (key == "app_lock") { "应用锁" }
+    else if (key == "clear_cache") { "清理缓存" }
+    else if (key == "repositories") { "仓库" }
+    else if (key == "system") { "跟随系统" }
+    else if (key == "light") { "浅色" }
+    else if (key == "dark") { "深色" }
+    else if (key == "lang_en") { "英语" }
+    else if (key == "lang_zh") { "中文" }
     else if (key == "save") { "保存" }
+    else if (key == "sign_in_github") { "登录 GitHub.com" }
+    else if (key == "sign_in_enterprise") { "登录 GitHub Enterprise" }
+    else if (key == "auth_enterprise_hint") { "需要 3.10.0 或更高版本服务端。" }
+    else if (key == "auth_terms") { "登录即表示你接受我们的使用条款和隐私政策。" }
+    else if (key == "auth_subtitle") { "使用你的账号继续使用 RepoPilot。" }
+    else if (key == "auth_web_title") { "github.com" }
+    else if (key == "auth_web_subtitle") { "登录 GitHub 以继续使用 RepoPilot。" }
+    else if (key == "auth_connected_title") { "连接已就绪" }
+    else if (key == "auth_connected_body") { "你的工作区已经可以打开。" }
+    else if (key == "auth_review_access") { "在运行任务前检查授权范围。" }
+    else if (key == "continue_to_workplace") { "继续进入工作区" }
+    else if (key == "workplace") { "工作区" }
+    else if (key == "back") { "返回" }
+    else if (key == "repository_detail") { "仓库详情" }
+    else if (key == "issue_detail") { "Issue 详情" }
+    else if (key == "pull_request_detail") { "Pull Request" }
+    else if (key == "create_task") { "创建任务" }
+    else if (key == "task_detail") { "任务详情" }
+    else if (key == "diff_review") { "差异审阅" }
+    else if (key == "open_issue") { "打开 Issue" }
+    else if (key == "review_pr") { "审阅 Pull Request" }
+    else if (key == "context") { "上下文" }
+    else if (key == "status") { "状态" }
+    else if (key == "close_issue") { "关闭 Issue" }
+    else if (key == "comment_issue") { "评论 Issue" }
+    else if (key == "ask_agent") { "交给 Agent 处理" }
+    else if (key == "approve_pr") { "批准审阅" }
+    else if (key == "request_changes") { "请求修改" }
+    else if (key == "comment_pr") { "评论 Pull Request" }
+    else if (key == "fork_repository") { "Fork 仓库" }
+    else if (key == "delete_repository") { "删除仓库" }
+    else if (key == "prompt_draft") { "任务草稿" }
+    else if (key == "execution_mode") { "执行模式" }
+    else if (key == "validation_scope") { "验证范围" }
+    else if (key == "output_target") { "输出目标" }
+    else if (key == "create_task_action") { "创建任务" }
+    else if (key == "validation_result") { "验证结果" }
+    else if (key == "open_diff_review") { "打开差异审阅" }
+    else if (key == "review_summary") { "审阅摘要" }
+    else if (key == "draft_pr_title") { "Draft PR 标题" }
+    else if (key == "draft_pr_body") { "Draft PR 内容" }
     else { localizedEn(key) }
 }

@@ -154,9 +154,26 @@ func localizedEn(key: String): String {
     else if (key == "cursor_agent_title") { "Delegate tasks to Cursor cloud agents" }
     else if (key == "cursor_agent_desc") { "Let Cursor work independently in the background to complete tasks, then return to review the results." }
     else if (key == "cursor_upgrade") { "Connect Cursor account" }
+    else if (key == "cursor_connect_pending") { "Cursor account connection is not implemented yet." }
     else if (key == "cursor_no_chats") { "No chats yet" }
     else if (key == "cursor_no_chats_desc") { "Ask Cursor anything to start your first chat." }
     else if (key == "cursor_new_chat") { "New Chat" }
+    else if (key == "cursor_new_conversation") { "New conversation" }
+    else if (key == "cursor_notice") { "uses AI. Check for mistakes." }
+    else if (key == "cursor_empty_conversation") { "Start with a suggestion below, or open a saved conversation." }
+    else if (key == "cursor_you") { "You" }
+    else if (key == "cursor_ask") { "Ask Cursor" }
+    else if (key == "cursor_default_prompt") { "Review the current repository and list the three highest-risk changes." }
+    else if (key == "cursor_local_agent_reply") { "Local demo reply: the Cursor API has not been connected yet, so this conversation is using on-device placeholder responses." }
+    else if (key == "cursor_new_agent_session") { "New Agent Session" }
+    else if (key == "cursor_new_agent_session_pending") { "Agent session creation will be connected after Cursor API access is in place." }
+    else if (key == "cursor_view_all_conversations") { "View all conversations" }
+    else if (key == "cursor_all_conversations") { "All conversations" }
+    else if (key == "cursor_models") { "Models" }
+    else if (key == "cursor_models_fast_group") { "Fast and cost-efficient" }
+    else if (key == "cursor_models_versatile_group") { "Versatile and highly intelligent" }
+    else if (key == "cursor_default_model") { "Claude Haiku 4.5" }
+    else if (key == "cursor_now") { "Now" }
     else if (key == "system") { "Automatic" }
     else if (key == "light") { "Light" }
     else if (key == "dark") { "Dark" }
@@ -339,8 +356,25 @@ func localizedZh(key: String): String {
     else if (key == "cursor_agent_title") { "将任务委派给 Cursor 云端 Agent" }
     else if (key == "cursor_agent_desc") { "让 Cursor 在后台独立完成任务，随后回到应用中查看结果。" }
     else if (key == "cursor_upgrade") { "连接 Cursor 账号" }
+    else if (key == "cursor_connect_pending") { "Cursor 账号连接能力暂未实现。" }
     else if (key == "cursor_no_chats") { "还没有聊天" }
     else if (key == "cursor_no_chats_desc") { "向 Cursor 提问即可开始你的第一段对话。" }
     else if (key == "cursor_new_chat") { "新建对话" }
+    else if (key == "cursor_new_conversation") { "新建会话" }
+    else if (key == "cursor_notice") { "使用 AI。请注意校验结果。" }
+    else if (key == "cursor_empty_conversation") { "从下方建议开始，或者打开一个已保存的会话。" }
+    else if (key == "cursor_you") { "你" }
+    else if (key == "cursor_ask") { "向 Cursor 提问" }
+    else if (key == "cursor_default_prompt") { "审查当前仓库，并列出风险最高的三处变更。" }
+    else if (key == "cursor_local_agent_reply") { "本地演示回复：当前还没有接入真实 Cursor API，所以这段对话使用的是本地占位响应。" }
+    else if (key == "cursor_new_agent_session") { "新建 Agent 会话" }
+    else if (key == "cursor_new_agent_session_pending") { "等接入 Cursor API 之后，这里会连接真实的 Agent 会话创建流程。" }
+    else if (key == "cursor_view_all_conversations") { "查看全部会话" }
+    else if (key == "cursor_all_conversations") { "全部会话" }
+    else if (key == "cursor_models") { "模型" }
+    else if (key == "cursor_models_fast_group") { "快速且更省成本" }
+    else if (key == "cursor_models_versatile_group") { "通用且能力更强" }
+    else if (key == "cursor_default_model") { "Claude Haiku 4.5" }
+    else if (key == "cursor_now") { "刚刚" }
     else { localizedEn(key) }
 }

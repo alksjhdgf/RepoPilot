@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.app
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
-import ohos_app_cangjie_entry.domain.{ExploreLaneSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, ExploreLaneSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 
 @Builder
 func buildTopBar(shell: AppShell) {
@@ -130,7 +130,11 @@ func buildCursorTab(shell: AppShell) {
         buildCursorAgentSessionsCard(shell)
 
         buildCursorSectionHeader(shell, shell.t("chats"))
-        buildCursorChatsCard(shell)
+        if (shell.hasCursorConversations()) {
+            buildCursorConversationList(shell)
+        } else {
+            buildCursorChatsCard(shell)
+        }
     }
     .width(100.percent)
 }
@@ -174,7 +178,7 @@ func buildCursorAgentSessionsCard(shell: AppShell) {
             .fontColor(shell.accentStrongColor())
             .fontSize(16)
             .borderRadius(14)
-            .onClick({ _ => shell.openPendingPage(shell.t("cursor_upgrade"), "该页面待开发") })
+            .onClick({ _ => shell.openPendingPage(shell.t("cursor_upgrade"), shell.t("cursor_connect_pending")) })
     }
     .width(100.percent)
     .padding(left: 20, right: 20, top: 22, bottom: 22)
@@ -225,7 +229,7 @@ func buildCursorChatsCard(shell: AppShell) {
                 .fontColor(shell.accentStrongColor())
                 .fontSize(16)
                 .borderRadius(14)
-                .onClick({ _ => shell.openPendingPage(shell.t("cursor_new_chat"), "该页面待开发") })
+                .onClick({ _ => shell.openNewCursorConversation() })
         }
         .width(100.percent)
         .alignItems(HorizontalAlign.Center)
@@ -238,13 +242,75 @@ func buildCursorChatsCard(shell: AppShell) {
             .fontColor(shell.primaryTextColor())
             .fontSize(20)
             .borderRadius(29)
-            .shadow(ShadowStyle.OUTER_DEFAULT_LG)
             .margin(right: 18, bottom: 18)
-            .onClick({ _ => shell.openPendingPage(shell.t("cursor_new_chat"), "该页面待开发") })
+            .onClick({ _ => shell.openNewCursorConversation() })
     }
     .width(100.percent)
     .backgroundColor(shell.surfaceColor())
     .borderRadius(26)
+}
+
+@Builder
+func buildCursorConversationList(shell: AppShell) {
+    Stack(alignContent: Alignment.BottomEnd) {
+        Column(space: 12) {
+            ForEach(
+                shell.visibleCursorConversations(),
+                itemGeneratorFunc: { item: CursorConversationSnapshot, _: Int64 =>
+                    buildCursorConversationRow(shell, item)
+                }
+            )
+
+            Button(shell.t("cursor_new_chat"))
+                .width(100.percent)
+                .height(46)
+                .backgroundColor(shell.mutedSurfaceColor())
+                .fontColor(shell.accentStrongColor())
+                .fontSize(16)
+                .borderRadius(14)
+                .onClick({ _ => shell.openNewCursorConversation() })
+        }
+        .width(100.percent)
+        .padding(left: 20, right: 20, top: 20, bottom: 20)
+
+        Button("✎")
+            .width(58)
+            .height(58)
+            .backgroundColor(shell.navBarColor())
+            .fontColor(shell.primaryTextColor())
+            .fontSize(20)
+            .borderRadius(29)
+            .margin(right: 18, bottom: 18)
+            .onClick({ _ => shell.openNewCursorConversation() })
+    }
+    .width(100.percent)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(26)
+}
+
+@Builder
+func buildCursorConversationRow(shell: AppShell, item: CursorConversationSnapshot) {
+    Column(space: 8) {
+        Row() {
+            Text(item.title)
+                .fontSize(17)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(shell.primaryTextColor())
+            Blank()
+            Text(item.updatedAtLabel).fontSize(12).fontColor(shell.secondaryTextColor())
+        }
+        .width(100.percent)
+
+        Text(item.preview)
+            .fontSize(14)
+            .fontColor(shell.secondaryTextColor())
+            .maxLines(2)
+    }
+    .width(100.percent)
+    .padding(left: 16, right: 16, top: 16, bottom: 16)
+    .backgroundColor(shell.mutedSurfaceColor())
+    .borderRadius(18)
+    .onClick({ _ => shell.openCursorConversation(item.id) })
 }
 
 @Builder

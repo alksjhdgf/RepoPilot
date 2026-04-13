@@ -82,6 +82,22 @@ func localizedEn(key: String): String {
     else if (key == "cursor_api_key_missing") { "Paste an API key first." }
     else if (key == "cursor_api_key_testing") { "Testing Cursor connection..." }
     else if (key == "cursor_api_key_valid") { "Cursor connection succeeded" }
+    else if (key == "cursor_connect_failed_title") { "Unable to connect Cursor" }
+    else if (key == "cursor_api_key_missing_reason") { "No API key was provided. Save still completed locally, but there is nothing to test yet. Open Cursor Dashboard and create a User API key first." }
+    else if (key == "cursor_error_400") { "Cursor rejected this request as invalid (400). The saved API key may be malformed, or the request data may not match the expected format." }
+    else if (key == "cursor_error_401") { "Cursor did not accept this API key (401). Check that you copied the full User API key from Cursor Dashboard and that there are no extra spaces or missing characters." }
+    else if (key == "cursor_error_403") { "Cursor refused this request (403). Common causes are: the key is not a User API key, the account has not enabled the required plan or feature yet, or this account does not have permission to use the agent endpoint." }
+    else if (key == "cursor_error_404") { "Cursor could not find the requested resource (404). This usually means the API path or referenced conversation is no longer available for the current account." }
+    else if (key == "cursor_error_409") { "Cursor reported a conflict (409). A previous agent or conversation operation may still be in progress. Wait a moment and try again." }
+    else if (key == "cursor_error_429") { "Cursor is rate-limiting requests (429). Wait a little and try again, or check whether the current account has reached its temporary usage limit." }
+    else if (key == "cursor_error_500") { "Cursor returned a server error (500). This is usually temporary on the service side. Try again in a moment." }
+    else if (key == "cursor_error_network") { "The request did not reach Cursor successfully. Check network availability and try again." }
+    else if (key == "cursor_error_no_response") { "Cursor did not return a response. This can happen with unstable network conditions or an upstream service problem." }
+    else if (key == "cursor_error_unknown") { "Cursor returned an unexpected error. The original response is shown below." }
+    else if (key == "cursor_open_dashboard") { "Open Cursor dashboard" }
+    else if (key == "cursor_dashboard_opened") { "Cursor dashboard opened. Go to Integrations and create a User API key, then return here." }
+    else if (key == "cursor_api_key_path_hint") { "Cursor Dashboard -> Integrations -> User API Keys" }
+    else if (key == "cursor_browser_open_failed") { "Unable to open the browser. Please try again." }
     else if (key == "cursor_repository_required") { "Open or select a repository before starting a Cursor agent." }
     else if (key == "cursor_agent_started") { "Cursor agent started. You can return later to inspect progress." }
     else if (key == "cursor_followup_sent") { "Follow-up sent to Cursor agent." }
@@ -110,6 +126,7 @@ func localizedEn(key: String): String {
     else if (key == "lang_en") { "English" }
     else if (key == "lang_zh") { "Chinese" }
     else if (key == "save") { "Save" }
+    else if (key == "close") { "Close" }
     else if (key == "add_short") { "+" }
     else if (key == "find_short") { "⌕" }
     else if (key == "sign_in_github") { "Sign in to GitHub.com" }
@@ -290,6 +307,22 @@ func localizedZh(key: String): String {
     else if (key == "cursor_api_key_missing") { "请先粘贴 API key。" }
     else if (key == "cursor_api_key_testing") { "正在测试 Cursor 连接..." }
     else if (key == "cursor_api_key_valid") { "Cursor 连接成功" }
+    else if (key == "cursor_connect_failed_title") { "无法连接 Cursor" }
+    else if (key == "cursor_api_key_missing_reason") { "当前没有提供 API key。保存动作仍然已经落到本地，但还没有可测试的凭证。请先前往 Cursor Dashboard 创建 User API key。" }
+    else if (key == "cursor_error_400") { "Cursor 返回了无效请求（400）。常见原因是 API key 格式不正确，或者请求内容不符合该接口要求。" }
+    else if (key == "cursor_error_401") { "Cursor 未接受当前 API key（401）。请确认你复制的是 Cursor Dashboard 中完整的 User API key，且没有多余空格或缺失字符。" }
+    else if (key == "cursor_error_403") { "Cursor 拒绝了本次请求（403）。常见原因包括：当前 key 不是 User API key、账号尚未开通所需 plan 或功能、或者当前账号没有使用该 agent 接口的权限。" }
+    else if (key == "cursor_error_404") { "Cursor 未找到对应资源（404）。这通常表示当前账号下没有对应资源，或者相关会话/路径已不可用。" }
+    else if (key == "cursor_error_409") { "Cursor 返回了冲突状态（409）。可能是之前的 agent 或会话操作仍在处理中，请稍后重试。" }
+    else if (key == "cursor_error_429") { "Cursor 当前触发了限流（429）。请稍等后再试，或检查当前账号是否已达到临时使用上限。" }
+    else if (key == "cursor_error_500") { "Cursor 返回了服务端错误（500）。这通常是暂时性的服务问题，可以稍后重试。" }
+    else if (key == "cursor_error_network") { "请求未能成功到达 Cursor，请检查网络状态后重试。" }
+    else if (key == "cursor_error_no_response") { "Cursor 没有返回响应。这通常与网络不稳定或上游服务异常有关。" }
+    else if (key == "cursor_error_unknown") { "Cursor 返回了未预期的错误，原始返回如下。" }
+    else if (key == "cursor_open_dashboard") { "打开 Cursor 控制台" }
+    else if (key == "cursor_dashboard_opened") { "已打开 Cursor 控制台。请前往 Integrations 创建 User API key，然后返回这里。" }
+    else if (key == "cursor_api_key_path_hint") { "Cursor Dashboard -> Integrations -> User API Keys" }
+    else if (key == "cursor_browser_open_failed") { "无法打开浏览器，请重试。" }
     else if (key == "cursor_repository_required") { "请先打开或选中一个仓库，再启动 Cursor agent。" }
     else if (key == "cursor_agent_started") { "Cursor agent 已启动，你可以稍后回来查看进度。" }
     else if (key == "cursor_followup_sent") { "已向 Cursor agent 发送 follow-up。" }
@@ -318,6 +351,7 @@ func localizedZh(key: String): String {
     else if (key == "lang_en") { "英语" }
     else if (key == "lang_zh") { "中文" }
     else if (key == "save") { "保存" }
+    else if (key == "close") { "关闭" }
     else if (key == "sign_in_github") { "登录 GitHub.com" }
     else if (key == "sign_in_enterprise") { "登录 GitHub Enterprise" }
     else if (key == "auth_enterprise_hint") { "需要 3.10.0 或更高版本服务端。" }

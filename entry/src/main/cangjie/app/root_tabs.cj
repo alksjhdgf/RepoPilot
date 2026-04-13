@@ -94,13 +94,13 @@ func buildActiveTabContent(shell: AppShell) {
 @Builder
 func buildHomeTab(shell: AppShell) {
     Column(space: 16) {
-        buildHomeSectionHeader(shell, shell.t("my_work"))
+        buildHomeSectionHeader(shell, "my_work")
         buildHomeWorkPanel(shell)
-        buildHomeSectionHeader(shell, shell.t("favorites"))
+        buildHomeSectionHeader(shell, "favorites")
         buildHomeFavoritesPanel(shell)
-        buildHomeSectionHeader(shell, shell.t("shortcuts"))
+        buildHomeSectionHeader(shell, "shortcuts")
         buildHomeShortcutsPanel(shell)
-        buildHomeSectionHeader(shell, shell.t("recent"))
+        buildHomeSectionHeader(shell, "recent")
         buildHomeRecentPanel(shell)
     }
     .width(100.percent)
@@ -389,9 +389,9 @@ func buildSectionHeader(shell: AppShell, title: String, action: String) {
 }
 
 @Builder
-func buildHomeSectionHeader(shell: AppShell, title: String) {
+func buildHomeSectionHeader(shell: AppShell, titleKey: String) {
     Row() {
-        Text(title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
+        Text(shell.t(titleKey)).fontSize(16).fontWeight(FontWeight.Bold).fontColor(shell.primaryTextColor())
         Blank()
         Text("...").fontSize(14).fontWeight(FontWeight.Bold).fontColor(shell.secondaryTextColor())
     }
@@ -401,7 +401,7 @@ func buildHomeSectionHeader(shell: AppShell, title: String) {
 @Builder
 func buildHomeWorkPanel(shell: AppShell) {
     Column() {
-        buildHomeWorkRow(shell, 0x68D968, "◎", shell.t("issues"), {
+        buildHomeWorkRow(shell, 0x68D968, "◎", "issues", {
             =>
             if (shell.hasLiveIssues()) {
                 shell.openSelectedIssue()
@@ -410,7 +410,7 @@ func buildHomeWorkPanel(shell: AppShell) {
             }
         })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0x4B88FF, "⎇", shell.t("pull_requests"), {
+        buildHomeWorkRow(shell, 0x4B88FF, "⎇", "pull_requests", {
             =>
             if (shell.hasLivePullRequests()) {
                 shell.openSelectedPullRequest()
@@ -419,15 +419,15 @@ func buildHomeWorkPanel(shell: AppShell) {
             }
         })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0x7B56E8, "◫", shell.t("discussions"), { => shell.openPendingPage(shell.t("discussions"), "该页面待开发") })
+        buildHomeWorkRow(shell, 0x7B56E8, "◫", "discussions", { => shell.openPendingPage(shell.t("discussions"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0xB0B4C0, "□", shell.t("projects"), { => shell.openPendingPage(shell.t("projects"), "该页面待开发") })
+        buildHomeWorkRow(shell, 0xB0B4C0, "□", "projects", { => shell.openPendingPage(shell.t("projects"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0x4B4F5C, "⌘", shell.t("top_repositories"), { => shell.openPendingPage(shell.t("top_repositories"), "该页面待开发") })
+        buildHomeWorkRow(shell, 0x4B4F5C, "⌘", "top_repositories", { => shell.openPendingPage(shell.t("top_repositories"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0xF4A24B, "⌂", shell.t("organizations"), { => shell.openPendingPage(shell.t("organizations"), "该页面待开发") })
+        buildHomeWorkRow(shell, 0xF4A24B, "⌂", "organizations", { => shell.openPendingPage(shell.t("organizations"), "该页面待开发") })
         buildHomeDivider(shell)
-        buildHomeWorkRow(shell, 0xFFD54A, "☆", shell.t("starred"), { => shell.openPendingPage(shell.t("starred"), "该页面待开发") })
+        buildHomeWorkRow(shell, 0xFFD54A, "☆", "starred", { => shell.openPendingPage(shell.t("starred"), "该页面待开发") })
     }
     .width(100.percent)
     .backgroundColor(shell.surfaceColor())
@@ -436,7 +436,7 @@ func buildHomeWorkPanel(shell: AppShell) {
 }
 
 @Builder
-func buildHomeWorkRow(shell: AppShell, accentColor: Int64, iconText: String, title: String, onTap: () -> Unit) {
+func buildHomeWorkRow(shell: AppShell, accentColor: Int64, iconText: String, titleKey: String, onTap: () -> Unit) {
     Row(space: 14) {
         Row() {
             Text(iconText).fontSize(14).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
@@ -447,7 +447,7 @@ func buildHomeWorkRow(shell: AppShell, accentColor: Int64, iconText: String, tit
         .borderRadius(9)
         .justifyContent(FlexAlign.Center)
 
-        Text(title).fontSize(15).fontColor(shell.primaryTextColor())
+        Text(shell.t(titleKey)).fontSize(15).fontColor(shell.primaryTextColor())
         Blank()
         Text("›").fontSize(20).fontColor(shell.secondaryTextColor())
     }

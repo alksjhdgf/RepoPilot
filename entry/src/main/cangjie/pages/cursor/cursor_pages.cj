@@ -1,18 +1,23 @@
-package ohos_app_cangjie_entry.pages.cursor
+ package ohos_app_cangjie_entry.pages.cursor
 
+import kit.AbilityKit.Want
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
+import ohos.business_exception.BusinessException
 import std.collection.ArrayList
 import kit.BasicServicesKit.SystemDateTime
 import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot, CursorModelSnapshot, CursorPromptSuggestionSnapshot, GitHubRepositoryDetailSnapshot}
 import ohos_app_cangjie_entry.infra.databoard.dataBoardSet
-import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
 import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorAgents, findCursorConversationTitle, findCursorModelTitle, launchCursorAgent, messagesForCursorConversation, modelForCursorConversation, sendCursorAgentFollowup}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
+import ohos_app_cangjie_entry.infra.logging.logWarn
+import ohos.app.ability.ui_ability.UIAbilityContext
 
 let CURSOR_API_KEY_STORE_KEY = "cursor_api_key"
+let CURSOR_DASHBOARD_URL = "https://cursor.com/dashboard"
 
 @Component
 public class CursorConversationPage {
@@ -26,6 +31,7 @@ public class CursorConversationPage {
     @Consume var cursorConversationId: String
     @Consume var cursorConversationTitle: String
     @Consume var cursorSelectedModelId: String
+    @Consume var cursorConnectionReady: Bool
     @Consume var cursorComposerDraft: String
     @Consume var cursorMenuActionMessage: String
     @Consume var cursorApiKey: String
@@ -426,6 +432,18 @@ public class CursorAccountSettingsPage {
     @State
     var validationMessage: String = ""
 
+    @State
+    var connectionValidated: Bool = false
+
+    @State
+    var showFailureDialogVisible: Bool = false
+
+    @State
+    var failureDialogTitle: String = ""
+
+    @State
+    var failureDialogBody: String = ""
+
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
         this.cursorApiKeyDraft = this.cursorApiKey
@@ -433,7 +451,7 @@ public class CursorAccountSettingsPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 cursorBackgroundCommon(this.pageBackgroundColor())
 
                 Column(space: 18) {
@@ -475,7 +493,7 @@ public class CursorAccountSettingsPage {
                         if (this.validationMessage != "") {
                             Text(this.validationMessage)
                                 .fontSize(13)
-                                .fontColor(this.secondaryTextColor())
+                                .fontColor(if (this.connectionValidated) { this.accentStrongColor() } else { this.secondaryTextColor() })
                                 .width(100.percent)
                         }
                     }
@@ -483,6 +501,23 @@ public class CursorAccountSettingsPage {
                     .padding(left: 18, right: 18, top: 18, bottom: 18)
                     .backgroundColor(this.surfaceColor())
                     .borderRadius(24)
+
+                    Column(space: 8) {
+                        Button(this.t("cursor_open_dashboard"))
+                            .width(100.percent)
+                            .height(50)
+                            .backgroundColor(this.mutedSurfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .fontSize(16)
+                            .borderRadius(16)
+                            .onClick({ _ => this.openCursorDashboard() })
+
+                        Text(this.t("cursor_api_key_path_hint"))
+                            .width(100.percent)
+                            .fontSize(12)
+                            .lineHeight(18)
+                            .fontColor(this.secondaryTextColor())
+                    }
 
                     Button(this.t("save"))
                         .width(100.percent)
@@ -492,18 +527,25 @@ public class CursorAccountSettingsPage {
                         .fontSize(16)
                         .borderRadius(16)
                         .onClick({ _ => this.saveCursorApiKey() })
-
-                    Button(this.t("cursor_test_connection"))
-                        .width(100.percent)
-                        .height(50)
-                        .backgroundColor(this.mutedSurfaceColor())
-                        .fontColor(this.accentStrongColor())
-                        .fontSize(16)
-                        .borderRadius(16)
-                        .onClick({ _ => this.validateCursorApiKey() })
                 }
                 .width(100.percent)
                 .padding(left: 18, right: 18, top: 18, bottom: 32)
+
+                if (this.showFailureDialogVisible) {
+                    Column() {}
+                        .width(100.percent)
+                        .height(100.percent)
+                        .backgroundColor(0x55000000)
+                        .onClick({ _ => this.closeFailureDialog() })
+
+                    Column() {
+                        this.failureDialogBuilder()
+                    }
+                    .width(100.percent)
+                    .height(100.percent)
+                    .justifyContent(FlexAlign.Center)
+                }
+
             }
             .width(100.percent)
             .height(100.percent)
@@ -512,26 +554,100 @@ public class CursorAccountSettingsPage {
         .backgroundColor(this.pageBackgroundColor())
     }
 
+    @Builder
+    func failureDialogBuilder() {
+        Column(space: 18) {
+            Text(this.failureDialogTitle)
+                .width(100.percent)
+                .fontSize(20)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(this.primaryTextColor())
+
+            Text(this.failureDialogBody)
+                .width(100.percent)
+                .fontSize(14)
+                .lineHeight(22)
+                .fontColor(this.secondaryTextColor())
+
+            Button(this.t("close"))
+                .width(100.percent)
+                .height(46)
+                .backgroundColor(this.navBarColor())
+                .fontColor(this.primaryTextColor())
+                .fontSize(15)
+                .borderRadius(16)
+                .onClick({ _ => this.closeFailureDialog() })
+        }
+        .width(100.percent)
+        .padding(left: 18, right: 18, top: 18, bottom: 18)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(24)
+        .margin(left: 20, right: 20)
+    }
+
     func goBack(): Unit { this.stack.pop(animated: true) }
+    func openExternalUrl(url: String, successMessage: String): Unit {
+        try {
+            getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData"))
+            this.validationMessage = successMessage
+        } catch (_: BusinessException) {
+            this.validationMessage = this.t("cursor_browser_open_failed")
+        }
+    }
+    func openCursorDashboard(): Unit {
+        this.openExternalUrl(CURSOR_DASHBOARD_URL, this.t("cursor_dashboard_opened"))
+    }
     func saveCursorApiKey(): Unit {
         this.cursorApiKey = this.cursorApiKeyDraft
         spawn { => dataBoardSet(CURSOR_API_KEY_STORE_KEY, this.cursorApiKeyDraft) }
-        this.validationMessage = this.t("cursor_api_key_saved")
-        this.loadCursorAgents()
-    }
-    func validateCursorApiKey(): Unit {
         if (this.cursorApiKeyDraft == "") {
-            this.validationMessage = this.t("cursor_api_key_missing")
+            this.connectionValidated = false
+            this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+            this.cursorMessages = ArrayList<CursorMessageSnapshot>()
+            this.validationMessage = this.t("cursor_api_key_saved")
+            this.showFailureDialog(this.t("cursor_connect_failed_title"), this.t("cursor_api_key_missing_reason"))
             return
         }
         this.validationMessage = this.t("cursor_api_key_testing")
         this.loadCursorAgents()
+    }
+    func showFailureDialog(title: String, body: String): Unit {
+        this.failureDialogTitle = title
+        this.failureDialogBody = body
+        this.showFailureDialogVisible = true
+    }
+    func closeFailureDialog(): Unit {
+        this.showFailureDialogVisible = false
+    }
+    func describeCursorFailure(message: String): String {
+        if (message.contains("Cursor API 400")) {
+            this.t("cursor_error_400")
+        } else if (message.contains("Cursor API 401")) {
+            this.t("cursor_error_401")
+        } else if (message.contains("Cursor API 403")) {
+            this.t("cursor_error_403")
+        } else if (message.contains("Cursor API 404")) {
+            this.t("cursor_error_404")
+        } else if (message.contains("Cursor API 409")) {
+            this.t("cursor_error_409")
+        } else if (message.contains("Cursor API 429")) {
+            this.t("cursor_error_429")
+        } else if (message.contains("Cursor API 500")) {
+            this.t("cursor_error_500")
+        } else if (message.contains("network error")) {
+            this.t("cursor_error_network")
+        } else if (message.contains("returned no response")) {
+            this.t("cursor_error_no_response")
+        } else {
+            "${this.t("cursor_error_unknown")}\n\n${message}"
+        }
     }
     func loadCursorAgents(): Unit {
         fetchCursorAgents(
             this.cursorApiKeyDraft,
             { items =>
                 spawn(UIThread) {
+                    this.connectionValidated = true
                     this.cursorConversations = items
                     if (items.size > 0) {
                         let first = items[0]
@@ -554,7 +670,9 @@ public class CursorAccountSettingsPage {
             },
             { message =>
                 spawn(UIThread) {
+                    this.connectionValidated = false
                     this.validationMessage = message
+                    this.showFailureDialog(this.t("cursor_connect_failed_title"), this.describeCursorFailure(message))
                 }
             }
         )
@@ -564,10 +682,10 @@ public class CursorAccountSettingsPage {
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
     func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
     func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
-    func navBarColor(): Int64 { appThemeColor("navBar", this.isDarkTheme()) }
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
     func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
     func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
+    func navBarColor(): Int64 { appThemeColor("navBar", this.isDarkTheme()) }
 }
 
 @Builder

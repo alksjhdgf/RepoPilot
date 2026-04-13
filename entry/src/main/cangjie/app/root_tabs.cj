@@ -128,7 +128,6 @@ func buildExploreTab(shell: AppShell) {
 @Builder
 func buildCursorTab(shell: AppShell) {
     Column(space: 18) {
-        buildCursorSectionHeader(shell, shell.t("agent_sessions"))
         buildCursorAgentSessionsCard(shell)
 
         buildCursorSectionHeader(shell, shell.t("chats"))
@@ -152,28 +151,22 @@ func buildCursorSectionHeader(shell: AppShell, title: String) {
 
 @Builder
 func buildCursorAgentSessionsCard(shell: AppShell) {
-    Column(space: 18) {
-        Row(space: 0) {
-            buildCursorSignalDot(0x31333B, "☁")
-            buildCursorSignalDot(0x243A63, "◎")
-            buildCursorSignalDot(0x27492D, "⎇")
-        }
-        .width(100.percent)
-        .justifyContent(FlexAlign.Center)
-
-        Text(shell.t("cursor_agent_title"))
+    Column(space: 14) {
+        Text(if (shell.hasCursorConnectionReady()) { shell.t("cursor_connected_title") } else { shell.t("cursor_agent_title") })
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
-            .textAlign(TextAlign.Center)
+            .textAlign(TextAlign.Start)
             .fontColor(shell.primaryTextColor())
+            .width(100.percent)
 
-        Text(shell.t("cursor_agent_desc"))
+        Text(if (shell.hasCursorConnectionReady()) { shell.t("cursor_connected_desc") } else { shell.t("cursor_agent_desc") })
             .fontSize(13)
             .lineHeight(22)
-            .textAlign(TextAlign.Center)
+            .textAlign(TextAlign.Start)
             .fontColor(shell.secondaryTextColor())
+            .width(100.percent)
 
-        Button(shell.t("cursor_upgrade"))
+        Button(if (shell.hasCursorConnectionReady()) { shell.t("cursor_manage_account") } else { shell.t("cursor_upgrade") })
             .width(100.percent)
             .height(48)
             .backgroundColor(shell.navSelectionColor())
@@ -189,102 +182,77 @@ func buildCursorAgentSessionsCard(shell: AppShell) {
 }
 
 @Builder
-func buildCursorSignalDot(color: Int64, symbol: String) {
-    Row() {
-        Text(symbol).fontSize(14).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
-    }
-    .width(52)
-    .height(52)
-    .backgroundColor(color)
-    .borderRadius(26)
-    .justifyContent(FlexAlign.Center)
-}
-
-@Builder
 func buildCursorChatsCard(shell: AppShell) {
-    Stack(alignContent: Alignment.BottomEnd) {
-        Column(space: 18) {
-            Row() {
-                Text("⌘").fontSize(20).fontColor(shell.secondaryTextColor())
-            }
-            .width(64)
-            .height(64)
-            .backgroundColor(shell.navBarColor())
-            .borderRadius(32)
-            .justifyContent(FlexAlign.Center)
-
-            Text(shell.t("cursor_no_chats"))
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(shell.primaryTextColor())
-
-            Text(shell.t("cursor_no_chats_desc"))
-                .fontSize(13)
-                .lineHeight(22)
-                .textAlign(TextAlign.Center)
-                .fontColor(shell.secondaryTextColor())
-
-            Button(shell.t("cursor_new_chat"))
-                .width(100.percent)
-                .height(46)
-                .backgroundColor(shell.mutedSurfaceColor())
-                .fontColor(shell.accentStrongColor())
-                .fontSize(16)
-                .borderRadius(14)
-                .onClick({ _ => shell.startCursorConversationEntry() })
+    Column(space: 18) {
+        Row() {
+            Text("⌘").fontSize(20).fontColor(shell.secondaryTextColor())
         }
-        .width(100.percent)
-        .alignItems(HorizontalAlign.Center)
-        .padding(left: 20, right: 20, top: 22, bottom: 22)
+        .width(64)
+        .height(64)
+        .backgroundColor(shell.navBarColor())
+        .borderRadius(32)
+        .justifyContent(FlexAlign.Center)
 
-        Button("✎")
-            .width(58)
-            .height(58)
-            .backgroundColor(shell.navBarColor())
+        Text(shell.t("cursor_no_chats"))
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
             .fontColor(shell.primaryTextColor())
-            .fontSize(20)
-            .borderRadius(29)
-            .margin(right: 18, bottom: 18)
+
+        Text(shell.t("cursor_no_chats_desc"))
+            .fontSize(13)
+            .lineHeight(22)
+            .textAlign(TextAlign.Center)
+            .fontColor(shell.secondaryTextColor())
+
+        Button(shell.t("cursor_new_chat"))
+            .width(100.percent)
+            .height(46)
+            .backgroundColor(shell.mutedSurfaceColor())
+            .fontColor(shell.accentStrongColor())
+            .fontSize(16)
+            .borderRadius(14)
             .onClick({ _ => shell.startCursorConversationEntry() })
     }
     .width(100.percent)
+    .alignItems(HorizontalAlign.Center)
+    .padding(left: 20, right: 20, top: 22, bottom: 22)
     .backgroundColor(shell.surfaceColor())
     .borderRadius(26)
 }
 
 @Builder
 func buildCursorConversationList(shell: AppShell) {
-    Stack(alignContent: Alignment.BottomEnd) {
-        Column() {
-            ForEach(
-                shell.visibleCursorConversations(),
-                itemGeneratorFunc: { item: CursorConversationSnapshot, index: Int64 =>
-                    buildCursorConversationRow(shell, item)
-                    if (index < shell.visibleCursorConversations().size - 1) {
-                        buildHomeDivider(shell)
-                    }
+    Column() {
+        ForEach(
+            shell.visibleCursorConversations(),
+            itemGeneratorFunc: { item: CursorConversationSnapshot, index: Int64 =>
+                buildCursorConversationRow(shell, item)
+                if (index < shell.visibleCursorConversations().size - 1) {
+                    buildHomeDivider(shell)
                 }
-            )
-        }
-        .width(100.percent)
-        .backgroundColor(shell.surfaceColor())
-        .borderRadius(20)
-        .padding(top: 2, bottom: 2)
-
-        Button("✎")
-            .width(58)
-            .height(58)
-            .backgroundColor(shell.navBarColor())
-            .fontColor(shell.primaryTextColor())
-            .fontSize(20)
-            .borderRadius(29)
-            .margin(right: 18, bottom: 18)
-            .onClick({
-                _ =>
-                shell.startCursorConversationEntry()
-            })
+            }
+        )
     }
     .width(100.percent)
+    .backgroundColor(shell.surfaceColor())
+    .borderRadius(20)
+    .padding(top: 2, bottom: 2)
+}
+
+@Builder
+func buildCursorFloatingNewChatButton(shell: AppShell) {
+    Button("✎")
+        .width(58)
+        .height(58)
+        .backgroundColor(shell.navBarColor())
+        .fontColor(shell.primaryTextColor())
+        .fontSize(20)
+        .borderRadius(29)
+        .opacity(0.7)
+        .onClick({
+            _ =>
+            shell.startCursorConversationEntry()
+        })
 }
 
 @Builder

@@ -171,6 +171,9 @@ public class AppShell {
     var cursorConnectionReady: Bool = false
 
     @State
+    var cursorRefreshing: Bool = false
+
+    @State
     var authCheckingToken: Bool = false
 
     @State
@@ -243,17 +246,7 @@ public class AppShell {
                 Stack(alignContent: Alignment.Top) {
                     this.buildRootBackground()
 
-                    Scroll {
-                        Column(space: 18) {
-                            buildActiveTabContent(this)
-                        }
-                        .width(100.percent)
-                        .padding(left: 18, right: 18, top: 84, bottom: 100)
-                    }
-                    .width(100.percent)
-                    .height(100.percent)
-                    .scrollBar(BarState.Off)
-                    .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
+                    this.buildScrollableContent()
 
                     Row() {
                         buildTopBar(this)
@@ -274,6 +267,14 @@ public class AppShell {
                 .height(100.percent)
 
                 Column(space: 10) {
+                    if (this.isActiveTab("copilot")) {
+                        Row() {
+                            Blank()
+                            buildCursorFloatingNewChatButton(this)
+                        }
+                        .width(100.percent)
+                        .padding(left: 18, right: 18, bottom: 2)
+                    }
                     if (this.showWorkplacePicker) {
                         buildWorkplacePicker(this)
                     }
@@ -294,6 +295,42 @@ public class AppShell {
         .height(100.percent)
         .hideTitleBar(true)
         .navDestination(bind(pageMap, this))
+    }
+
+    @Builder
+    func buildScrollableContent() {
+        if (this.isActiveTab("copilot")) {
+            Refresh(RefreshOptions(refreshing: @Binder(cursorRefreshing))) {
+                Scroll {
+                    Column(space: 18) {
+                        buildActiveTabContent(this)
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 84, bottom: 100)
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
+                .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
+            }
+            .width(100.percent)
+            .height(100.percent)
+            .onRefreshing({ =>
+                this.refreshCursorHomeData(showRefreshIndicator: true)
+            })
+        } else {
+            Scroll {
+                Column(space: 18) {
+                    buildActiveTabContent(this)
+                }
+                .width(100.percent)
+                .padding(left: 18, right: 18, top: 84, bottom: 100)
+            }
+            .width(100.percent)
+            .height(100.percent)
+            .scrollBar(BarState.Off)
+            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
+        }
     }
 
     /**
@@ -337,7 +374,7 @@ public class AppShell {
     @Builder
     func buildRootBackground() {
         Column() {
-            if (!this.isActiveTab("home")) {
+            if (!this.isActiveTab("home") && !this.isActiveTab("copilot")) {
                 Column() {}
                     .width(100.percent)
                     .height(260)
@@ -710,7 +747,7 @@ public class AppShell {
             this.showWorkplacePicker = false
         })
         if (tab == "copilot") {
-            this.refreshCursorConversations()
+            this.refreshCursorHomeData()
         }
     }
 
@@ -1085,11 +1122,19 @@ public class AppShell {
      * 如果用户已经提供了 Cursor API key，则用真实 agents 列表覆盖本地演示会话。
      * Replaces local demo conversations with live Cursor agents once the user has provided an API key.
      */
+    func refreshCursorHomeData(showRefreshIndicator!: Bool = false): Unit {
+        if (showRefreshIndicator) {
+            this.cursorRefreshing = true
+        }
+        this.refreshCursorConversations()
+    }
+
     func refreshCursorConversations(): Unit {
         if (this.cursorApiKey == "") {
             this.cursorConnectionReady = false
             this.cursorConversations = ArrayList<CursorConversationSnapshot>()
             this.cursorMessages = ArrayList<CursorMessageSnapshot>()
+            this.cursorRefreshing = false
             return
         }
         fetchCursorAgents(
@@ -1102,6 +1147,7 @@ public class AppShell {
                     this.cursorConversations = ArrayList<CursorConversationSnapshot>()
                     this.cursorMessages = ArrayList<CursorMessageSnapshot>()
                     this.cursorMenuActionMessage = message
+                    this.cursorRefreshing = false
                 })
             }
         )
@@ -1128,6 +1174,7 @@ public class AppShell {
         this.runOnUi({
             =>
             this.cursorConnectionReady = true
+            this.cursorRefreshing = false
             if (items.size > 0) {
                 this.cursorConversations = items
                 if (this.cursorConversationId == "") {

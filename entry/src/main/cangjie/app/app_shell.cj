@@ -13,8 +13,7 @@ import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
-import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, findCursorModelTitle}
-import ohos_app_cangjie_entry.services.cursor.fetchCursorAgents
+import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, findCursorModelTitle, refreshStoredCursorSession}
 import ohos_app_cangjie_entry.services.github.{deserializeGitHubStoredSession, extractUrlQueryParameter, serializeGitHubStoredSession}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
@@ -23,8 +22,6 @@ import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 let GITHUB_SESSION_STORE_KEY = "github_auth_session"
 let THEME_PREFERENCE_STORE_KEY = "theme_preference"
 let LANGUAGE_PREFERENCE_STORE_KEY = "language_preference"
-let CURSOR_API_KEY_STORE_KEY = "cursor_api_key"
-
 @Component
 public class AppShell {
     @StorageProp["colorMode"]
@@ -151,9 +148,6 @@ public class AppShell {
 
     @Provide
     var cursorSelectedModelId: String = "claude-haiku-4.5"
-
-    @Provide
-    var cursorApiKey: String = ""
 
     @Provide
     var cursorConnectionReady: Bool = false
@@ -722,7 +716,6 @@ public class AppShell {
             this.languagePreference = storedLanguage
         }
 
-        this.cursorApiKey = dataBoardGet(CURSOR_API_KEY_STORE_KEY)
     }
 
     func handleTabTap(tab: String): Unit {
@@ -875,9 +868,7 @@ public class AppShell {
     func visibleCursorConversations(): ArrayList<CursorConversationSnapshot> { this.cursorConversations }
     func visibleCursorModels(): ArrayList<CursorModelSnapshot> { this.cursorModels }
     func hasCursorConversations(): Bool { this.cursorConversations.size > 0 }
-    func hasCursorApiKey(): Bool { this.cursorApiKey != "" }
     func hasCursorConnectionReady(): Bool { this.cursorConnectionReady }
-    func cursorApiKeyValue(): String { this.cursorApiKey }
     func currentCursorConversationTitle(): String {
         if (this.cursorConversationTitle != "") {
             return this.cursorConversationTitle
@@ -1112,16 +1103,18 @@ public class AppShell {
     }
 
     func refreshCursorConversations(): Unit {
-        if (this.cursorApiKey == "") {
-            this.cursorConnectionReady = false
-            this.cursorConversations = ArrayList<CursorConversationSnapshot>()
-            this.cursorRefreshing = false
-            return
-        }
-        fetchCursorAgents(
-            this.cursorApiKey,
+        refreshStoredCursorSession(
             { items => this.applyCursorConversations(items) },
-            { message =>
+            {
+                =>
+                this.runOnUi({
+                    =>
+                    this.cursorConnectionReady = false
+                    this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+                    this.cursorRefreshing = false
+                })
+            },
+            { _ =>
                 this.runOnUi({
                     =>
                     this.cursorConnectionReady = false
@@ -1192,7 +1185,7 @@ public class AppShell {
     }
 
     func startCursorConversationEntry(): Unit {
-        if (!this.hasCursorApiKey() || !this.hasCursorConnectionReady()) {
+        if (!this.hasCursorConnectionReady()) {
             this.openCursorAccountSettings()
             return
         }

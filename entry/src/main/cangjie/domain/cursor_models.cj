@@ -20,11 +20,31 @@ public class CursorMessageSnapshot {
     public let id: String
     public let role: String
     public let body: String
+    public var failed: Bool
+    public var failureReason: String
 
     public init(id: String, role: String, body: String) {
         this.id = id
         this.role = role
         this.body = body
+        this.failed = false
+        this.failureReason = ""
+    }
+
+    public init(id: String, role: String, body: String, failed: Bool, failureReason: String) {
+        this.id = id
+        this.role = role
+        this.body = body
+        this.failed = failed
+        this.failureReason = failureReason
+    }
+
+    public init(message: CursorMessageSnapshot) {
+        this.id = message.id
+        this.role = message.role
+        this.body = message.body
+        this.failed = message.failed
+        this.failureReason = message.failureReason
     }
 }
 

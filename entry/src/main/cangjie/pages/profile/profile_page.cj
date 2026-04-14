@@ -16,7 +16,6 @@ public class ProfilePage {
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var viewerLogin: String
-    @Consume var viewerDisplayName: String
     @Consume var viewerAvatarUrl: String
     @Consume var viewerProfileUrl: String
     @Consume var liveRepositoryCount: String

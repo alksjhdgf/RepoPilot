@@ -3,7 +3,7 @@ package ohos_app_cangjie_entry.services.cursor
 import std.collection.{ArrayList, HashMap}
 import kit.NetworkKit.*
 import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
-import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot}
+import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot, CursorModelSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
 let CURSOR_API_BASE = "https://api.cursor.com/v0"
@@ -72,6 +72,43 @@ func extractCursorObjectArrayField(payload: String, key: String): ArrayList<Stri
                     continue
                 }
                 if (depth == 0 && current == UInt8(UInt32(r']'))) {
+                    break
+                }
+            }
+        case None => ()
+    }
+    items
+}
+
+func extractCursorStringArrayField(payload: String, key: String): ArrayList<String> {
+    let items = ArrayList<String>()
+    let marker = "\"${key}\":["
+    match (payload.indexOf(marker)) {
+        case Some(start) =>
+            let begin = Int64(start + marker.size)
+            let tail = payload[begin..payload.size]
+            var stringStart = -1
+            var escaping = false
+            for (index in 0..tail.size - 1) {
+                let ch = tail[index]
+                if (escaping) {
+                    escaping = false
+                    continue
+                }
+                if (ch == UInt8(UInt32(r'\\'))) {
+                    escaping = true
+                    continue
+                }
+                if (ch == UInt8(UInt32(r'"'))) {
+                    if (stringStart < 0) {
+                        stringStart = index + 1
+                    } else {
+                        items.add(tail[stringStart..index])
+                        stringStart = -1
+                    }
+                    continue
+                }
+                if (stringStart < 0 && ch == UInt8(UInt32(r']'))) {
                     break
                 }
             }
@@ -209,6 +246,59 @@ public func fetchCursorAgentConversation(
                 )
             }
             logInfo("CursorApi", "Loaded ${items.size} Cursor messages for ${agentId}.")
+            onSuccess(items)
+        },
+        onFailure
+    )
+}
+
+func cursorModelGroup(modelId: String): String {
+    if (
+        modelId.contains("mini") ||
+        modelId.contains("haiku") ||
+        modelId == "o3"
+    ) {
+        return "fast"
+    }
+    "versatile"
+}
+
+func cursorModelProvider(modelId: String): String {
+    if (modelId.contains("claude")) {
+        return "AI"
+    }
+    if (modelId.contains("gpt") || modelId == "o3" || modelId.contains("o4")) {
+        return "OA"
+    }
+    "AI"
+}
+
+func cursorModelTitleFromId(modelId: String): String {
+    modelId
+}
+
+public func fetchCursorModels(
+    apiKey: String,
+    onSuccess: (ArrayList<CursorModelSnapshot>) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestCursorJson(
+        "${CURSOR_API_BASE}/models",
+        apiKey,
+        { body =>
+            let items = ArrayList<CursorModelSnapshot>()
+            let models = extractCursorStringArrayField(body, "models")
+            for (modelId in models) {
+                items.add(
+                    CursorModelSnapshot(
+                        modelId,
+                        cursorModelTitleFromId(modelId),
+                        cursorModelProvider(modelId),
+                        cursorModelGroup(modelId)
+                    )
+                )
+            }
+            logInfo("CursorApi", "Loaded ${items.size} Cursor models.")
             onSuccess(items)
         },
         onFailure

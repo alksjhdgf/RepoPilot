@@ -7,14 +7,14 @@ import ohos.business_exception.BusinessException
 import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot, CursorModelSnapshot, CursorPromptSuggestionSnapshot, ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorModelSnapshot, ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.infra.databoard.{dataBoardDelete, dataBoardGet, dataBoardSet}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
-import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, defaultCursorSuggestions, findCursorConversationTitle, findCursorModelTitle}
-import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorAgents}
+import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, findCursorModelTitle}
+import ohos_app_cangjie_entry.services.cursor.fetchCursorAgents
 import ohos_app_cangjie_entry.services.github.{deserializeGitHubStoredSession, extractUrlQueryParameter, serializeGitHubStoredSession}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
@@ -51,7 +51,7 @@ public class AppShell {
     @Provide
     var languagePreference: String = "system"
 
-    @Provide
+    @State
     var currentWorkplace: String = "github"
 
     @Provide
@@ -69,7 +69,7 @@ public class AppShell {
     @Provide
     var selectedTask: String = ""
 
-    @Provide
+    @State
     var draftPrStatusKey: String = "draft_pr_pending"
 
     @Provide
@@ -99,7 +99,7 @@ public class AppShell {
     @Provide
     var viewerLogin: String = ""
 
-    @Provide
+    @State
     var viewerDisplayName: String = ""
 
     @Provide
@@ -141,13 +141,7 @@ public class AppShell {
     var cursorConversations: ArrayList<CursorConversationSnapshot> = ArrayList<CursorConversationSnapshot>()
 
     @Provide
-    var cursorMessages: ArrayList<CursorMessageSnapshot> = ArrayList<CursorMessageSnapshot>()
-
-    @Provide
     var cursorModels: ArrayList<CursorModelSnapshot> = ArrayList<CursorModelSnapshot>()
-
-    @Provide
-    var cursorSuggestions: ArrayList<CursorPromptSuggestionSnapshot> = ArrayList<CursorPromptSuggestionSnapshot>()
 
     @Provide
     var cursorConversationId: String = ""
@@ -157,12 +151,6 @@ public class AppShell {
 
     @Provide
     var cursorSelectedModelId: String = "claude-haiku-4.5"
-
-    @Provide
-    var cursorComposerDraft: String = ""
-
-    @Provide
-    var cursorMenuActionMessage: String = ""
 
     @Provide
     var cursorApiKey: String = ""
@@ -885,9 +873,7 @@ public class AppShell {
     func hasLivePullRequests(): Bool { this.livePullRequests.size > 0 }
     func visibleLivePullRequests(): ArrayList<GitHubPullRequestSnapshot> { this.livePullRequests }
     func visibleCursorConversations(): ArrayList<CursorConversationSnapshot> { this.cursorConversations }
-    func visibleCursorMessages(): ArrayList<CursorMessageSnapshot> { this.cursorMessages }
     func visibleCursorModels(): ArrayList<CursorModelSnapshot> { this.cursorModels }
-    func visibleCursorSuggestions(): ArrayList<CursorPromptSuggestionSnapshot> { this.cursorSuggestions }
     func hasCursorConversations(): Bool { this.cursorConversations.size > 0 }
     func hasCursorApiKey(): Bool { this.cursorApiKey != "" }
     func hasCursorConnectionReady(): Bool { this.cursorConnectionReady }
@@ -903,7 +889,6 @@ public class AppShell {
         if (title == "") { this.t("cursor_default_model") } else { title }
     }
     func currentCursorModelId(): String { this.cursorSelectedModelId }
-    func currentCursorMenuActionMessage(): String { this.cursorMenuActionMessage }
     func selectedLiveRepositoryDetail(): GitHubRepositoryDetailSnapshot { this.liveRepositoryDetail }
     func currentLiveIssue(): GitHubIssueSnapshot {
         for (item in this.liveIssues) {
@@ -1113,9 +1098,6 @@ public class AppShell {
         if (this.cursorModels.size == 0) {
             this.cursorModels = defaultCursorModels()
         }
-        if (this.cursorSuggestions.size == 0) {
-            this.cursorSuggestions = defaultCursorSuggestions()
-        }
     }
 
     /**
@@ -1133,7 +1115,6 @@ public class AppShell {
         if (this.cursorApiKey == "") {
             this.cursorConnectionReady = false
             this.cursorConversations = ArrayList<CursorConversationSnapshot>()
-            this.cursorMessages = ArrayList<CursorMessageSnapshot>()
             this.cursorRefreshing = false
             return
         }
@@ -1145,26 +1126,7 @@ public class AppShell {
                     =>
                     this.cursorConnectionReady = false
                     this.cursorConversations = ArrayList<CursorConversationSnapshot>()
-                    this.cursorMessages = ArrayList<CursorMessageSnapshot>()
-                    this.cursorMenuActionMessage = message
                     this.cursorRefreshing = false
-                })
-            }
-        )
-    }
-
-    func refreshSelectedCursorConversation(): Unit {
-        if (this.cursorApiKey == "" || this.cursorConversationId == "") {
-            return
-        }
-        fetchCursorAgentConversation(
-            this.cursorApiKey,
-            this.cursorConversationId,
-            { items => this.applyCursorConversationMessages(items) },
-            { message =>
-                this.runOnUi({
-                    =>
-                    this.cursorMenuActionMessage = message
                 })
             }
         )
@@ -1182,18 +1144,9 @@ public class AppShell {
                     this.cursorConversationTitle = items[0].title
                     this.cursorSelectedModelId = items[0].modelId
                 }
-                this.refreshSelectedCursorConversation()
             } else {
                 this.cursorConversations = ArrayList<CursorConversationSnapshot>()
-                this.cursorMessages = ArrayList<CursorMessageSnapshot>()
             }
-        })
-    }
-
-    func applyCursorConversationMessages(items: ArrayList<CursorMessageSnapshot>): Unit {
-        this.runOnUi({
-            =>
-            this.cursorMessages = items
         })
     }
 
@@ -1210,8 +1163,6 @@ public class AppShell {
                 this.cursorSelectedModelId = item.modelId
             }
         }
-        this.cursorMessages = ArrayList<CursorMessageSnapshot>()
-        this.cursorMenuActionMessage = ""
     }
 
     /**
@@ -1222,8 +1173,6 @@ public class AppShell {
         this.ensureCursorState()
         this.cursorConversationId = ""
         this.cursorConversationTitle = this.t("cursor_new_conversation")
-        this.cursorMessages = ArrayList<CursorMessageSnapshot>()
-        this.cursorMenuActionMessage = ""
         if (this.cursorSelectedModelId == "") {
             this.cursorSelectedModelId = "claude-haiku-4.5"
         }
@@ -1233,35 +1182,6 @@ public class AppShell {
      * 追加一轮本地消息，先让会话页的发送链路跑通，后续再接真实 Cursor API。
      * Appends a local user/assistant exchange so the conversation flow works before live API integration.
      */
-    func sendCursorPrompt(prompt: String): Unit {
-        if (prompt == "") {
-            return
-        }
-        if (this.cursorConversationId == "") {
-            let conversationId = "conv_local_${SystemDateTime.getTime()}"
-            this.cursorConversationId = conversationId
-            this.cursorConversationTitle = prompt
-            this.cursorConversations.add(
-                CursorConversationSnapshot(
-                    conversationId,
-                    prompt,
-                    this.cursorSelectedModelId,
-                    prompt,
-                    this.t("cursor_now")
-                )
-            )
-        }
-        this.cursorMessages.add(CursorMessageSnapshot("user_${SystemDateTime.getTime()}", "user", prompt))
-        this.cursorMessages.add(
-            CursorMessageSnapshot(
-                "assistant_${SystemDateTime.getTime()}",
-                "assistant",
-                this.t("cursor_local_agent_reply")
-            )
-        )
-        this.cursorComposerDraft = ""
-    }
-
     func selectCursorModel(modelId: String): Unit {
         this.cursorSelectedModelId = modelId
     }
@@ -1281,7 +1201,6 @@ public class AppShell {
 
     func openCursorConversation(conversationId: String): Unit {
         this.selectCursorConversation(conversationId)
-        this.refreshSelectedCursorConversation()
         this.stack.pushPath(NavPathInfo(name: "cursorConversation", param: ""), options: NavigationOptions(animated: true))
     }
 

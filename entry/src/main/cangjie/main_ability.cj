@@ -8,6 +8,7 @@ import kit.AbilityKit.LaunchReason
 import kit.ArkUI.{Window, WindowStage}
 import ohos_app_cangjie_entry.infra.logging.logInfo
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, notifyAppAuthCallback, notifyAppForeground, setAppAbilityContext, setAppMainWindow}
+import ohos.arkui.state_management.AppStorage
 
 class MainAbility <: UIAbility {
     public init() {

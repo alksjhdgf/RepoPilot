@@ -55,12 +55,16 @@ func localizedEn(key: String): String {
     else if (key == "cursor_agent_title") { "Delegate tasks to Cursor cloud agents" }
     else if (key == "cursor_agent_desc") { "Let Cursor work independently in the background to complete tasks, then return to review the results." }
     else if (key == "cursor_upgrade") { "Connect Cursor account" }
+    else if (key == "cursor_connected_title") { "Cursor account connected" }
+    else if (key == "cursor_connected_desc") { "Your Cursor account is ready. Existing conversations and new chats can now use your cloud agents." }
+    else if (key == "cursor_manage_account") { "Manage Cursor account" }
     else if (key == "cursor_no_chats") { "No chats yet" }
     else if (key == "cursor_no_chats_desc") { "Ask Cursor anything to start your first chat." }
     else if (key == "cursor_new_chat") { "New Chat" }
     else if (key == "cursor_new_conversation") { "New conversation" }
     else if (key == "cursor_notice") { "uses AI. Check for mistakes." }
     else if (key == "cursor_empty_conversation") { "Start with a suggestion below, or open a saved conversation." }
+    else if (key == "cursor_message_failed") { "Message not delivered" }
     else if (key == "cursor_you") { "You" }
     else if (key == "cursor_ask") { "Ask Cursor" }
     else if (key == "cursor_local_agent_reply") { "Local demo reply: the Cursor API has not been connected yet, so this conversation is using on-device placeholder responses." }
@@ -79,6 +83,7 @@ func localizedEn(key: String): String {
     else if (key == "cursor_api_key_placeholder") { "Paste your Cursor API key" }
     else if (key == "cursor_test_connection") { "Test connection" }
     else if (key == "cursor_api_key_saved") { "API key saved locally." }
+    else if (key == "cursor_api_key_cleared") { "Cursor API key cleared." }
     else if (key == "cursor_api_key_missing") { "Paste an API key first." }
     else if (key == "cursor_api_key_testing") { "Testing Cursor connection..." }
     else if (key == "cursor_api_key_valid") { "Cursor connection succeeded" }
@@ -95,6 +100,7 @@ func localizedEn(key: String): String {
     else if (key == "cursor_error_no_response") { "Cursor did not return a response. This can happen with unstable network conditions or an upstream service problem." }
     else if (key == "cursor_error_unknown") { "Cursor returned an unexpected error. The original response is shown below." }
     else if (key == "cursor_open_dashboard") { "Open Cursor dashboard" }
+    else if (key == "cursor_clear_api_key") { "Clear API key" }
     else if (key == "cursor_dashboard_opened") { "Cursor dashboard opened. Go to Integrations and create a User API key, then return here." }
     else if (key == "cursor_api_key_path_hint") { "Cursor Dashboard -> Integrations -> User API Keys" }
     else if (key == "cursor_browser_open_failed") { "Unable to open the browser. Please try again." }
@@ -280,12 +286,16 @@ func localizedZh(key: String): String {
     else if (key == "cursor_agent_title") { "将任务委派给 Cursor 云端 Agent" }
     else if (key == "cursor_agent_desc") { "让 Cursor 在后台独立完成任务，随后回到应用中查看结果。" }
     else if (key == "cursor_upgrade") { "连接 Cursor 账号" }
+    else if (key == "cursor_connected_title") { "Cursor 账号已连接" }
+    else if (key == "cursor_connected_desc") { "当前 Cursor 账号已经可用，已有会话和新建对话都可以直接使用你的云端 agents。" }
+    else if (key == "cursor_manage_account") { "管理 Cursor 账号" }
     else if (key == "cursor_no_chats") { "还没有聊天" }
     else if (key == "cursor_no_chats_desc") { "向 Cursor 提问即可开始你的第一段对话。" }
     else if (key == "cursor_new_chat") { "新建对话" }
     else if (key == "cursor_new_conversation") { "新建会话" }
     else if (key == "cursor_notice") { "使用 AI。请注意校验结果。" }
     else if (key == "cursor_empty_conversation") { "从下方建议开始，或者打开一个已保存的会话。" }
+    else if (key == "cursor_message_failed") { "消息未成功送达" }
     else if (key == "cursor_you") { "你" }
     else if (key == "cursor_ask") { "向 Cursor 提问" }
     else if (key == "cursor_local_agent_reply") { "本地演示回复：当前还没有接入真实 Cursor API，所以这段对话使用的是本地占位响应。" }
@@ -304,6 +314,7 @@ func localizedZh(key: String): String {
     else if (key == "cursor_api_key_placeholder") { "粘贴你的 Cursor API key" }
     else if (key == "cursor_test_connection") { "测试连接" }
     else if (key == "cursor_api_key_saved") { "API key 已保存到本地。" }
+    else if (key == "cursor_api_key_cleared") { "Cursor API key 已清除。" }
     else if (key == "cursor_api_key_missing") { "请先粘贴 API key。" }
     else if (key == "cursor_api_key_testing") { "正在测试 Cursor 连接..." }
     else if (key == "cursor_api_key_valid") { "Cursor 连接成功" }
@@ -320,6 +331,7 @@ func localizedZh(key: String): String {
     else if (key == "cursor_error_no_response") { "Cursor 没有返回响应。这通常与网络不稳定或上游服务异常有关。" }
     else if (key == "cursor_error_unknown") { "Cursor 返回了未预期的错误，原始返回如下。" }
     else if (key == "cursor_open_dashboard") { "打开 Cursor 控制台" }
+    else if (key == "cursor_clear_api_key") { "清除 API key" }
     else if (key == "cursor_dashboard_opened") { "已打开 Cursor 控制台。请前往 Integrations 创建 User API key，然后返回这里。" }
     else if (key == "cursor_api_key_path_hint") { "Cursor Dashboard -> Integrations -> User API Keys" }
     else if (key == "cursor_browser_open_failed") { "无法打开浏览器，请重试。" }

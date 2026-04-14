@@ -26,11 +26,11 @@ public class AppearanceSettingsPage {
     public func build() {
         NavDestination() {
             Stack() {
-                buildSettingsOptionBackground(this)
+                this.buildBackground()
 
                 Column(space: 20) {
-                    buildSettingsOptionHeader(this)
-                    buildAppearanceOptionList(this)
+                    this.buildHeader()
+                    this.buildOptionList()
                 }
                 .width(100.percent)
                 .height(100.percent)
@@ -57,8 +57,65 @@ public class AppearanceSettingsPage {
     func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
     func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
-    func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
     func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
+
+    @Builder
+    func buildBackground() {
+        Column() {}
+            .width(100.percent)
+            .height(100.percent)
+            .backgroundColor(this.pageBackgroundColor())
+            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
+    }
+
+    @Builder
+    func buildHeader() {
+        Row(space: 10) {
+            Button("<")
+                .width(44)
+                .height(44)
+                .backgroundColor(this.surfaceColor())
+                .fontColor(this.primaryTextColor())
+                .borderRadius(22)
+                .onClick({ _ => this.goBack() })
+            Text(this.t("appearance")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
+        }
+        .width(100.percent)
+        .alignItems(VerticalAlign.Center)
+    }
+
+    @Builder
+    func buildOptionList() {
+        Column() {
+            this.buildOptionRow(this.t("system"), "system")
+            this.buildDivider()
+            this.buildOptionRow(this.t("light"), "light")
+            this.buildDivider()
+            this.buildOptionRow(this.t("dark"), "dark")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
+    }
+
+    @Builder
+    func buildOptionRow(title: String, value: String) {
+        Row() {
+            Text(title).fontSize(18).fontColor(this.primaryTextColor())
+            Blank()
+            Text(if (this.isSelected(value)) { "ON" } else { "" }).fontSize(14).fontColor(this.accentStrongColor())
+        }
+        .width(100.percent)
+        .height(68)
+        .padding(left: 18, right: 18)
+        .onClick({ _ => this.selectTheme(value) })
+    }
+
+    @Builder
+    func buildDivider() {
+        Blank().width(100.percent).height(1).backgroundColor(this.mutedSurfaceColor())
+    }
 }
 
 @Component
@@ -80,11 +137,11 @@ public class LanguageSettingsPage {
     public func build() {
         NavDestination() {
             Stack() {
-                buildSettingsOptionBackground(this)
+                this.buildBackground()
 
                 Column(space: 20) {
-                    buildSettingsOptionHeader(this)
-                    buildLanguageOptionList(this)
+                    this.buildHeader()
+                    this.buildOptionList()
                 }
                 .width(100.percent)
                 .height(100.percent)
@@ -110,128 +167,63 @@ public class LanguageSettingsPage {
     func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
     func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
-    func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
     func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
-}
 
-@Builder
-func buildSettingsOptionHeader(page: AppearanceSettingsPage) {
-    Row(space: 10) {
-        Button("<")
-            .width(44)
-            .height(44)
-            .backgroundColor(page.surfaceColor())
-            .fontColor(page.primaryTextColor())
-            .borderRadius(22)
-            .onClick({ _ => page.goBack() })
-        Text(page.t("appearance")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
-    }
-    .width(100.percent)
-    .alignItems(VerticalAlign.Center)
-}
-
-@Builder
-func buildSettingsOptionHeader(page: LanguageSettingsPage) {
-    Row(space: 10) {
-        Button("<")
-            .width(44)
-            .height(44)
-            .backgroundColor(page.surfaceColor())
-            .fontColor(page.primaryTextColor())
-            .borderRadius(22)
-            .onClick({ _ => page.goBack() })
-        Text(page.t("app_language")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
-    }
-    .width(100.percent)
-    .alignItems(VerticalAlign.Center)
-}
-
-@Builder
-func buildAppearanceOptionList(page: AppearanceSettingsPage) {
-    Column() {
-        buildSettingsOptionRow(page, { => page.t("system") }, "system")
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildSettingsOptionRow(page, { => page.t("light") }, "light")
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildSettingsOptionRow(page, { => page.t("dark") }, "dark")
-    }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
-
-@Builder
-func buildLanguageOptionList(page: LanguageSettingsPage) {
-    Column() {
-        buildSettingsOptionRow(page, { => page.t("system") }, "system")
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildSettingsOptionRow(page, { => page.t("lang_en") }, "en")
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildSettingsOptionRow(page, { => page.t("lang_zh") }, "zh")
-    }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
-
-@Builder
-func buildSettingsOptionBackground(page: AppearanceSettingsPage) {
-    if (page.isDarkTheme()) {
+    @Builder
+    func buildBackground() {
         Column() {}
             .width(100.percent)
             .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
-            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
-    } else {
-        Column() {}
-            .width(100.percent)
-            .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
+            .backgroundColor(this.pageBackgroundColor())
             .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
     }
-}
 
-@Builder
-func buildSettingsOptionBackground(page: LanguageSettingsPage) {
-    if (page.isDarkTheme()) {
-        Column() {}
-            .width(100.percent)
-            .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
-            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
-    } else {
-        Column() {}
-            .width(100.percent)
-            .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
-            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
+    @Builder
+    func buildHeader() {
+        Row(space: 10) {
+            Button("<")
+                .width(44)
+                .height(44)
+                .backgroundColor(this.surfaceColor())
+                .fontColor(this.primaryTextColor())
+                .borderRadius(22)
+                .onClick({ _ => this.goBack() })
+            Text(this.t("app_language")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
+        }
+        .width(100.percent)
+        .alignItems(VerticalAlign.Center)
     }
-}
 
-@Builder
-func buildSettingsOptionRow(page: AppearanceSettingsPage, title: () -> String, value: String) {
-    Row() {
-        Text(title()).fontSize(18).fontColor(page.primaryTextColor())
-        Blank()
-        Text(if (page.isSelected(value)) { "ON" } else { "" }).fontSize(14).fontColor(page.accentStrongColor())
+    @Builder
+    func buildOptionList() {
+        Column() {
+            this.buildOptionRow(this.t("system"), "system")
+            this.buildDivider()
+            this.buildOptionRow(this.t("lang_en"), "en")
+            this.buildDivider()
+            this.buildOptionRow(this.t("lang_zh"), "zh")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
     }
-    .width(100.percent)
-    .height(68)
-    .padding(left: 18, right: 18)
-    .onClick({ _ => page.selectTheme(value) })
-}
 
-@Builder
-func buildSettingsOptionRow(page: LanguageSettingsPage, title: () -> String, value: String) {
-    Row() {
-        Text(title()).fontSize(18).fontColor(page.primaryTextColor())
-        Blank()
-        Text(if (page.isSelected(value)) { "ON" } else { "" }).fontSize(14).fontColor(page.accentStrongColor())
+    @Builder
+    func buildOptionRow(title: String, value: String) {
+        Row() {
+            Text(title).fontSize(18).fontColor(this.primaryTextColor())
+            Blank()
+            Text(if (this.isSelected(value)) { "ON" } else { "" }).fontSize(14).fontColor(this.accentStrongColor())
+        }
+        .width(100.percent)
+        .height(68)
+        .padding(left: 18, right: 18)
+        .onClick({ _ => this.selectLanguage(value) })
     }
-    .width(100.percent)
-    .height(68)
-    .padding(left: 18, right: 18)
-    .onClick({ _ => page.selectLanguage(value) })
+
+    @Builder
+    func buildDivider() {
+        Blank().width(100.percent).height(1).backgroundColor(this.mutedSurfaceColor())
+    }
 }

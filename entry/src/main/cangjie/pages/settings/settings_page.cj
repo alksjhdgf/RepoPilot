@@ -27,18 +27,18 @@ public class SettingsPage {
     public func build() {
         NavDestination() {
             Stack() {
-                buildSettingsBackground(this)
+                this.buildSettingsBackground()
 
                 Scroll {
                     Column(space: 22) {
-                        buildSettingsHeader(this)
-                        buildPrimarySettingsGroup(this)
-                        buildCopilotSettingsGroup(this)
-                        buildShareFeedbackSettingsGroup(this)
-                        buildLegalSettingsGroup(this)
-                        buildFeaturePreviewSettingsGroup(this)
-                        buildAccountSettingsGroup(this)
-                        buildCacheRow(this)
+                        this.buildSettingsHeader()
+                        this.buildPrimarySettingsGroup()
+                        this.buildCopilotSettingsGroup()
+                        this.buildShareFeedbackSettingsGroup()
+                        this.buildLegalSettingsGroup()
+                        this.buildFeaturePreviewSettingsGroup()
+                        this.buildAccountSettingsGroup()
+                        this.buildCacheRow()
                     }
                     .width(100.percent)
                     .padding(left: 18, right: 18, top: 8, bottom: 32)
@@ -65,9 +65,8 @@ public class SettingsPage {
             this.stack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
         }
     }
+
     func goBack(): Unit { this.stack.pop(animated: true) }
-    func themePreferenceValue(): String { this.themePreference }
-    func languagePreferenceValue(): String { this.languagePreference }
 
     func preferenceLabel(kind: String, value: String): String {
         if (value == "system") {
@@ -82,6 +81,7 @@ public class SettingsPage {
             this.t("lang_en")
         }
     }
+
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
@@ -90,219 +90,146 @@ public class SettingsPage {
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
     func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
     func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
-}
 
-@Builder
-func buildSettingsHeader(page: SettingsPage) {
-    Row(space: 10) {
-        Button("<")
-            .width(44)
-            .height(44)
-            .backgroundColor(page.surfaceColor())
-            .fontColor(page.primaryTextColor())
-            .borderRadius(22)
-            .onClick({ _ => page.goBack() })
-        Text(page.t("settings")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
-    }
-    .width(100.percent)
-    .alignItems(VerticalAlign.Center)
-}
-
-@Builder
-func buildPrimarySettingsGroup(page: SettingsPage) {
-    Column() {
-        buildAppearanceSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildAppIconSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildAppLanguageSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildNotificationsSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildCodeOptionsSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildExternalLinksSettingsRow(page)
-    }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
-
-@Builder
-func buildCopilotSettingsGroup(page: SettingsPage) {
-    Column() {
-        buildCopilotPlanSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildGitHubProSettingsRow(page)
-    }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
-
-@Builder
-func buildLegalSettingsGroup(page: SettingsPage) {
-    Column() {
-        buildTermsSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildPrivacySettingsRow(page)
-    }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
-
-@Builder
-func buildAccountSettingsGroup(page: SettingsPage) {
-    Column() {
-        buildManageAccountsSettingsRow(page)
-        Blank().width(100.percent).height(1).backgroundColor(page.mutedSurfaceColor())
-        buildAppLockSettingsRow(page)
-    }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
-
-@Builder
-func buildSettingsBackground(page: SettingsPage) {
-    if (page.isDarkTheme()) {
+    @Builder
+    func buildSettingsBackground() {
         Column() {}
             .width(100.percent)
             .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
-            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
-    } else {
-        Column() {}
-            .width(100.percent)
-            .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
+            .backgroundColor(this.pageBackgroundColor())
             .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
     }
-}
 
-@Builder
-func buildSettingsRow(page: SettingsPage, title: () -> String, value: () -> String, kind: String) {
-    Row(space: 14) {
-        Text(title()).fontSize(18).fontColor(page.primaryTextColor())
-        Blank()
-        if (value() != "") {
-            Text(value()).fontSize(17).fontColor(page.secondaryTextColor())
+    @Builder
+    func buildSettingsHeader() {
+        Row(space: 10) {
+            Button("<")
+                .width(44)
+                .height(44)
+                .backgroundColor(this.surfaceColor())
+                .fontColor(this.primaryTextColor())
+                .borderRadius(22)
+                .onClick({ _ => this.goBack() })
+            Text(this.t("settings")).fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
         }
-        Text("›").fontSize(24).fontColor(page.secondaryTextColor())
+        .width(100.percent)
+        .alignItems(VerticalAlign.Center)
     }
-    .width(100.percent)
-    .height(72)
-    .padding(left: 18, right: 18)
-    .onClick({ _ => page.openSettingDestination(kind, title()) })
-}
 
-@Builder
-func buildAppearanceSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("appearance") }, { => page.preferenceLabel("theme", page.themePreferenceValue()) }, "appearance")
-}
-
-@Builder
-func buildAppIconSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("app_icon") }, { => page.t("default_option") }, "pending")
-}
-
-@Builder
-func buildAppLanguageSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("app_language") }, { => page.preferenceLabel("language", page.languagePreferenceValue()) }, "language")
-}
-
-@Builder
-func buildNotificationsSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("notifications") }, { => page.t("setup_needed") }, "pending")
-}
-
-@Builder
-func buildCodeOptionsSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("code_options") }, { => "" }, "pending")
-}
-
-@Builder
-func buildExternalLinksSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("external_links") }, { => "" }, "pending")
-}
-
-@Builder
-func buildCopilotPlanSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => "Copilot" }, { => "Copilot Free" }, "pending")
-}
-
-@Builder
-func buildGitHubProSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => "GitHub Pro" }, { => "" }, "pending")
-}
-
-@Builder
-func buildTermsSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("terms_of_service") }, { => "" }, "pending")
-}
-
-@Builder
-func buildPrivacySettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("privacy_policy") }, { => "" }, "pending")
-}
-
-@Builder
-func buildManageAccountsSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("manage_accounts") }, { => "" }, "pending")
-}
-
-@Builder
-func buildAppLockSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("app_lock") }, { => "" }, "pending")
-}
-
-@Builder
-func buildShareFeedbackSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("share_feedback") }, { => "" }, "pending")
-}
-
-@Builder
-func buildFeaturePreviewSettingsRow(page: SettingsPage) {
-    buildSettingsRow(page, { => page.t("feature_preview") }, { => "" }, "pending")
-}
-
-@Builder
-func buildShareFeedbackSettingsGroup(page: SettingsPage) {
-    Column() {
-        buildShareFeedbackSettingsRow(page)
+    @Builder
+    func buildPrimarySettingsGroup() {
+        Column() {
+            this.buildSettingsRow(this.t("appearance"), this.preferenceLabel("theme", this.themePreference), "appearance")
+            this.buildDivider()
+            this.buildSettingsRow(this.t("app_icon"), this.t("default_option"), "pending")
+            this.buildDivider()
+            this.buildSettingsRow(this.t("app_language"), this.preferenceLabel("language", this.languagePreference), "language")
+            this.buildDivider()
+            this.buildSettingsRow(this.t("notifications"), this.t("setup_needed"), "pending")
+            this.buildDivider()
+            this.buildSettingsRow(this.t("code_options"), "", "pending")
+            this.buildDivider()
+            this.buildSettingsRow(this.t("external_links"), "", "pending")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
     }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
 
-@Builder
-func buildFeaturePreviewSettingsGroup(page: SettingsPage) {
-    Column() {
-        buildFeaturePreviewSettingsRow(page)
+    @Builder
+    func buildCopilotSettingsGroup() {
+        Column() {
+            this.buildSettingsRow("Copilot", "Copilot Free", "pending")
+            this.buildDivider()
+            this.buildSettingsRow("GitHub Pro", "", "pending")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
     }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
-    .padding(top: 2, bottom: 2)
-}
 
-@Builder
-func buildCacheRow(page: SettingsPage) {
-    Row() {
-        Text(page.t("clear_cache")).fontSize(18).fontColor(page.accentStrongColor())
-        Blank()
-        Text("107 KB").fontSize(18).fontColor(page.secondaryTextColor())
+    @Builder
+    func buildLegalSettingsGroup() {
+        Column() {
+            this.buildSettingsRow(this.t("terms_of_service"), "", "pending")
+            this.buildDivider()
+            this.buildSettingsRow(this.t("privacy_policy"), "", "pending")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
     }
-    .width(100.percent)
-    .height(72)
-    .padding(left: 18, right: 18)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(26)
+
+    @Builder
+    func buildAccountSettingsGroup() {
+        Column() {
+            this.buildSettingsRow(this.t("manage_accounts"), "", "pending")
+            this.buildDivider()
+            this.buildSettingsRow(this.t("app_lock"), "", "pending")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
+    }
+
+    @Builder
+    func buildShareFeedbackSettingsGroup() {
+        Column() {
+            this.buildSettingsRow(this.t("share_feedback"), "", "pending")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
+    }
+
+    @Builder
+    func buildFeaturePreviewSettingsGroup() {
+        Column() {
+            this.buildSettingsRow(this.t("feature_preview"), "", "pending")
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .padding(top: 2, bottom: 2)
+    }
+
+    @Builder
+    func buildSettingsRow(title: String, value: String, kind: String) {
+        Row(space: 14) {
+            Text(title).fontSize(18).fontColor(this.primaryTextColor())
+            Blank()
+            if (value != "") {
+                Text(value).fontSize(17).fontColor(this.secondaryTextColor())
+            }
+            Text("›").fontSize(24).fontColor(this.secondaryTextColor())
+        }
+        .width(100.percent)
+        .height(72)
+        .padding(left: 18, right: 18)
+        .onClick({ _ => this.openSettingDestination(kind, title) })
+    }
+
+    @Builder
+    func buildDivider() {
+        Blank().width(100.percent).height(1).backgroundColor(this.mutedSurfaceColor())
+    }
+
+    @Builder
+    func buildCacheRow() {
+        Row() {
+            Text(this.t("clear_cache")).fontSize(18).fontColor(this.accentStrongColor())
+            Blank()
+            Text("107 KB").fontSize(18).fontColor(this.secondaryTextColor())
+        }
+        .width(100.percent)
+        .height(72)
+        .padding(left: 18, right: 18)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+    }
 }

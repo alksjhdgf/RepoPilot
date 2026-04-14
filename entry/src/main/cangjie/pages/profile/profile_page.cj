@@ -38,14 +38,14 @@ public class ProfilePage {
     public func build() {
         NavDestination() {
             Stack() {
-                buildProfileBackground(this)
+                this.buildProfileBackground()
 
                 Scroll {
                     Column(space: 24) {
-                        buildProfileTopBar(this)
-                        buildProfileIdentity(this)
-                        buildProfileStats(this)
-                        buildProfilePopular(this)
+                        this.buildProfileTopBar()
+                        this.buildProfileIdentity()
+                        this.buildProfileStats()
+                        this.buildProfilePopular()
                     }
                     .width(100.percent)
                     .padding(left: 18, right: 18, top: 18, bottom: 32)
@@ -98,198 +98,180 @@ public class ProfilePage {
         this.openPlaceholder(snapshot.name, "Repository actions from profile are not implemented yet.")
     }
 
-    func hasViewerAvatar(): Bool { this.viewerAvatarUrl != "" }
-    func viewerAvatarUrlValue(): String { this.viewerAvatarUrl }
-    func viewerLoginValue(): String { this.viewerLogin }
-    func repositoryCountValue(): String { this.liveRepositoryCount }
-    func starredCountValue(): String { this.liveStarredCount }
-    func organizationCountValue(): String { this.liveOrganizationCount }
-    func visibleRepositories(): ArrayList<GitHubRepositoryCardSnapshot> { this.liveRepositories }
-
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
     func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
     func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
     func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
-    func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
-    func shadowColor(): Int64 { appThemeColor("shadow", this.isDarkTheme()) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
-}
 
-@Builder
-func buildProfileBackground(page: ProfilePage) {
-    if (page.isDarkTheme()) {
+    @Builder
+    func buildProfileBackground() {
         Column() {}
             .width(100.percent)
             .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
-            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
-    } else {
-        Column() {}
-            .width(100.percent)
-            .height(100.percent)
-            .backgroundColor(page.pageBackgroundColor())
+            .backgroundColor(this.pageBackgroundColor())
             .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Top, SafeAreaEdge.Bottom])
     }
-}
 
-@Builder
-func buildProfileTopBar(page: ProfilePage) {
-    Row() {
-        Button("<")
-            .width(40)
-            .height(40)
-            .backgroundColor(page.surfaceColor())
-            .fontColor(page.primaryTextColor())
-            .borderRadius(20)
-            .onClick({ _ => page.goBack() })
-        Blank()
-        Row(space: 0) {
-            Button("⚙")
-                .width(56)
-                .height(44)
-                .backgroundColor(page.surfaceColor())
-                .fontColor(page.primaryTextColor())
-                .borderRadius(22)
-                .onClick({ _ => page.openSettings() })
-            Button("⇪")
-                .width(56)
-                .height(44)
-                .backgroundColor(page.surfaceColor())
-                .fontColor(page.primaryTextColor())
-                .borderRadius(22)
-                .onClick({ _ => page.shareProfile() })
+    @Builder
+    func buildProfileTopBar() {
+        Row() {
+            Button("<")
+                .width(40)
+                .height(40)
+                .backgroundColor(this.surfaceColor())
+                .fontColor(this.primaryTextColor())
+                .borderRadius(20)
+                .onClick({ _ => this.goBack() })
+            Blank()
+            Row(space: 0) {
+                Button("⚙")
+                    .width(56)
+                    .height(44)
+                    .backgroundColor(this.surfaceColor())
+                    .fontColor(this.primaryTextColor())
+                    .borderRadius(22)
+                    .onClick({ _ => this.openSettings() })
+                Button("⇪")
+                    .width(56)
+                    .height(44)
+                    .backgroundColor(this.surfaceColor())
+                    .fontColor(this.primaryTextColor())
+                    .borderRadius(22)
+                    .onClick({ _ => this.shareProfile() })
+            }
+            .backgroundColor(this.surfaceColor())
+            .borderRadius(24)
         }
-        .backgroundColor(page.surfaceColor())
-        .borderRadius(24)
+        .width(100.percent)
     }
-    .width(100.percent)
-}
 
-@Builder
-func buildProfileIdentity(page: ProfilePage) {
-    Row(space: 16) {
-        if (page.hasViewerAvatar()) {
-            Image(page.viewerAvatarUrlValue())
+    @Builder
+    func buildProfileIdentity() {
+        Row(space: 16) {
+            if (this.viewerAvatarUrl != "") {
+                Image(this.viewerAvatarUrl)
+                    .width(92)
+                    .height(92)
+                    .borderRadius(46)
+                    .objectFit(ImageFit.Cover)
+            } else {
+                Row() {
+                    Text("GH").fontSize(26).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
+                }
                 .width(92)
                 .height(92)
+                .backgroundColor(this.surfaceColor())
                 .borderRadius(46)
-                .objectFit(ImageFit.Cover)
-        } else {
-            Row() {
-                Text("GH").fontSize(26).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
+                .justifyContent(FlexAlign.Center)
             }
-            .width(92)
-            .height(92)
-            .backgroundColor(page.surfaceColor())
-            .borderRadius(46)
+            Column(space: 6) {
+                Text(this.displayName()).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
+                if (this.viewerLogin != "") {
+                    Text("@${this.viewerLogin}").fontSize(14).fontColor(this.secondaryTextColor())
+                }
+            }
+            .alignItems(HorizontalAlign.Start)
             .justifyContent(FlexAlign.Center)
         }
-        Column(space: 6) {
-            Text(page.displayName()).fontSize(24).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
-            if (page.viewerLoginValue() != "") {
-                Text("@${page.viewerLoginValue()}").fontSize(14).fontColor(page.secondaryTextColor())
+        .width(100.percent)
+    }
+
+    @Builder
+    func buildProfileStats() {
+        Column() {
+            this.buildProfileStatRow(0x4B4F5C, "⌘", "repositories", this.liveRepositoryCount, { => this.openRepositories() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0xFFD54A, "☆", "starred", this.liveStarredCount, { => this.openStarred() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0xF4A24B, "⌂", "organizations", this.liveOrganizationCount, { => this.openOrganizations() })
+        }
+        .width(100.percent)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(24)
+        .padding(top: 2, bottom: 2)
+    }
+
+    @Builder
+    func buildProfileStatRow(accentColor: Int64, iconText: String, titleKey: String, count: String, onTap: () -> Unit) {
+        Row(space: 14) {
+            Row() {
+                Text(iconText).fontSize(15).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
             }
+            .width(40)
+            .height(40)
+            .backgroundColor(accentColor)
+            .borderRadius(12)
+            .justifyContent(FlexAlign.Center)
+
+            Text(this.t(titleKey)).fontSize(18).fontWeight(FontWeight.Medium).fontColor(this.primaryTextColor())
+            Blank()
+            Text(count).fontSize(17).fontColor(this.secondaryTextColor())
+            Text("›").fontSize(24).fontColor(this.secondaryTextColor())
         }
-        .alignItems(HorizontalAlign.Start)
-        .justifyContent(FlexAlign.Center)
+        .width(100.percent)
+        .height(72)
+        .padding(left: 18, right: 18)
+        .onClick({ _ => onTap() })
     }
-    .width(100.percent)
-}
 
-@Builder
-func buildProfileStats(page: ProfilePage) {
-    Column() {
-        buildProfileStatRow(page, 0x4B4F5C, "⌘", "repositories", page.repositoryCountValue(), { => page.openRepositories() })
-        buildProfileDivider(page)
-        buildProfileStatRow(page, 0xFFD54A, "☆", "starred", page.starredCountValue(), { => page.openStarred() })
-        buildProfileDivider(page)
-        buildProfileStatRow(page, 0xF4A24B, "⌂", "organizations", page.organizationCountValue(), { => page.openOrganizations() })
-    }
-    .width(100.percent)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(24)
-    .padding(top: 2, bottom: 2)
-}
-
-@Builder
-func buildProfileStatRow(page: ProfilePage, accentColor: Int64, iconText: String, titleKey: String, count: String, onTap: () -> Unit) {
-    Row(space: 14) {
-        Row() {
-            Text(iconText).fontSize(15).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor(accentColor)
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
-
-        Text(page.t(titleKey)).fontSize(18).fontWeight(FontWeight.Medium).fontColor(page.primaryTextColor())
+    @Builder
+    func buildProfileDivider() {
         Blank()
-        Text(count).fontSize(17).fontColor(page.secondaryTextColor())
-        Text("›").fontSize(24).fontColor(page.secondaryTextColor())
+            .width(100.percent)
+            .height(1)
+            .backgroundColor(this.mutedSurfaceColor())
     }
-    .width(100.percent)
-    .height(72)
-    .padding(left: 18, right: 18)
-    .onClick({ _ => onTap() })
-}
 
-@Builder
-func buildProfileDivider(page: ProfilePage) {
-    Blank()
-        .width(100.percent)
-        .height(1)
-        .backgroundColor(page.mutedSurfaceColor())
-}
-
-@Builder
-func buildProfilePopular(page: ProfilePage) {
-    Column(space: 14) {
-        Row(space: 10) {
-            Text("☆").fontSize(18).fontColor(page.secondaryTextColor())
-            Text(page.t("popular")).fontSize(18).fontWeight(FontWeight.Medium).fontColor(page.secondaryTextColor())
-        }
-        .width(100.percent)
-
+    @Builder
+    func buildProfilePopular() {
         Column(space: 14) {
-            ForEach(
-                page.visibleRepositories(),
-                itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
-                    buildProfileRepositoryCard(page, item)
-                }
-            )
-        }
-        .width(100.percent)
-    }
-    .width(100.percent)
-}
-
-@Builder
-func buildProfileRepositoryCard(page: ProfilePage, snapshot: GitHubRepositoryCardSnapshot) {
-    Column(space: 12) {
-        Row(space: 10) {
-            if (page.hasViewerAvatar()) {
-                Image(page.viewerAvatarUrlValue())
-                    .width(28)
-                    .height(28)
-                    .borderRadius(14)
-                    .objectFit(ImageFit.Cover)
+            Row(space: 10) {
+                Text("☆").fontSize(18).fontColor(this.secondaryTextColor())
+                Text(this.t("popular")).fontSize(18).fontWeight(FontWeight.Medium).fontColor(this.secondaryTextColor())
             }
-            Text(page.displayName()).fontSize(13).fontColor(page.secondaryTextColor())
+            .width(100.percent)
+
+            Column(space: 14) {
+                ForEach(
+                    this.liveRepositories,
+                    itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
+                        this.buildProfileRepositoryCard(item)
+                    }
+                )
+            }
+            .width(100.percent)
         }
         .width(100.percent)
-
-        Text(snapshot.name).fontSize(18).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
-        Text(snapshot.summary).fontSize(14).fontColor(page.primaryTextColor())
-        Text(if (snapshot.isFork) { "Fork" } else if (snapshot.isPrivate) { "Private" } else { "Public" })
-            .fontSize(13)
-            .fontColor(page.secondaryTextColor())
     }
-    .width(100.percent)
-    .padding(18)
-    .backgroundColor(page.surfaceColor())
-    .borderRadius(28)
-    .onClick({ _ => page.openRepositoryCard(snapshot) })
+
+    @Builder
+    func buildProfileRepositoryCard(snapshot: GitHubRepositoryCardSnapshot) {
+        Column(space: 12) {
+            Row(space: 10) {
+                if (this.viewerAvatarUrl != "") {
+                    Image(this.viewerAvatarUrl)
+                        .width(28)
+                        .height(28)
+                        .borderRadius(14)
+                        .objectFit(ImageFit.Cover)
+                }
+                Text(this.displayName()).fontSize(13).fontColor(this.secondaryTextColor())
+            }
+            .width(100.percent)
+
+            Text(snapshot.name).fontSize(18).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
+            Text(snapshot.summary).fontSize(14).fontColor(this.primaryTextColor())
+            Text(if (snapshot.isFork) { "Fork" } else if (snapshot.isPrivate) { "Private" } else { "Public" })
+                .fontSize(13)
+                .fontColor(this.secondaryTextColor())
+        }
+        .width(100.percent)
+        .padding(18)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(28)
+        .onClick({ _ => this.openRepositoryCard(snapshot) })
+    }
 }

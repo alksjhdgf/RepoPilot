@@ -12,7 +12,7 @@ import ohos_app_cangjie_entry.infra.databoard.{dataBoardDelete, dataBoardGet, da
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
-import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
+import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, buildPersistedGitHubStoredSession, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, loadStoredLanguagePreference, loadStoredThemePreference, persistLanguagePreference, persistThemePreference, planStoredGitHubSession, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
 import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, findCursorModelTitle, refreshStoredCursorSession}
 import ohos_app_cangjie_entry.services.github.{deserializeGitHubStoredSession, extractUrlQueryParameter, serializeGitHubStoredSession}
 import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
@@ -20,8 +20,6 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
 let GITHUB_SESSION_STORE_KEY = "github_auth_session"
-let THEME_PREFERENCE_STORE_KEY = "theme_preference"
-let LANGUAGE_PREFERENCE_STORE_KEY = "language_preference"
 @Component
 public class AppShell {
     @StorageProp["colorMode"]
@@ -706,15 +704,8 @@ public class AppShell {
         }
         this.hasRestoredPreferences = true
 
-        let storedTheme = dataBoardGet(THEME_PREFERENCE_STORE_KEY)
-        if (storedTheme == "system" || storedTheme == "light" || storedTheme == "dark") {
-            this.themePreference = storedTheme
-        }
-
-        let storedLanguage = dataBoardGet(LANGUAGE_PREFERENCE_STORE_KEY)
-        if (storedLanguage == "system" || storedLanguage == "en" || storedLanguage == "zh") {
-            this.languagePreference = storedLanguage
-        }
+        this.themePreference = loadStoredThemePreference()
+        this.languagePreference = loadStoredLanguagePreference()
 
     }
 
@@ -902,10 +893,10 @@ public class AppShell {
             if (kind == "theme") {
                 this.themePreference = value
                 applyAppStatusBarStyle(this.isDarkTheme())
-                spawn { => dataBoardSet(THEME_PREFERENCE_STORE_KEY, value) }
+                spawn { => persistThemePreference(value) }
             } else {
                 this.languagePreference = value
-                spawn { => dataBoardSet(LANGUAGE_PREFERENCE_STORE_KEY, value) }
+                spawn { => persistLanguagePreference(value) }
             }
         })
     }

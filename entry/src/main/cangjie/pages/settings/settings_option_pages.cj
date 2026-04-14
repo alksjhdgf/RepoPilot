@@ -2,13 +2,10 @@ package ohos_app_cangjie_entry.pages.settings
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.infra.databoard.dataBoardSet
 import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
+import ohos_app_cangjie_entry.services.app.{persistLanguagePreference, persistThemePreference}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
-
-let THEME_PREFERENCE_STORE_KEY = "theme_preference"
-let LANGUAGE_PREFERENCE_STORE_KEY = "language_preference"
 
 @Component
 public class AppearanceSettingsPage {
@@ -49,7 +46,7 @@ public class AppearanceSettingsPage {
     func selectTheme(value: String): Unit {
         this.themePreference = value
         applyAppStatusBarStyle(this.isDarkTheme())
-        spawn { => dataBoardSet(THEME_PREFERENCE_STORE_KEY, value) }
+        spawn { => persistThemePreference(value) }
     }
 
     func goBack(): Unit { this.stack.pop(animated: true) }
@@ -102,7 +99,7 @@ public class LanguageSettingsPage {
 
     func selectLanguage(value: String): Unit {
         this.languagePreference = value
-        spawn { => dataBoardSet(LANGUAGE_PREFERENCE_STORE_KEY, value) }
+        spawn { => persistLanguagePreference(value) }
     }
 
     func goBack(): Unit { this.stack.pop(animated: true) }

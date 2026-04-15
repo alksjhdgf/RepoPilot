@@ -119,17 +119,17 @@ public class SettingsPage {
     @Builder
     func buildPrimarySettingsGroup() {
         Column() {
-            this.buildSettingsRow(this.t("appearance"), this.preferenceLabel("theme", this.themePreference), "appearance")
+            this.buildSettingsRow("appearance", "theme", this.themePreference, "appearance")
             this.buildDivider()
-            this.buildSettingsRow(this.t("app_icon"), this.t("default_option"), "pending")
+            this.buildSettingsRow("app_icon", "default_option", "", "pending")
             this.buildDivider()
-            this.buildSettingsRow(this.t("app_language"), this.preferenceLabel("language", this.languagePreference), "language")
+            this.buildSettingsRow("app_language", "language", this.languagePreference, "language")
             this.buildDivider()
-            this.buildSettingsRow(this.t("notifications"), this.t("setup_needed"), "pending")
+            this.buildSettingsRow("notifications", "setup_needed", "", "pending")
             this.buildDivider()
-            this.buildSettingsRow(this.t("code_options"), "", "pending")
+            this.buildSettingsRow("code_options", "", "", "pending")
             this.buildDivider()
-            this.buildSettingsRow(this.t("external_links"), "", "pending")
+            this.buildSettingsRow("external_links", "", "", "pending")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -140,9 +140,9 @@ public class SettingsPage {
     @Builder
     func buildCopilotSettingsGroup() {
         Column() {
-            this.buildSettingsRow("Copilot", "Copilot Free", "pending")
+            this.buildSettingsRowRaw("Copilot", "Copilot Free", "pending")
             this.buildDivider()
-            this.buildSettingsRow("GitHub Pro", "", "pending")
+            this.buildSettingsRowRaw("GitHub Pro", "", "pending")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -153,9 +153,9 @@ public class SettingsPage {
     @Builder
     func buildLegalSettingsGroup() {
         Column() {
-            this.buildSettingsRow(this.t("terms_of_service"), "", "pending")
+            this.buildSettingsRow("terms_of_service", "", "", "pending")
             this.buildDivider()
-            this.buildSettingsRow(this.t("privacy_policy"), "", "pending")
+            this.buildSettingsRow("privacy_policy", "", "", "pending")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -166,9 +166,9 @@ public class SettingsPage {
     @Builder
     func buildAccountSettingsGroup() {
         Column() {
-            this.buildSettingsRow(this.t("manage_accounts"), "", "pending")
+            this.buildSettingsRow("manage_accounts", "", "", "pending")
             this.buildDivider()
-            this.buildSettingsRow(this.t("app_lock"), "", "pending")
+            this.buildSettingsRow("app_lock", "", "", "pending")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -179,7 +179,7 @@ public class SettingsPage {
     @Builder
     func buildShareFeedbackSettingsGroup() {
         Column() {
-            this.buildSettingsRow(this.t("share_feedback"), "", "pending")
+            this.buildSettingsRow("share_feedback", "", "", "pending")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -190,7 +190,7 @@ public class SettingsPage {
     @Builder
     func buildFeaturePreviewSettingsGroup() {
         Column() {
-            this.buildSettingsRow(this.t("feature_preview"), "", "pending")
+            this.buildSettingsRow("feature_preview", "", "", "pending")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -199,7 +199,29 @@ public class SettingsPage {
     }
 
     @Builder
-    func buildSettingsRow(title: String, value: String, kind: String) {
+    func buildSettingsRow(titleKey: String, valueMode: String, rawValue: String, kind: String) {
+        Row(space: 14) {
+            Text(this.t(titleKey)).fontSize(18).fontColor(this.primaryTextColor())
+            Blank()
+            if (valueMode != "") {
+                Text(
+                    if (valueMode == "theme" || valueMode == "language") {
+                        this.preferenceLabel(valueMode, rawValue)
+                    } else {
+                        this.t(valueMode)
+                    }
+                ).fontSize(17).fontColor(this.secondaryTextColor())
+            }
+            Text("›").fontSize(24).fontColor(this.secondaryTextColor())
+        }
+        .width(100.percent)
+        .height(72)
+        .padding(left: 18, right: 18)
+        .onClick({ _ => this.openSettingDestination(kind, this.t(titleKey)) })
+    }
+
+    @Builder
+    func buildSettingsRowRaw(title: String, value: String, kind: String) {
         Row(space: 14) {
             Text(title).fontSize(18).fontColor(this.primaryTextColor())
             Blank()

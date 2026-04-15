@@ -8,7 +8,7 @@ import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorModelSnapshot, ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, clearAppPreferenceHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler, setAppPreferenceHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, loadStoredLanguagePreference, loadStoredThemePreference, persistLanguagePreference, persistThemePreference, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
 import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, findCursorModelTitle, refreshStoredCursorSession}
@@ -168,6 +168,7 @@ public class AppShell {
         this.restorePersistedPreferencesIfNeeded()
         setAppForegroundHandler({ => this.handleAppForeground() })
         setAppAuthCallbackHandler({ uri => this.handleAuthCallbackUri(uri) })
+        setAppPreferenceHandler({ kind, value => this.applyRootPreference(kind, value) })
         applyAppStatusBarStyle(this.isDarkTheme())
         if (let Some(pendingUri) <- consumePendingAuthCallback()) {
             this.handleAuthCallbackUri(pendingUri)
@@ -184,6 +185,7 @@ public class AppShell {
     protected override func aboutToDisappear(): Unit {
         clearAppForegroundHandler()
         clearAppAuthCallbackHandler()
+        clearAppPreferenceHandler()
     }
 
     public func build() {

@@ -7,6 +7,7 @@ var appAbilityContext: ?UIAbilityContext = None
 var appMainWindow: ?Window = None
 var appForegroundHandler: ?() -> Unit = None
 var appAuthCallbackHandler: ?(String) -> Unit = None
+var appPreferenceHandler: ?(String, String) -> Unit = None
 var pendingAuthCallbackUri: ?String = None
 
 /**
@@ -96,6 +97,32 @@ public func setAppAuthCallbackHandler(handler: (String) -> Unit): Unit {
  */
 public func clearAppAuthCallbackHandler(): Unit {
     appAuthCallbackHandler = None
+}
+
+/**
+ * 注册偏好设置变更处理器，供设置页面把主题/语言修改统一交回 AppShell。
+ * Registers a preference-change handler so settings pages can delegate updates back to AppShell.
+ */
+public func setAppPreferenceHandler(handler: (String, String) -> Unit): Unit {
+    appPreferenceHandler = Some(handler)
+}
+
+/**
+ * 清理偏好设置处理器，避免旧页面实例销毁后仍然接收设置动作。
+ * Clears the preference handler when the active shell disappears.
+ */
+public func clearAppPreferenceHandler(): Unit {
+    appPreferenceHandler = None
+}
+
+/**
+ * 将主题或语言变更动作派发给当前 AppShell。
+ * Forwards theme or language change requests into the active app shell.
+ */
+public func notifyAppPreferenceChange(kind: String, value: String): Unit {
+    if (let Some(handler) <- appPreferenceHandler) {
+        handler(kind, value)
+    }
 }
 
 /**

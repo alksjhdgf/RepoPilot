@@ -37,7 +37,7 @@ public class ProfilePage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 this.buildProfileBackground()
 
                 Scroll {

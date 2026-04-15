@@ -2,8 +2,7 @@ package ohos_app_cangjie_entry.pages.settings
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
-import ohos_app_cangjie_entry.services.app.{persistLanguagePreference, persistThemePreference}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, notifyAppPreferenceChange}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
@@ -44,9 +43,7 @@ public class AppearanceSettingsPage {
     }
 
     func selectTheme(value: String): Unit {
-        this.themePreference = value
-        applyAppStatusBarStyle(this.isDarkTheme())
-        spawn { => persistThemePreference(value) }
+        notifyAppPreferenceChange("theme", value)
     }
 
     func goBack(): Unit { this.stack.pop(animated: true) }
@@ -87,11 +84,11 @@ public class AppearanceSettingsPage {
     @Builder
     func buildOptionList() {
         Column() {
-            this.buildOptionRow(this.t("system"), "system")
+            this.buildOptionRow("system")
             this.buildDivider()
-            this.buildOptionRow(this.t("light"), "light")
+            this.buildOptionRow("light")
             this.buildDivider()
-            this.buildOptionRow(this.t("dark"), "dark")
+            this.buildOptionRow("dark")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -100,9 +97,17 @@ public class AppearanceSettingsPage {
     }
 
     @Builder
-    func buildOptionRow(title: String, value: String) {
+    func buildOptionRow(value: String) {
         Row() {
-            Text(title).fontSize(18).fontColor(this.primaryTextColor())
+            Text(
+                if (value == "system") {
+                    this.t("system")
+                } else if (value == "light") {
+                    this.t("light")
+                } else {
+                    this.t("dark")
+                }
+            ).fontSize(18).fontColor(this.primaryTextColor())
             Blank()
             Text(if (this.isSelected(value)) { "ON" } else { "" }).fontSize(14).fontColor(this.accentStrongColor())
         }
@@ -155,8 +160,7 @@ public class LanguageSettingsPage {
     }
 
     func selectLanguage(value: String): Unit {
-        this.languagePreference = value
-        spawn { => persistLanguagePreference(value) }
+        notifyAppPreferenceChange("language", value)
     }
 
     func goBack(): Unit { this.stack.pop(animated: true) }
@@ -197,11 +201,11 @@ public class LanguageSettingsPage {
     @Builder
     func buildOptionList() {
         Column() {
-            this.buildOptionRow(this.t("system"), "system")
+            this.buildOptionRow("system")
             this.buildDivider()
-            this.buildOptionRow(this.t("lang_en"), "en")
+            this.buildOptionRow("en")
             this.buildDivider()
-            this.buildOptionRow(this.t("lang_zh"), "zh")
+            this.buildOptionRow("zh")
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -210,9 +214,17 @@ public class LanguageSettingsPage {
     }
 
     @Builder
-    func buildOptionRow(title: String, value: String) {
+    func buildOptionRow(value: String) {
         Row() {
-            Text(title).fontSize(18).fontColor(this.primaryTextColor())
+            Text(
+                if (value == "system") {
+                    this.t("system")
+                } else if (value == "zh") {
+                    this.t("lang_zh")
+                } else {
+                    this.t("lang_en")
+                }
+            ).fontSize(18).fontColor(this.primaryTextColor())
             Blank()
             Text(if (this.isSelected(value)) { "ON" } else { "" }).fontSize(14).fontColor(this.accentStrongColor())
         }

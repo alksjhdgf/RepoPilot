@@ -103,6 +103,48 @@ public class ProfilePage {
         }
         "GitHub"
     }
+    func repositoryDisplayName(snapshot: GitHubRepositoryCardSnapshot): String {
+        let parts = snapshot.name.split("/")
+        if (parts.size > 0) {
+            return parts[parts.size - 1]
+        }
+        snapshot.name
+    }
+    func visiblePopularRepositories(): ArrayList<GitHubRepositoryCardSnapshot> {
+        let topItems = ArrayList<GitHubRepositoryCardSnapshot>()
+        let usedNames = ArrayList<String>()
+        var rank: Int64 = 0
+        while (rank < 5) {
+            var found = false
+            var best = GitHubRepositoryCardSnapshot("", "", "", false, false, 0, false)
+            var bestStars: Int64 = -1
+            for (item in this.liveRepositories) {
+                var alreadyUsed = false
+                for (usedName in usedNames) {
+                    if (usedName == item.name) {
+                        alreadyUsed = true
+                        break
+                    }
+                }
+                if (alreadyUsed) {
+                    continue
+                }
+                let stars = item.starCount
+                if (!found || stars > bestStars) {
+                    found = true
+                    best = item
+                    bestStars = stars
+                }
+            }
+            if (!found) {
+                break
+            }
+            topItems.add(best)
+            usedNames.add(best.name)
+            rank += 1
+        }
+        topItems
+    }
 
     func openPlaceholder(title: String, message: String): Unit {
         this.pendingPageTitle = title
@@ -122,6 +164,7 @@ public class ProfilePage {
     func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
     func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
+    func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
 
@@ -172,25 +215,22 @@ public class ProfilePage {
         Row(space: 16) {
             if (this.viewerAvatarUrl != "") {
                 Image(this.viewerAvatarUrl)
-                    .width(92)
-                    .height(92)
-                    .borderRadius(46)
+                    .width(76)
+                    .height(76)
+                    .borderRadius(38)
                     .objectFit(ImageFit.Cover)
             } else {
                 Row() {
-                    Text("GH").fontSize(26).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
+                    Text("GH").fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
                 }
-                .width(92)
-                .height(92)
+                .width(76)
+                .height(76)
                 .backgroundColor(this.surfaceColor())
-                .borderRadius(46)
+                .borderRadius(38)
                 .justifyContent(FlexAlign.Center)
             }
-            Column(space: 6) {
-                Text(this.displayName()).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-                if (this.viewerLogin != "") {
-                    Text("@${this.viewerLogin}").fontSize(14).fontColor(this.secondaryTextColor())
-                }
+            Column() {
+                Text(this.displayName()).fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
             }
             .alignItems(HorizontalAlign.Start)
             .justifyContent(FlexAlign.Center)
@@ -217,22 +257,22 @@ public class ProfilePage {
     func buildProfileStatRow(accentColor: Int64, iconText: String, titleKey: String, count: String, onTap: () -> Unit) {
         Row(space: 14) {
             Row() {
-                Text(iconText).fontSize(15).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
+                Text(iconText).fontSize(14).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC)
             }
-            .width(40)
-            .height(40)
+            .width(38)
+            .height(38)
             .backgroundColor(accentColor)
-            .borderRadius(12)
+            .borderRadius(11)
             .justifyContent(FlexAlign.Center)
 
-            Text(this.t(titleKey)).fontSize(18).fontWeight(FontWeight.Medium).fontColor(this.primaryTextColor())
+            Text(this.t(titleKey)).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryTextColor())
             Blank()
-            Text(count).fontSize(17).fontColor(this.secondaryTextColor())
-            Text("›").fontSize(24).fontColor(this.secondaryTextColor())
+            Text(count).fontSize(16).fontColor(this.secondaryTextColor())
+            Text("›").fontSize(22).fontColor(this.secondaryTextColor())
         }
         .width(100.percent)
-        .height(72)
-        .padding(left: 18, right: 18)
+        .height(68)
+        .padding(left: 16, right: 16)
         .onClick({ _ => onTap() })
     }
 
@@ -246,51 +286,68 @@ public class ProfilePage {
 
     @Builder
     func buildProfilePopular() {
-        Column(space: 14) {
+        Column(space: 12) {
             Row(space: 10) {
-                Text("☆").fontSize(18).fontColor(this.secondaryTextColor())
-                Text(this.t("popular")).fontSize(18).fontWeight(FontWeight.Medium).fontColor(this.secondaryTextColor())
+                Text("☆").fontSize(17).fontColor(this.secondaryTextColor())
+                Text(this.t("popular")).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.secondaryTextColor())
             }
             .width(100.percent)
 
-            Column(space: 14) {
+            Column(space: 12) {
                 ForEach(
-                    this.liveRepositories,
+                    this.visiblePopularRepositories(),
                     itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
                         this.buildProfileRepositoryCard(item)
                     }
                 )
             }
             .width(100.percent)
+
+            if (this.liveRepositories.size > 5) {
+                Text(this.t("profile_repositories_hint"))
+                    .fontSize(13)
+                    .lineHeight(20)
+                    .fontColor(this.secondaryTextColor())
+                    .width(100.percent)
+            }
         }
         .width(100.percent)
     }
 
     @Builder
     func buildProfileRepositoryCard(snapshot: GitHubRepositoryCardSnapshot) {
-        Column(space: 12) {
+        Column(space: 10) {
             Row(space: 10) {
                 if (this.viewerAvatarUrl != "") {
                     Image(this.viewerAvatarUrl)
-                        .width(28)
-                        .height(28)
-                        .borderRadius(14)
+                        .width(24)
+                        .height(24)
+                        .borderRadius(12)
                         .objectFit(ImageFit.Cover)
                 }
-                Text(this.displayName()).fontSize(13).fontColor(this.secondaryTextColor())
+                Text(this.displayName()).fontSize(12).fontColor(this.secondaryTextColor())
             }
             .width(100.percent)
 
-            Text(snapshot.name).fontSize(18).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-            Text(snapshot.summary).fontSize(14).fontColor(this.primaryTextColor())
-            Text(if (snapshot.isFork) { "Fork" } else if (snapshot.isPrivate) { "Private" } else { "Public" })
-                .fontSize(13)
-                .fontColor(this.secondaryTextColor())
+            Text(this.repositoryDisplayName(snapshot))
+                .fontSize(17)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(this.primaryTextColor())
+                .width(100.percent)
+                .textAlign(TextAlign.Start)
+            Row(space: 8) {
+                Text(if (snapshot.viewerStarred) { "★" } else { "☆" })
+                    .fontSize(15)
+                    .fontColor(if (snapshot.viewerStarred) { 0xFFD54A } else { this.secondaryTextColor() })
+                Text("${snapshot.starCount}").fontSize(13).fontColor(this.secondaryTextColor())
+            }
+            .width(100.percent)
+            .justifyContent(FlexAlign.Start)
         }
         .width(100.percent)
-        .padding(18)
+        .padding(16)
         .backgroundColor(this.surfaceColor())
-        .borderRadius(28)
+        .borderRadius(24)
         .onClick({ _ => this.openRepositoryCard(snapshot) })
     }
 }

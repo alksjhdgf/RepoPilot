@@ -50,6 +50,7 @@ func localizedEn(key: String): String {
     else if (key == "inbox_subtitle") { "Prioritize what needs your attention next." }
     else if (key == "explore_subtitle") { "Find code, trends and queues worth opening." }
     else if (key == "popular") { "Popular" }
+    else if (key == "profile_repositories_hint") { "Tap Repositories to view all repositories." }
     else if (key == "agent_sessions") { "Agent sessions" }
     else if (key == "chats") { "Chats" }
     else if (key == "cursor_agent_title") { "Delegate tasks to Cursor cloud agents" }
@@ -281,6 +282,7 @@ func localizedZh(key: String): String {
     else if (key == "inbox_subtitle") { "优先处理下一步最值得关注的事项。" }
     else if (key == "explore_subtitle") { "发现值得打开的代码、趋势和队列。" }
     else if (key == "popular") { "热门" }
+    else if (key == "profile_repositories_hint") { "点击“仓库”查看全部仓库。" }
     else if (key == "agent_sessions") { "Agent 会话" }
     else if (key == "chats") { "聊天" }
     else if (key == "cursor_agent_title") { "将任务委派给 Cursor 云端 Agent" }

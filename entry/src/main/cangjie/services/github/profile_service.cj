@@ -110,25 +110,42 @@ public func fetchGitHubRepositories(
         "https://api.github.com/user/repos?sort=updated&per_page=12",
         token,
         { body =>
-            let repositories = ArrayList<GitHubRepositoryCardSnapshot>()
-            for (item in extractTopLevelObjectArray(body)) {
-                let name = extractJsonStringField(item, "full_name")
-                if (name == "") {
-                    continue
-                }
-                let description = extractJsonStringField(item, "description")
-                repositories.add(
-                    GitHubRepositoryCardSnapshot(
-                        name,
-                        if (description == "") { "No description" } else { description },
-                        extractJsonStringField(item, "html_url"),
-                        extractJsonBoolField(item, "private"),
-                        extractJsonBoolField(item, "fork")
-                    )
-                )
-            }
-            logInfo("GitHubApi", "Loaded ${repositories.size} repositories.")
-            onSuccess(repositories)
+            requestGitHubJson(
+                "https://api.github.com/user/starred?per_page=100",
+                token,
+                { starredBody =>
+                    let starredItems = extractTopLevelObjectArray(starredBody)
+                    let repositories = ArrayList<GitHubRepositoryCardSnapshot>()
+                    for (item in extractTopLevelObjectArray(body)) {
+                        let name = extractJsonStringField(item, "full_name")
+                        if (name == "") {
+                            continue
+                        }
+                        let description = extractJsonStringField(item, "description")
+                        var viewerStarred = false
+                        for (starredItem in starredItems) {
+                            if (extractJsonStringField(starredItem, "full_name") == name) {
+                                viewerStarred = true
+                                break
+                            }
+                        }
+                        repositories.add(
+                            GitHubRepositoryCardSnapshot(
+                                name,
+                                if (description == "") { "No description" } else { description },
+                                extractJsonStringField(item, "html_url"),
+                                extractJsonBoolField(item, "private"),
+                                extractJsonBoolField(item, "fork"),
+                                extractJsonIntField(item, "stargazers_count"),
+                                viewerStarred
+                            )
+                        )
+                    }
+                    logInfo("GitHubApi", "Loaded ${repositories.size} repositories.")
+                    onSuccess(repositories)
+                },
+                onFailure
+            )
         },
         onFailure
     )

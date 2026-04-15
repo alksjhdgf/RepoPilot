@@ -104,13 +104,17 @@ public class GitHubRepositoryCardSnapshot {
     public let repoUrl: String
     public let isPrivate: Bool
     public let isFork: Bool
+    public let starCount: Int64
+    public let viewerStarred: Bool
 
-    public init(name: String, summary: String, repoUrl: String, isPrivate: Bool, isFork: Bool) {
+    public init(name: String, summary: String, repoUrl: String, isPrivate: Bool, isFork: Bool, starCount: Int64, viewerStarred: Bool) {
         this.name = name
         this.summary = summary
         this.repoUrl = repoUrl
         this.isPrivate = isPrivate
         this.isFork = isFork
+        this.starCount = starCount
+        this.viewerStarred = viewerStarred
     }
 }
 

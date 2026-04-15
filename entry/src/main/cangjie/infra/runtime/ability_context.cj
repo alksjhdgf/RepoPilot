@@ -8,6 +8,7 @@ var appMainWindow: ?Window = None
 var appForegroundHandler: ?() -> Unit = None
 var appAuthCallbackHandler: ?(String) -> Unit = None
 var appPreferenceHandler: ?(String, String) -> Unit = None
+var appDataRefreshHandler: ?(String, () -> Unit) -> Unit = None
 var pendingAuthCallbackUri: ?String = None
 
 /**
@@ -123,6 +124,34 @@ public func notifyAppPreferenceChange(kind: String, value: String): Unit {
     if (let Some(handler) <- appPreferenceHandler) {
         handler(kind, value)
     }
+}
+
+/**
+ * 注册全局数据刷新处理器，供独立页面把刷新动作交回 AppShell。
+ * Registers a shared data-refresh handler so standalone pages can delegate refresh work to AppShell.
+ */
+public func setAppDataRefreshHandler(handler: (String, () -> Unit) -> Unit): Unit {
+    appDataRefreshHandler = Some(handler)
+}
+
+/**
+ * 清理全局数据刷新处理器，避免旧壳层销毁后仍接收刷新动作。
+ * Clears the shared data-refresh handler when the active shell disappears.
+ */
+public func clearAppDataRefreshHandler(): Unit {
+    appDataRefreshHandler = None
+}
+
+/**
+ * 将页面发起的数据刷新动作转交给当前 AppShell。
+ * Forwards page-initiated data refresh actions into the active app shell.
+ */
+public func notifyAppDataRefresh(kind: String, onComplete: () -> Unit): Unit {
+    if (let Some(handler) <- appDataRefreshHandler) {
+        handler(kind, onComplete)
+        return
+    }
+    onComplete()
 }
 
 /**

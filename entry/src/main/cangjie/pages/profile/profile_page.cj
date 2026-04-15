@@ -6,7 +6,7 @@ import ohos.arkui.state_macro_manage.*
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.GitHubRepositoryCardSnapshot
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext, notifyAppDataRefresh}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -31,6 +31,9 @@ public class ProfilePage {
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
 
+    @State
+    var profileRefreshing: Bool = false
+
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
     }
@@ -40,19 +43,35 @@ public class ProfilePage {
             Stack(alignContent: Alignment.TopStart) {
                 this.buildProfileBackground()
 
-                Scroll {
-                    Column(space: 24) {
-                        this.buildProfileTopBar()
-                        this.buildProfileIdentity()
-                        this.buildProfileStats()
-                        this.buildProfilePopular()
+                Column() {
+                    this.buildProfileTopBar()
+
+                    Refresh(RefreshOptions(refreshing: @Binder(profileRefreshing))) {
+                        Scroll {
+                            Column(space: 24) {
+                                this.buildProfileIdentity()
+                                this.buildProfileStats()
+                                this.buildProfilePopular()
+                            }
+                            .width(100.percent)
+                            .padding(left: 18, right: 18, top: 18, bottom: 32)
+                        }
+                        .width(100.percent)
+                        .scrollBar(BarState.Off)
                     }
+                    .layoutWeight(1)
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .onRefreshing({ =>
+                        notifyAppDataRefresh("profile", {
+                            =>
+                            this.profileRefreshing = false
+                        })
+                    })
+                    .align(Alignment.Top)
                 }
                 .width(100.percent)
                 .height(100.percent)
-                .scrollBar(BarState.Off)
+                .padding(left: 18, right: 18, top: 18)
             }
             .width(100.percent)
             .height(100.percent)

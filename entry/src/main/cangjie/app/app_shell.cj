@@ -8,7 +8,7 @@ import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorModelSnapshot, ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, clearAppPreferenceHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler, setAppPreferenceHandler}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppDataRefreshHandler, clearAppForegroundHandler, clearAppPreferenceHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppDataRefreshHandler, setAppForegroundHandler, setAppPreferenceHandler}
 import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, loadStoredLanguagePreference, loadStoredThemePreference, persistLanguagePreference, persistThemePreference, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
 import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, findCursorModelTitle, refreshStoredCursorSession}
@@ -36,6 +36,9 @@ public class AppShell {
 
     @State
     var showWorkplacePicker: Bool = false
+
+    @State
+    var homeRefreshing: Bool = false
 
     @Provide
     var themePreference: String = "system"
@@ -169,6 +172,7 @@ public class AppShell {
         setAppForegroundHandler({ => this.handleAppForeground() })
         setAppAuthCallbackHandler({ uri => this.handleAuthCallbackUri(uri) })
         setAppPreferenceHandler({ kind, value => this.applyRootPreference(kind, value) })
+        setAppDataRefreshHandler({ kind, onComplete => this.handleDataRefreshRequest(kind, onComplete) })
         applyAppStatusBarStyle(this.isDarkTheme())
         if (let Some(pendingUri) <- consumePendingAuthCallback()) {
             this.handleAuthCallbackUri(pendingUri)
@@ -186,6 +190,7 @@ public class AppShell {
         clearAppForegroundHandler()
         clearAppAuthCallbackHandler()
         clearAppPreferenceHandler()
+        clearAppDataRefreshHandler()
     }
 
     public func build() {
@@ -290,12 +295,32 @@ public class AppShell {
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
                 .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
             }
             .width(100.percent)
             .height(100.percent)
             .onRefreshing({ =>
                 this.refreshCursorHomeData(showRefreshIndicator: true)
+            })
+        } else if (this.isActiveTab("home")) {
+            Refresh(RefreshOptions(refreshing: @Binder(homeRefreshing))) {
+                Scroll {
+                    Column(space: 18) {
+                        buildActiveTabContent(this)
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 84, bottom: 100)
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
+                .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
+            }
+            .width(100.percent)
+            .height(100.percent)
+            .onRefreshing({ =>
+                this.refreshHomeData(showRefreshIndicator: true)
             })
         } else {
             Scroll {
@@ -885,6 +910,33 @@ public class AppShell {
             { repositories => this.applyLiveRepositories(repositories) },
             { message => this.handleGitHubApiFailure(message) }
         )
+    }
+    func handleDataRefreshRequest(kind: String, onComplete: () -> Unit): Unit {
+        if (kind == "profile") {
+            this.refreshHomeData(onComplete: onComplete)
+            return
+        }
+        onComplete()
+    }
+    func refreshHomeData(showRefreshIndicator!: Bool = false, onComplete!: () -> Unit = { => }): Unit {
+        if (showRefreshIndicator) {
+            this.homeRefreshing = true
+        }
+        if (this.authAccessToken == "") {
+            this.runOnUi({ =>
+                this.homeRefreshing = false
+                onComplete()
+            })
+            return
+        }
+        this.refreshGitHubProfile()
+        if (this.selectedRepository != "") {
+            this.refreshSelectedRepositoryData()
+        }
+        this.runOnUi({ =>
+            this.homeRefreshing = false
+            onComplete()
+        })
     }
     /**
      * 更新当前登录用户的展示信息。

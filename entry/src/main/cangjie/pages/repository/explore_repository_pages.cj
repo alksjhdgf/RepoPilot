@@ -14,8 +14,8 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
 @Component
-public class RepositoryDetailPage {
-    @Consume var homeStack: NavPathStack
+public class ExploreRepositoryDetailPage {
+    @Consume var exploreStack: NavPathStack
     @Consume var selectedRepository: String
     @Consume var selectedIssue: String
     @Consume var selectedPullRequest: String
@@ -46,24 +46,24 @@ public class RepositoryDetailPage {
 
                 Scroll {
                     Column(space: 16) {
-                        detailHeaderCommon(this.homeStack, this.t("back"), this.t("repository_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailHeaderCommon(this.exploreStack, this.t("back"), this.t("repository_detail"), this.primaryTextColor(), this.surfaceColor())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentRepository().name, this.currentRepository().summary)
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "${this.currentRepository().issueCount} ${this.t("issues")} / ${this.currentRepository().pullRequestCount} ${this.t("pull_requests")}")
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentRepository().visibilityLabel} / ${this.currentRepository().defaultBranch}")
                         if (this.repositoryActionMessage != "") {
                             detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.repositoryActionMessage)
                         }
-                        buildRepositoryActionGrid(this)
+                        buildExploreRepositoryActionGrid(this)
                         if (this.currentIssues().size > 0) {
                             ForEach(this.currentIssues(), itemGeneratorFunc: { item: GitHubIssueSnapshot, _: Int64 =>
-                                buildIssueStrip(this, item)
+                                buildExploreIssueStrip(this, item)
                             })
                         } else {
                             detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), "No open issues.")
                         }
                         if (this.currentPullRequests().size > 0) {
                             ForEach(this.currentPullRequests(), itemGeneratorFunc: { item: GitHubPullRequestSnapshot, _: Int64 =>
-                                buildPullRequestStrip(this, item)
+                                buildExplorePullRequestStrip(this, item)
                             })
                         } else {
                             detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("pull_requests"), "No open pull requests.")
@@ -89,15 +89,15 @@ public class RepositoryDetailPage {
     func openIssue(issueId: String): Unit {
         this.selectedIssue = issueId
         this.selectedTask = taskIdForIssue(issueId)
-        this.homeStack.pushPath(NavPathInfo(name: "issueDetail", param: ""), options: NavigationOptions(animated: true))
+        this.exploreStack.pushPath(NavPathInfo(name: "issueDetail", param: ""), options: NavigationOptions(animated: true))
     }
     func openPullRequest(pullRequestId: String): Unit {
         this.selectedPullRequest = pullRequestId
-        this.homeStack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
+        this.exploreStack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
     }
     func openCreateTask(): Unit {
         this.selectedTask = taskIdForIssue(this.selectedIssue)
-        this.homeStack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
+        this.exploreStack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
     }
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func forkRepository(): Unit {
@@ -134,7 +134,7 @@ public class RepositoryDetailPage {
 }
 
 @Builder
-func buildRepositoryActionGrid(page: RepositoryDetailPage) {
+func buildExploreRepositoryActionGrid(page: ExploreRepositoryDetailPage) {
     Column(space: 12) {
         Button(page.t("open_issue"))
             .width(100.percent)
@@ -178,7 +178,7 @@ func buildRepositoryActionGrid(page: RepositoryDetailPage) {
 }
 
 @Builder
-func buildIssueStrip(page: RepositoryDetailPage, item: GitHubIssueSnapshot) {
+func buildExploreIssueStrip(page: ExploreRepositoryDetailPage, item: GitHubIssueSnapshot) {
     Button() {
         Column(space: 6) {
             Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
@@ -196,7 +196,7 @@ func buildIssueStrip(page: RepositoryDetailPage, item: GitHubIssueSnapshot) {
 }
 
 @Builder
-func buildPullRequestStrip(page: RepositoryDetailPage, item: GitHubPullRequestSnapshot) {
+func buildExplorePullRequestStrip(page: ExploreRepositoryDetailPage, item: GitHubPullRequestSnapshot) {
     Button() {
         Column(space: 6) {
             Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(page.primaryTextColor())
@@ -214,8 +214,8 @@ func buildPullRequestStrip(page: RepositoryDetailPage, item: GitHubPullRequestSn
 }
 
 @Component
-public class IssueDetailPage {
-    @Consume var homeStack: NavPathStack
+public class ExploreIssueDetailPage {
+    @Consume var exploreStack: NavPathStack
     @Consume var selectedRepository: String
     @Consume var selectedIssue: String
     @Consume var selectedTask: String
@@ -246,7 +246,7 @@ public class IssueDetailPage {
 
                 Scroll {
                     Column(space: 16) {
-                        detailHeaderCommon(this.homeStack, this.t("back"), this.t("issue_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailHeaderCommon(this.exploreStack, this.t("back"), this.t("issue_detail"), this.primaryTextColor(), this.surfaceColor())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentIssue().title, this.currentIssue().summary)
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentIssueStatus()} / @${this.currentIssue().authorLogin}")
                         if (this.actionMessage != "") {
@@ -271,11 +271,11 @@ public class IssueDetailPage {
                             .fontColor(this.surfaceColor())
                             .onClick({ _ =>
                                 this.selectedTask = taskIdForIssue(this.currentIssue().id)
-                                this.homeStack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
+                                this.exploreStack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
                             })
                         if (this.issueComments.size > 0) {
                             ForEach(this.issueComments, itemGeneratorFunc: { item: GitHubCommentSnapshot, _: Int64 =>
-                                buildCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
+                                buildExploreCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
                             })
                         }
                     }
@@ -371,8 +371,8 @@ public class IssueDetailPage {
 }
 
 @Component
-public class PullRequestDetailPage {
-    @Consume var homeStack: NavPathStack
+public class ExplorePullRequestDetailPage {
+    @Consume var exploreStack: NavPathStack
     @Consume var selectedRepository: String
     @Consume var selectedPullRequest: String
     @Consume var themePreference: String
@@ -401,7 +401,7 @@ public class PullRequestDetailPage {
 
                 Scroll {
                     Column(space: 16) {
-                        detailHeaderCommon(this.homeStack, this.t("back"), this.t("pull_request_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailHeaderCommon(this.exploreStack, this.t("back"), this.t("pull_request_detail"), this.primaryTextColor(), this.surfaceColor())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentPullRequest().title, this.currentPullRequest().summary)
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), "${this.currentPullRequest().status} / @${this.currentPullRequest().authorLogin}")
                         if (this.actionMessage != "") {
@@ -427,7 +427,7 @@ public class PullRequestDetailPage {
                             .onClick({ _ => this.submitReview("COMMENT", "RepoPilot mobile review comment @ ${SystemDateTime.getTime()}") })
                         if (this.reviewComments.size > 0) {
                             ForEach(this.reviewComments, itemGeneratorFunc: { item: GitHubCommentSnapshot, _: Int64 =>
-                                buildCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
+                                buildExploreCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
                             })
                         }
                     }
@@ -497,7 +497,7 @@ public class PullRequestDetailPage {
 }
 
 @Builder
-func buildCommentStrip(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, item: GitHubCommentSnapshot) {
+func buildExploreCommentStrip(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, item: GitHubCommentSnapshot) {
     Column(space: 6) {
         Text("@${item.authorLogin}").fontSize(12).fontWeight(FontWeight.Bold).fontColor(primaryTextColor)
         Text(if (item.body == "") { "Empty comment." } else { item.body }).fontSize(12).fontColor(secondaryTextColor)

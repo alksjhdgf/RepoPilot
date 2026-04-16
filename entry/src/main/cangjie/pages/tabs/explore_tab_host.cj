@@ -2,27 +2,25 @@ package ohos_app_cangjie_entry.pages.tabs
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.pages.pageMap
+import ohos_app_cangjie_entry.pages.maps.explorePageMap
 import ohos_app_cangjie_entry.domain.ExploreLaneSnapshot
 import ohos_app_cangjie_entry.services.platform.exploreLane
 
 @Component
 public class ExploreTabHost {
-    @Provide var stack: NavPathStack = NavPathStack()
     @Consume var exploreStack: NavPathStack = NavPathStack()
     @Consume var themePreference: String = "system"
     @Consume var languagePreference: String = "system"
     @Consume var selectedRepository: String = ""
+
+    @Provide var pendingPageTitle: String = "Pending"
+    @Provide var pendingPageMessage: String = "该页面待开发"
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
 
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
-
-    protected override func aboutToAppear(): Unit {
-        this.stack = this.exploreStack
-    }
 
     public func build() {
         Navigation(this.exploreStack) {
@@ -53,7 +51,7 @@ public class ExploreTabHost {
         .width(100.percent)
         .height(100.percent)
         .hideTitleBar(true)
-        .navDestination(bind(pageMap, this))
+        .navDestination(bind(explorePageMap, this))
     }
 
     func t(key: String): String { tabText(this.languagePreference, this.systemLanguageCode, key) }

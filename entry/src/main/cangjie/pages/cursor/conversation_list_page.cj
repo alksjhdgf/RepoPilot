@@ -11,7 +11,7 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
 @Component
 public class CursorConversationListPage {
-    @Consume var stack: NavPathStack
+    @Consume var cursorStack: NavPathStack
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var cursorConversations: ArrayList<CursorConversationSnapshot>
@@ -87,7 +87,7 @@ public class CursorConversationListPage {
         .backgroundColor(0x00000000)
     }
 
-    func goBack(): Unit { this.stack.pop(animated: true) }
+    func goBack(): Unit { this.cursorStack.pop(animated: true) }
     func selectConversation(conversationId: String): Unit {
         this.cursorConversationId = conversationId
         this.cursorConversationTitle = findCursorConversationTitle(this.cursorConversations, conversationId)

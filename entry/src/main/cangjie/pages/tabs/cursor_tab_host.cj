@@ -4,13 +4,12 @@ import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.pages.pageMap
+import ohos_app_cangjie_entry.pages.maps.cursorPageMap
 import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorModelSnapshot}
 import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, refreshStoredCursorSession}
 
 @Component
 public class CursorTabHost {
-    @Provide var stack: NavPathStack = NavPathStack()
     @Provide var cursorConversations: ArrayList<CursorConversationSnapshot> = ArrayList<CursorConversationSnapshot>()
     @Provide var cursorModels: ArrayList<CursorModelSnapshot> = ArrayList<CursorModelSnapshot>()
     @Provide var cursorConversationId: String = ""
@@ -18,6 +17,8 @@ public class CursorTabHost {
     @Provide var cursorSelectedModelId: String = "claude-haiku-4.5"
     @Provide var cursorConnectionReady: Bool = false
     @Provide var cursorAtRoot: Bool = true
+    @Provide var pendingPageTitle: String = "Pending"
+    @Provide var pendingPageMessage: String = "该页面待开发"
 
     @Consume var cursorStack: NavPathStack = NavPathStack()
     @Consume var themePreference: String = "system"
@@ -32,7 +33,6 @@ public class CursorTabHost {
     @State var cursorRefreshing: Bool = false
 
     protected override func aboutToAppear(): Unit {
-        this.stack = this.cursorStack
         this.cursorAtRoot = true
         this.ensureCursorState()
         this.refreshCursorContent()
@@ -83,7 +83,7 @@ public class CursorTabHost {
         .width(100.percent)
         .height(100.percent)
         .hideTitleBar(true)
-        .navDestination(bind(pageMap, this))
+        .navDestination(bind(cursorPageMap, this))
     }
 
     func ensureCursorState(): Unit {

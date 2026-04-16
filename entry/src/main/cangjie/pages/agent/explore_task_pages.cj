@@ -11,8 +11,8 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
 @Component
-public class CreateTaskPage {
-    @Consume var homeStack: NavPathStack
+public class ExploreCreateTaskPage {
+    @Consume var exploreStack: NavPathStack
     @Consume var selectedRepository: String
     @Consume var selectedIssue: String
     @Consume var selectedTask: String
@@ -38,7 +38,7 @@ public class CreateTaskPage {
 
                 Scroll {
                     Column(space: 16) {
-                        detailHeaderCommon(this.homeStack, this.t("back"), this.t("create_task"), this.primaryTextColor(), this.surfaceColor())
+                        detailHeaderCommon(this.exploreStack, this.t("back"), this.t("create_task"), this.primaryTextColor(), this.surfaceColor())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("prompt_draft"), this.currentPromptDraft())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("execution_mode"), this.currentExecutionMode())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("validation_scope"), this.currentValidationScope())
@@ -48,7 +48,7 @@ public class CreateTaskPage {
                             .height(48)
                             .backgroundColor(this.primaryTextColor())
                             .fontColor(this.surfaceColor())
-                            .onClick({ _ => this.homeStack.pushPath(NavPathInfo(name: "taskDetail", param: ""), options: NavigationOptions(animated: true)) })
+                            .onClick({ _ => this.exploreStack.pushPath(NavPathInfo(name: "taskDetail", param: ""), options: NavigationOptions(animated: true)) })
                     }
                     .width(100.percent)
                     .padding(left: 18, right: 18, top: 18, bottom: 32)
@@ -112,8 +112,8 @@ public class CreateTaskPage {
 }
 
 @Component
-public class TaskDetailPage {
-    @Consume var homeStack: NavPathStack
+public class ExploreTaskDetailPage {
+    @Consume var exploreStack: NavPathStack
     @Consume var selectedIssue: String
     @Consume var selectedTask: String
     @Consume var themePreference: String
@@ -138,7 +138,7 @@ public class TaskDetailPage {
 
                 Scroll {
                     Column(space: 16) {
-                        detailHeaderCommon(this.homeStack, this.t("back"), this.t("task_detail"), this.primaryTextColor(), this.surfaceColor())
+                        detailHeaderCommon(this.exploreStack, this.t("back"), this.t("task_detail"), this.primaryTextColor(), this.surfaceColor())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.currentTaskTitle(), this.currentTaskSummary())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("context"), this.currentTaskContext())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("validation_result"), this.currentValidationSummary())
@@ -147,7 +147,7 @@ public class TaskDetailPage {
                             .height(48)
                             .backgroundColor(this.primaryTextColor())
                             .fontColor(this.surfaceColor())
-                            .onClick({ _ => this.homeStack.pushPath(NavPathInfo(name: "diffReview", param: ""), options: NavigationOptions(animated: true)) })
+                            .onClick({ _ => this.exploreStack.pushPath(NavPathInfo(name: "diffReview", param: ""), options: NavigationOptions(animated: true)) })
                     }
                     .width(100.percent)
                     .padding(left: 18, right: 18, top: 18, bottom: 32)
@@ -206,8 +206,8 @@ public class TaskDetailPage {
 }
 
 @Component
-public class DiffReviewPage {
-    @Consume var homeStack: NavPathStack
+public class ExploreDiffReviewPage {
+    @Consume var exploreStack: NavPathStack
     @Consume var selectedIssue: String
     @Consume var selectedRepository: String
     @Consume var selectedPullRequest: String
@@ -234,7 +234,7 @@ public class DiffReviewPage {
 
                 Scroll {
                     Column(space: 16) {
-                        detailHeaderCommon(this.homeStack, this.t("back"), this.t("diff_review"), this.primaryTextColor(), this.surfaceColor())
+                        detailHeaderCommon(this.exploreStack, this.t("back"), this.t("diff_review"), this.primaryTextColor(), this.surfaceColor())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("review_summary"), this.currentReviewSummary())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("draft_pr_title"), this.currentDraftPrTitle())
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("draft_pr_body"), this.currentDraftPrBody())

@@ -14,7 +14,7 @@ import ohos_app_cangjie_entry.infra.logging.logWarn
 
 @Component
 public class CursorConversationPage {
-    @Consume var stack: NavPathStack
+    @Consume var cursorStack: NavPathStack
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var cursorConversations: ArrayList<CursorConversationSnapshot>
@@ -25,6 +25,7 @@ public class CursorConversationPage {
     @Consume var cursorSelectedModelId: String
     @Consume var cursorConnectionReady: Bool
     @Consume var cursorAtRoot: Bool
+    @Consume var hideFloatingNavigation: Bool
     @State var cursorComposerDraft: String = ""
     @State var cursorMenuActionMessage: String = ""
     @Consume var selectedRepository: String
@@ -42,7 +43,7 @@ public class CursorConversationPage {
     var showMenu: Bool = false
 
     let messageScroller: Scroller = Scroller()
-    let composerController: TextInputController = TextInputController()
+    let composerController: TextAreaController = TextAreaController()
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
@@ -58,6 +59,7 @@ public class CursorConversationPage {
 
     protected override func aboutToDisappear(): Unit {
         this.cursorAtRoot = true
+        this.hideFloatingNavigation = false
     }
 
     public func build() {
@@ -94,7 +96,7 @@ public class CursorConversationPage {
                 }
                 .width(100.percent)
                 .height(100.percent)
-                .padding(bottom: 18)
+                .padding(bottom: if (this.hideFloatingNavigation) { 18 } else { 104 })
 
                 if (this.showMenu) {
                     Column() {}
@@ -265,14 +267,16 @@ public class CursorConversationPage {
     @Builder
     func buildConversationComposer() {
         Row(space: 12) {
-            TextInput(placeholder: this.t("cursor_ask"), text: this.cursorComposerDraft, controller: this.composerController)
-                .height(54)
+            TextArea(placeholder: this.t("cursor_ask"), text: this.cursorComposerDraft, controller: this.composerController)
                 .layoutWeight(1)
+                .constraintSize(minHeight: 54, maxHeight: 40.percent)
                 .backgroundColor(this.surfaceColor())
                 .fontColor(this.secondaryTextColor())
                 .fontSize(16)
                 .borderRadius(18)
-                .padding(left: 16, right: 16)
+                .padding(left: 16, right: 16, top: 14, bottom: 14)
+                .textAlign(TextAlign.Start)
+                .onEditChange({ editing => this.hideFloatingNavigation = editing })
                 .onChange({ value => this.updateComposerDraft(value) })
 
             Button("➜")
@@ -284,6 +288,7 @@ public class CursorConversationPage {
                 .onClick({ _ => this.submitPrompt() })
         }
         .width(100.percent)
+        .alignItems(VerticalAlign.Bottom)
     }
 
     @Builder
@@ -312,20 +317,20 @@ public class CursorConversationPage {
         .align(Alignment.TopEnd)
     }
 
-    func goBack(): Unit { this.stack.pop(animated: true) }
+    func goBack(): Unit { this.cursorStack.pop(animated: true) }
     func toggleMenu(show: Bool): Unit { this.showMenu = show }
     func openAllConversations(): Unit {
         this.showMenu = false
-        this.stack.pushPath(NavPathInfo(name: "cursorConversationList", param: ""), options: NavigationOptions(animated: true))
+        this.cursorStack.pushPath(NavPathInfo(name: "cursorConversationList", param: ""), options: NavigationOptions(animated: true))
     }
     func openModelPicker(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "cursorModelPicker", param: ""), options: NavigationOptions(animated: true))
+        this.cursorStack.pushPath(NavPathInfo(name: "cursorModelPicker", param: ""), options: NavigationOptions(animated: true))
     }
     func openPending(title: String, message: String): Unit {
         this.pendingPageTitle = title
         this.pendingPageMessage = message
         this.showMenu = false
-        this.stack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+        this.cursorStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
     }
     func refreshModelsIfPossible(): Unit {
         let apiKey = this.currentCursorApiKey()
@@ -418,7 +423,7 @@ public class CursorConversationPage {
             this.openPending(this.t("cursor_account"), this.t("cursor_api_key_missing"))
             return
         }
-        this.composerController.stopEditing()
+        this.hideFloatingNavigation = false
         let prompt = this.cursorComposerDraft
         this.cursorComposerDraft = ""
         let messageId = this.appendUserPrompt(prompt)

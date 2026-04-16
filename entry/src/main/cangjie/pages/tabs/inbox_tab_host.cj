@@ -2,13 +2,12 @@ package ohos_app_cangjie_entry.pages.tabs
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.pages.pageMap
+import ohos_app_cangjie_entry.pages.maps.inboxPageMap
 import ohos_app_cangjie_entry.domain.InboxItemSnapshot
 import ohos_app_cangjie_entry.services.platform.inboxItem
 
 @Component
 public class InboxTabHost {
-    @Provide var stack: NavPathStack = NavPathStack()
     @Consume var inboxStack: NavPathStack = NavPathStack()
     @Consume var themePreference: String = "system"
     @Consume var languagePreference: String = "system"
@@ -18,10 +17,6 @@ public class InboxTabHost {
 
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
-
-    protected override func aboutToAppear(): Unit {
-        this.stack = this.inboxStack
-    }
 
     public func build() {
         Navigation(this.inboxStack) {
@@ -53,7 +48,7 @@ public class InboxTabHost {
         .width(100.percent)
         .height(100.percent)
         .hideTitleBar(true)
-        .navDestination(bind(pageMap, this))
+        .navDestination(bind(inboxPageMap, this))
     }
 
     func t(key: String): String { tabText(this.languagePreference, this.systemLanguageCode, key) }

@@ -14,7 +14,7 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
 @Component
 public class CursorAccountSettingsPage {
-    @Consume var stack: NavPathStack
+    @Consume var cursorStack: NavPathStack
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var cursorConnectionReady: Bool
@@ -196,7 +196,7 @@ public class CursorAccountSettingsPage {
         .margin(left: 20, right: 20)
     }
 
-    func goBack(): Unit { this.stack.pop(animated: true) }
+    func goBack(): Unit { this.cursorStack.pop(animated: true) }
     func openExternalUrl(url: String, successMessage: String): Unit {
         try {
             getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData"))

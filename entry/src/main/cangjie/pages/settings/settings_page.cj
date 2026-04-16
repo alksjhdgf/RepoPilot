@@ -10,7 +10,7 @@ import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 public class SettingsPage {
     @Consume var themePreference: String
     @Consume var languagePreference: String
-    @Consume var stack: NavPathStack
+    @Consume var homeStack: NavPathStack
     @Consume var pendingPageTitle: String
     @Consume var pendingPageMessage: String
 
@@ -56,17 +56,17 @@ public class SettingsPage {
 
     func openSettingDestination(kind: String, title: String): Unit {
         if (kind == "appearance") {
-            this.stack.pushPath(NavPathInfo(name: "appearanceSettings", param: ""), options: NavigationOptions(animated: true))
+            this.homeStack.pushPath(NavPathInfo(name: "appearanceSettings", param: ""), options: NavigationOptions(animated: true))
         } else if (kind == "language") {
-            this.stack.pushPath(NavPathInfo(name: "languageSettings", param: ""), options: NavigationOptions(animated: true))
+            this.homeStack.pushPath(NavPathInfo(name: "languageSettings", param: ""), options: NavigationOptions(animated: true))
         } else {
             this.pendingPageTitle = title
             this.pendingPageMessage = "该页面待开发"
-            this.stack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+            this.homeStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
         }
     }
 
-    func goBack(): Unit { this.stack.pop(animated: true) }
+    func goBack(): Unit { this.homeStack.pop(animated: true) }
 
     func preferenceLabel(kind: String, value: String): String {
         if (value == "system") {

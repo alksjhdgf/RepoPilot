@@ -10,7 +10,7 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
 @Component
 public class CursorModelPickerPage {
-    @Consume var stack: NavPathStack
+    @Consume var cursorStack: NavPathStack
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var cursorModels: ArrayList<CursorModelSnapshot>
@@ -89,7 +89,7 @@ public class CursorModelPickerPage {
         .backgroundColor(0x00000000)
     }
 
-    func goBack(): Unit { this.stack.pop(animated: true) }
+    func goBack(): Unit { this.cursorStack.pop(animated: true) }
     func selectModel(modelId: String): Unit {
         this.cursorSelectedModelId = modelId
         this.goBack()

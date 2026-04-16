@@ -1,16 +1,15 @@
-package ohos_app_cangjie_entry.pages
+package ohos_app_cangjie_entry.pages.maps
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
 import ohos_app_cangjie_entry.pages.repository.{IssueDetailPage, PullRequestDetailPage, RepositoryDetailPage}
 import ohos_app_cangjie_entry.pages.agent.{CreateTaskPage, DiffReviewPage, TaskDetailPage}
-import ohos_app_cangjie_entry.pages.common.PlaceholderPage
-import ohos_app_cangjie_entry.pages.cursor.{CursorAccountSettingsPage, CursorConversationListPage, CursorConversationPage, CursorModelPickerPage}
+import ohos_app_cangjie_entry.pages.common.HomePlaceholderPage
 import ohos_app_cangjie_entry.pages.profile.ProfilePage
 import ohos_app_cangjie_entry.pages.settings.{AppearanceSettingsPage, LanguageSettingsPage, SettingsPage}
 
 @Builder
-public func pageMap(name: String, detailParam: Any) {
+public func homePageMap(name: String, detailParam: Any) {
     if (name == "repositoryDetail") {
         RepositoryDetailPage()
     } else if (name == "issueDetail") {
@@ -24,17 +23,9 @@ public func pageMap(name: String, detailParam: Any) {
     } else if (name == "diffReview") {
         DiffReviewPage()
     } else if (name == "placeholder") {
-        PlaceholderPage()
+        HomePlaceholderPage()
     } else if (name == "profilePage") {
         ProfilePage()
-    } else if (name == "cursorConversation") {
-        CursorConversationPage()
-    } else if (name == "cursorConversationList") {
-        CursorConversationListPage()
-    } else if (name == "cursorModelPicker") {
-        CursorModelPickerPage()
-    } else if (name == "cursorAccountSettings") {
-        CursorAccountSettingsPage()
     } else if (name == "appearanceSettings") {
         AppearanceSettingsPage()
     } else if (name == "languageSettings") {

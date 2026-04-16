@@ -14,7 +14,7 @@ import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, creat
 import ohos_app_cangjie_entry.services.github.{clearStoredGitHubSession, extractUrlQueryParameter, persistStoredGitHubSession, restoreStoredGitHubSession}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
-import ohos_app_cangjie_entry.pages.pageMap
+import ohos_app_cangjie_entry.pages.maps.shellPageMap
 import ohos_app_cangjie_entry.pages.tabs.{CursorTabHost, ExploreTabHost, HomeTabHost, InboxTabHost}
 
 @Component
@@ -46,7 +46,7 @@ public class AppShell {
     @Provide
     var currentWorkplace: String = "github"
 
-    @State
+    @Provide
     var shellStack: NavPathStack = NavPathStack()
 
     @Provide
@@ -62,6 +62,9 @@ public class AppShell {
     var cursorStack: NavPathStack = NavPathStack()
 
     @Provide
+    var hideFloatingNavigation: Bool = false
+
+    @Provide
     var selectedRepository: String = ""
 
     @Provide
@@ -75,12 +78,6 @@ public class AppShell {
 
     @State
     var draftPrStatusKey: String = "draft_pr_pending"
-
-    @Provide
-    var pendingPageTitle: String = "Pending"
-
-    @Provide
-    var pendingPageMessage: String = "该页面待开发"
 
     @State
     var authMessage: String = ""
@@ -220,14 +217,16 @@ public class AppShell {
                 }
 
                 Column(space: 10) {
-                    if (this.showWorkplacePicker) {
+                    if (this.showWorkplacePicker && !this.hideFloatingNavigation) {
                         buildWorkplacePicker(this)
                     }
-                    Row() {
-                        buildFloatingNavigation(this)
+                    if (!this.hideFloatingNavigation) {
+                        Row() {
+                            buildFloatingNavigation(this)
+                        }
+                        .width(100.percent)
+                        .justifyContent(FlexAlign.Center)
                     }
-                    .width(100.percent)
-                    .justifyContent(FlexAlign.Center)
                 }
                 .width(100.percent)
                 .align(Alignment.Bottom)
@@ -239,7 +238,7 @@ public class AppShell {
         .width(100.percent)
         .height(100.percent)
         .hideTitleBar(true)
-        .navDestination(bind(pageMap, this))
+        .navDestination(bind(shellPageMap, this))
     }
 
     /**

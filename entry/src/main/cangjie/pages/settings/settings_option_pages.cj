@@ -8,7 +8,7 @@ import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
 @Component
 public class AppearanceSettingsPage {
-    @Consume var stack: NavPathStack
+    @Consume var homeStack: NavPathStack
     @Consume var themePreference: String
     @Consume var languagePreference: String
 
@@ -46,7 +46,7 @@ public class AppearanceSettingsPage {
         notifyAppPreferenceChange("theme", value)
     }
 
-    func goBack(): Unit { this.stack.pop(animated: true) }
+    func goBack(): Unit { this.homeStack.pop(animated: true) }
     func isSelected(value: String): Bool { this.themePreference == value }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
@@ -125,7 +125,7 @@ public class AppearanceSettingsPage {
 
 @Component
 public class LanguageSettingsPage {
-    @Consume var stack: NavPathStack
+    @Consume var homeStack: NavPathStack
     @Consume var themePreference: String
     @Consume var languagePreference: String
 
@@ -163,7 +163,7 @@ public class LanguageSettingsPage {
         notifyAppPreferenceChange("language", value)
     }
 
-    func goBack(): Unit { this.stack.pop(animated: true) }
+    func goBack(): Unit { this.homeStack.pop(animated: true) }
     func isSelected(value: String): Bool { this.languagePreference == value }
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
     func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }

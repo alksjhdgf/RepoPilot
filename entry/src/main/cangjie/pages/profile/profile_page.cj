@@ -14,7 +14,7 @@ import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
 @Component
 public class ProfilePage {
-    @Consume var stack: NavPathStack
+    @Consume var homeStack: NavPathStack
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var viewerLogin: String
@@ -82,11 +82,11 @@ public class ProfilePage {
     }
 
     func openSettings(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "settings", param: ""), options: NavigationOptions(animated: true))
+        this.homeStack.pushPath(NavPathInfo(name: "settings", param: ""), options: NavigationOptions(animated: true))
     }
 
     func goBack(): Unit {
-        this.stack.pop(animated: true)
+        this.homeStack.pop(animated: true)
     }
 
     func runOnUi(task: () -> Unit): Unit {
@@ -197,7 +197,7 @@ public class ProfilePage {
     func openPlaceholder(title: String, message: String): Unit {
         this.pendingPageTitle = title
         this.pendingPageMessage = message
-        this.stack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+        this.homeStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
     }
 
     func openRepositories(): Unit { this.openPlaceholder(this.t("repositories"), "Repository list is not fully implemented yet.") }

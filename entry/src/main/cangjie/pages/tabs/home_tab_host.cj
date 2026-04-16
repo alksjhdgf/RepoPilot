@@ -4,7 +4,7 @@ import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.pages.pageMap
+import ohos_app_cangjie_entry.pages.maps.homePageMap
 import ohos_app_cangjie_entry.domain.{GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.services.app.{refreshGitHubProfileData, refreshGitHubRepositoryBundle, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
@@ -12,7 +12,6 @@ import ohos_app_cangjie_entry.services.platform.repositorySnapshot
 
 @Component
 public class HomeTabHost {
-    @Provide var stack: NavPathStack = NavPathStack()
     @Consume var homeStack: NavPathStack = NavPathStack()
     @Consume var themePreference: String = "system"
     @Consume var languagePreference: String = "system"
@@ -32,8 +31,9 @@ public class HomeTabHost {
     @Consume var selectedIssue: String = ""
     @Consume var selectedPullRequest: String = ""
     @Consume var selectedTask: String = ""
-    @Consume var pendingPageTitle: String = ""
-    @Consume var pendingPageMessage: String = ""
+
+    @Provide var pendingPageTitle: String = "Pending"
+    @Provide var pendingPageMessage: String = "该页面待开发"
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -44,7 +44,6 @@ public class HomeTabHost {
     @State var homeRefreshing: Bool = false
 
     protected override func aboutToAppear(): Unit {
-        this.stack = this.homeStack
         this.refreshHomeContent()
     }
 
@@ -83,7 +82,7 @@ public class HomeTabHost {
         .width(100.percent)
         .height(100.percent)
         .hideTitleBar(true)
-        .navDestination(bind(pageMap, this))
+        .navDestination(bind(homePageMap, this))
     }
 
     func refreshHomeContent(showRefreshIndicator!: Bool = false): Unit {

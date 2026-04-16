@@ -5,10 +5,20 @@ import kit.AbilityKit.Want
 import kit.AbilityKit.UIAbility
 import kit.AbilityKit.LaunchParam
 import kit.AbilityKit.LaunchReason
-import kit.ArkUI.{Window, WindowStage}
+import kit.ArkUI.{Window, WindowCallbackType, WindowStage}
+import ohos.callback_invoke.Callback1Argument
+import ohos.business_exception.BusinessException
 import ohos_app_cangjie_entry.infra.logging.logInfo
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, notifyAppAuthCallback, notifyAppForeground, setAppAbilityContext, setAppMainWindow}
+import ohos_app_cangjie_entry.infra.runtime.{KEYBOARD_HEIGHT_STORAGE_KEY, applyAppStatusBarStyle, notifyAppAuthCallback, notifyAppForeground, setAppAbilityContext, setAppMainWindow}
 import ohos.arkui.state_management.AppStorage
+
+class KeyboardHeightCallback <: Callback1Argument<UInt32> {
+    public init() {}
+
+    public func invoke(err: ?BusinessException, value: UInt32): Unit {
+        AppStorage.setOrCreate<UInt32>(KEYBOARD_HEIGHT_STORAGE_KEY, value)
+    }
+}
 
 class MainAbility <: UIAbility {
     public init() {
@@ -30,6 +40,8 @@ class MainAbility <: UIAbility {
         setAppAbilityContext(this.context)
         let mainWindow: Window = windowStage.getMainWindow()
         setAppMainWindow(mainWindow)
+        AppStorage.setOrCreate<UInt32>(KEYBOARD_HEIGHT_STORAGE_KEY, 0)
+        mainWindow.on(WindowCallbackType.KeyboardHeightChange, KeyboardHeightCallback())
         applyAppStatusBarStyle(false)
         windowStage.loadContent("EntryView")
     }

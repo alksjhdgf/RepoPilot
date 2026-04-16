@@ -68,13 +68,17 @@ public class CursorTabHost {
                 .height(100.percent)
 
                 if (this.cursorAtRoot) {
-                    Row() {
+                    Column() {
                         Blank()
-                        this.buildFloatingNewChatButton()
+                        Row() {
+                            Blank()
+                            this.buildFloatingNewChatButton()
+                        }
+                        .width(100.percent)
+                        .padding(left: 18, right: 18, bottom: 90)
                     }
                     .width(100.percent)
-                    .align(Alignment.Bottom)
-                    .padding(left: 18, right: 18, bottom: 90)
+                    .height(100.percent)
                 }
             }
             .width(100.percent)

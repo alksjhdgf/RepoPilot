@@ -3,6 +3,8 @@ package ohos_app_cangjie_entry.infra.runtime
 import kit.AbilityKit.UIAbilityContext
 import kit.ArkUI.{SystemBarProperties, Window}
 
+public let KEYBOARD_HEIGHT_STORAGE_KEY = "keyboardHeight"
+
 var appAbilityContext: ?UIAbilityContext = None
 var appMainWindow: ?Window = None
 var appForegroundHandler: ?() -> Unit = None

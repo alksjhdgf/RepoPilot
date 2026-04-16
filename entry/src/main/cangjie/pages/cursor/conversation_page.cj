@@ -39,9 +39,13 @@ public class CursorConversationPage {
     @StorageProp["languageCode"]
     let systemLanguageCode: String = "en"
 
+    @StorageProp["keyboardHeight"]
+    let keyboardHeight: UInt32 = 0
+
     @State
     var showMenu: Bool = false
 
+    let focusSinkId: String = "cursorConversationFocusSink"
     let messageScroller: Scroller = Scroller()
     let composerController: TextAreaController = TextAreaController()
 
@@ -68,6 +72,13 @@ public class CursorConversationPage {
                 cursorBackgroundCommon(this.pageBackgroundColor())
 
                 Column(space: 0) {
+                    Text("")
+                        .id(this.focusSinkId)
+                        .focusable(true)
+                        .width(1)
+                        .height(1)
+                        .opacity(0.0)
+
                     Column(space: 18) {
                         this.buildConversationHeader()
                         this.buildConversationNotice()
@@ -96,7 +107,6 @@ public class CursorConversationPage {
                 }
                 .width(100.percent)
                 .height(100.percent)
-                .padding(bottom: if (this.hideFloatingNavigation) { 18 } else { 104 })
 
                 if (this.showMenu) {
                     Column() {}
@@ -269,7 +279,7 @@ public class CursorConversationPage {
         Row(space: 12) {
             TextArea(placeholder: this.t("cursor_ask"), text: this.cursorComposerDraft, controller: this.composerController)
                 .layoutWeight(1)
-                .constraintSize(minHeight: 54, maxHeight: 40.percent)
+                .constraintSize(minHeight: 54, maxHeight: 30.percent)
                 .backgroundColor(this.surfaceColor())
                 .fontColor(this.secondaryTextColor())
                 .fontSize(16)
@@ -289,6 +299,7 @@ public class CursorConversationPage {
         }
         .width(100.percent)
         .alignItems(VerticalAlign.Bottom)
+        .padding(left: 18, right: 18, bottom: this.composerBottomInset())
     }
 
     @Builder
@@ -423,6 +434,7 @@ public class CursorConversationPage {
             this.openPending(this.t("cursor_account"), this.t("cursor_api_key_missing"))
             return
         }
+        FocusControl.requestFocus(this.focusSinkId)
         this.hideFloatingNavigation = false
         let prompt = this.cursorComposerDraft
         this.cursorComposerDraft = ""
@@ -500,4 +512,13 @@ public class CursorConversationPage {
     func shadowColor(): Int64 { appThemeColor("shadow", this.isDarkTheme()) }
     func userBubbleColor(): Int64 { if (this.isDarkTheme()) { 0x243146 } else { 0xDCEBFF } }
     func errorColor(): Int64 { if (this.isDarkTheme()) { 0xFF8F8F } else { 0xC62828 } }
+    func composerBottomInset(): Length {
+        if (this.keyboardHeight > 0) {
+            return Int64(this.keyboardHeight / 3).px
+        }
+        if (this.hideFloatingNavigation) {
+            return 18.vp
+        }
+        82.vp
+    }
 }

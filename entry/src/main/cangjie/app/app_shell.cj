@@ -6,16 +6,16 @@ import ohos.business_exception.BusinessException
 import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorModelSnapshot, ExploreLaneSnapshot, GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot, InboxItemSnapshot, PullRequestSnapshot, RepositorySnapshot, TaskSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppDataRefreshHandler, clearAppForegroundHandler, clearAppPreferenceHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppDataRefreshHandler, setAppForegroundHandler, setAppPreferenceHandler}
-import ohos_app_cangjie_entry.services.platform.{activeAccountSnapshot, defaultWorkplace, exploreLane, inboxItem, primaryRepositoryId, pullRequestSnapshot, repositorySnapshot, workplaceSnapshot}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, clearAppPreferenceHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler, setAppPreferenceHandler}
+import ohos_app_cangjie_entry.services.platform.{defaultWorkplace, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, loadStoredLanguagePreference, loadStoredThemePreference, persistLanguagePreference, persistThemePreference, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
-import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, findCursorModelTitle, refreshStoredCursorSession}
 import ohos_app_cangjie_entry.services.github.{clearStoredGitHubSession, extractUrlQueryParameter, persistStoredGitHubSession, restoreStoredGitHubSession}
-import ohos_app_cangjie_entry.services.agent.{taskIdForIssue, taskSnapshot}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
+import ohos_app_cangjie_entry.pages.pageMap
+import ohos_app_cangjie_entry.pages.tabs.{CursorTabHost, ExploreTabHost, HomeTabHost, InboxTabHost}
 
 @Component
 public class AppShell {
@@ -37,20 +37,29 @@ public class AppShell {
     @State
     var showWorkplacePicker: Bool = false
 
-    @State
-    var homeRefreshing: Bool = false
-
     @Provide
     var themePreference: String = "system"
 
     @Provide
     var languagePreference: String = "system"
 
-    @State
+    @Provide
     var currentWorkplace: String = "github"
 
+    @State
+    var shellStack: NavPathStack = NavPathStack()
+
     @Provide
-    var stack: NavPathStack = NavPathStack()
+    var homeStack: NavPathStack = NavPathStack()
+
+    @Provide
+    var inboxStack: NavPathStack = NavPathStack()
+
+    @Provide
+    var exploreStack: NavPathStack = NavPathStack()
+
+    @Provide
+    var cursorStack: NavPathStack = NavPathStack()
 
     @Provide
     var selectedRepository: String = ""
@@ -94,9 +103,6 @@ public class AppShell {
     @Provide
     var viewerLogin: String = ""
 
-    @State
-    var viewerDisplayName: String = ""
-
     @Provide
     var viewerAvatarUrl: String = ""
 
@@ -132,27 +138,6 @@ public class AppShell {
     @Provide
     var livePullRequests: ArrayList<GitHubPullRequestSnapshot> = ArrayList<GitHubPullRequestSnapshot>()
 
-    @Provide
-    var cursorConversations: ArrayList<CursorConversationSnapshot> = ArrayList<CursorConversationSnapshot>()
-
-    @Provide
-    var cursorModels: ArrayList<CursorModelSnapshot> = ArrayList<CursorModelSnapshot>()
-
-    @Provide
-    var cursorConversationId: String = ""
-
-    @Provide
-    var cursorConversationTitle: String = ""
-
-    @Provide
-    var cursorSelectedModelId: String = "claude-haiku-4.5"
-
-    @Provide
-    var cursorConnectionReady: Bool = false
-
-    @State
-    var cursorRefreshing: Bool = false
-
     @State
     var authCheckingToken: Bool = false
 
@@ -172,13 +157,11 @@ public class AppShell {
         setAppForegroundHandler({ => this.handleAppForeground() })
         setAppAuthCallbackHandler({ uri => this.handleAuthCallbackUri(uri) })
         setAppPreferenceHandler({ kind, value => this.applyRootPreference(kind, value) })
-        setAppDataRefreshHandler({ kind, onComplete => this.handleDataRefreshRequest(kind, onComplete) })
         applyAppStatusBarStyle(this.isDarkTheme())
         if (let Some(pendingUri) <- consumePendingAuthCallback()) {
             this.handleAuthCallbackUri(pendingUri)
         }
         this.ensureInitialSelection()
-        this.ensureCursorState()
         this.restorePersistedAuthSessionIfNeeded()
     }
 
@@ -190,7 +173,6 @@ public class AppShell {
         clearAppForegroundHandler()
         clearAppAuthCallbackHandler()
         clearAppPreferenceHandler()
-        clearAppDataRefreshHandler()
     }
 
     public func build() {
@@ -225,40 +207,19 @@ public class AppShell {
 
     @Builder
     func buildMainScene() {
-        Navigation(this.stack) {
+        Navigation(this.shellStack) {
             Stack(alignContent: Alignment.Bottom) {
-                Stack(alignContent: Alignment.Top) {
-                    this.buildRootBackground()
-
-                    this.buildScrollableContent()
-
-                    Row() {
-                        buildTopBar(this)
-                    }
-                    .width(100.percent)
-                    .padding(left: 18, right: 18, top: 16, bottom: 12)
-                    .backgroundColor(this.topBarOverlayColor())
-
-                    if (this.showWorkplacePicker) {
-                        Column() {}
-                            .width(100.percent)
-                            .height(100.percent)
-                            .backgroundColor(0x33000000)
-                            .onClick({ _ => this.toggleWorkplacePicker(false) })
-                    }
+                if (this.activeTab == "home") {
+                    HomeTabHost()
+                } else if (this.activeTab == "inbox") {
+                    InboxTabHost()
+                } else if (this.activeTab == "explore") {
+                    ExploreTabHost()
+                } else {
+                    CursorTabHost()
                 }
-                .width(100.percent)
-                .height(100.percent)
 
                 Column(space: 10) {
-                    if (this.isActiveTab("copilot")) {
-                        Row() {
-                            Blank()
-                            buildCursorFloatingNewChatButton(this)
-                        }
-                        .width(100.percent)
-                        .padding(left: 18, right: 18, bottom: 2)
-                    }
                     if (this.showWorkplacePicker) {
                         buildWorkplacePicker(this)
                     }
@@ -279,62 +240,6 @@ public class AppShell {
         .height(100.percent)
         .hideTitleBar(true)
         .navDestination(bind(pageMap, this))
-    }
-
-    @Builder
-    func buildScrollableContent() {
-        if (this.isActiveTab("copilot")) {
-            Refresh(RefreshOptions(refreshing: @Binder(cursorRefreshing))) {
-                Scroll {
-                    Column(space: 18) {
-                        buildActiveTabContent(this)
-                    }
-                    .width(100.percent)
-                    .padding(left: 18, right: 18, top: 84, bottom: 100)
-                }
-                .width(100.percent)
-                .height(100.percent)
-                .scrollBar(BarState.Off)
-                .align(Alignment.Top)
-                .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
-            }
-            .width(100.percent)
-            .height(100.percent)
-            .onRefreshing({ =>
-                this.refreshCursorHomeData(showRefreshIndicator: true)
-            })
-        } else if (this.isActiveTab("home")) {
-            Refresh(RefreshOptions(refreshing: @Binder(homeRefreshing))) {
-                Scroll {
-                    Column(space: 18) {
-                        buildActiveTabContent(this)
-                    }
-                    .width(100.percent)
-                    .padding(left: 18, right: 18, top: 84, bottom: 100)
-                }
-                .width(100.percent)
-                .height(100.percent)
-                .scrollBar(BarState.Off)
-                .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
-            }
-            .width(100.percent)
-            .height(100.percent)
-            .onRefreshing({ =>
-                this.refreshHomeData(showRefreshIndicator: true)
-            })
-        } else {
-            Scroll {
-                Column(space: 18) {
-                    buildActiveTabContent(this)
-                }
-                .width(100.percent)
-                .padding(left: 18, right: 18, top: 84, bottom: 100)
-            }
-            .width(100.percent)
-            .height(100.percent)
-            .scrollBar(BarState.Off)
-            .expandSafeArea(types: [SafeAreaType.System], edges: [SafeAreaEdge.Bottom])
-        }
     }
 
     /**
@@ -376,9 +281,9 @@ public class AppShell {
     }
 
     @Builder
-    func buildRootBackground() {
+    func buildRootBackgroundForTab(tabId: String) {
         Column() {
-            if (!this.isActiveTab("home") && !this.isActiveTab("copilot")) {
+            if (tabId != "home" && tabId != "cursor") {
                 Column() {}
                     .width(100.percent)
                     .height(260)
@@ -587,7 +492,6 @@ public class AppShell {
                 this.sharedAuthAccessToken = ""
                 this.authCheckingToken = false
                 this.viewerLogin = ""
-                this.viewerDisplayName = ""
                 this.viewerAvatarUrl = ""
                 this.viewerProfileUrl = ""
                 this.liveRepositoryCount = "0"
@@ -630,7 +534,6 @@ public class AppShell {
             this.sharedAuthAccessToken = ""
             this.authCheckingToken = false
             this.viewerLogin = ""
-            this.viewerDisplayName = ""
             this.viewerAvatarUrl = ""
             this.viewerProfileUrl = ""
             this.liveRepositoryCount = "0"
@@ -716,9 +619,6 @@ public class AppShell {
             this.activeTab = tab
             this.showWorkplacePicker = false
         })
-        if (tab == "copilot") {
-            this.refreshCursorHomeData()
-        }
     }
 
     func toggleWorkplacePicker(show: Bool): Unit {
@@ -726,7 +626,6 @@ public class AppShell {
             this.showWorkplacePicker = show
         })
     }
-
     func switchWorkplace(workplaceId: String): Unit {
         let nextSelection = restoreMockWorkplaceSelection(workplaceId)
         getUIContext().animateTo(AnimateParam(duration: 200, curve: Curve.Ease), { =>
@@ -786,106 +685,9 @@ public class AppShell {
         this.selectedTask = nextSelection.taskId
     }
 
-    func currentWorkplaceTitle(): String { this.t(workplaceSnapshot(this.currentWorkplace).titleKey) }
-    func currentHeaderWorkplaceTitle(): String {
-        if (this.currentWorkplace == "unified") { this.t("all_workplaces") } else { this.t("workplace_github") }
-    }
-    func currentWorkplaceSummary(): String { this.t(workplaceSnapshot(this.currentWorkplace).summaryKey) }
-    func currentWorkplaceHeroTitle(): String { this.t(workplaceSnapshot(this.currentWorkplace).heroTitleKey) }
-    func primaryHomeRepository(): RepositorySnapshot { repositorySnapshot(primaryRepositoryId(this.currentWorkplace)) }
-    func secondaryHomeRepository(): RepositorySnapshot { repositorySnapshot("bff") }
-    func tertiaryHomeRepository(): RepositorySnapshot { repositorySnapshot("orchestrator") }
-    func visibleRepositories(): ArrayList<RepositorySnapshot> {
-        let items = ArrayList<RepositorySnapshot>()
-        items.add(this.primaryHomeRepository())
-        items.add(this.secondaryHomeRepository())
-        items.add(this.tertiaryHomeRepository())
-        items
-    }
-    func focusedTask(): TaskSnapshot { taskSnapshot(this.selectedTask) }
-    func reviewTask(): TaskSnapshot { taskSnapshot("repoPolish") }
-    func highlightedPullRequest(): PullRequestSnapshot { pullRequestSnapshot(this.selectedPullRequest) }
-    func inboxPrimary(): InboxItemSnapshot { inboxItem(1) }
-    func inboxSecondary(): InboxItemSnapshot { inboxItem(2) }
-    func inboxTertiary(): InboxItemSnapshot { inboxItem(3) }
-    func firstExploreLane(): ExploreLaneSnapshot { exploreLane(1) }
-    func secondExploreLane(): ExploreLaneSnapshot { exploreLane(2) }
     func isActiveTab(tab: String): Bool { this.activeTab == tab }
     func isCurrentWorkplace(workplaceId: String): Bool { this.currentWorkplace == workplaceId }
-    func themePreferenceValue(): String { this.themePreference }
-    func languagePreferenceValue(): String { this.languagePreference }
-    func mainTitle(): String {
-        if (this.activeTab == "home") {
-            this.currentWorkplaceTitle()
-        } else if (this.activeTab == "inbox") {
-            this.t("inbox")
-        } else if (this.activeTab == "explore") {
-            this.t("explore")
-        } else {
-            this.t("cursor")
-        }
-    }
-    func mainSubtitle(): String {
-        if (this.activeTab == "home") {
-            this.currentWorkplaceSummary()
-        } else if (this.activeTab == "inbox") {
-            this.t("inbox_subtitle")
-        } else if (this.activeTab == "explore") {
-            this.t("explore_subtitle")
-        } else {
-            this.t("cursor_subtitle")
-        }
-    }
-    func accountCaption(): String {
-        if (this.viewerLogin != "") {
-            return "GitHub / ${this.viewerDisplayName} (@${this.viewerLogin})"
-        }
-        let account = activeAccountSnapshot()
-        "${this.t("profile_account_prefix")}: ${this.t(account.providerKey)} / ${account.accountLabel}"
-    }
-    func hasViewerAvatar(): Bool { this.viewerAvatarUrl != "" }
-    func viewerAvatarUrlValue(): String { this.viewerAvatarUrl }
-    func viewerDisplayNameValue(): String { if (this.viewerDisplayName == "") { this.viewerLogin } else { this.viewerDisplayName } }
-    func viewerProfileUrlValue(): String { this.viewerProfileUrl }
     func canCreateFromCurrentWorkplace(): Bool { this.currentWorkplace != "unified" }
-    func hasLiveRepositories(): Bool { this.liveRepositories.size > 0 }
-    func visibleLiveRepositories(): ArrayList<GitHubRepositoryCardSnapshot> { this.liveRepositories }
-    func hasLiveIssues(): Bool { this.liveIssues.size > 0 }
-    func visibleLiveIssues(): ArrayList<GitHubIssueSnapshot> { this.liveIssues }
-    func hasLivePullRequests(): Bool { this.livePullRequests.size > 0 }
-    func visibleLivePullRequests(): ArrayList<GitHubPullRequestSnapshot> { this.livePullRequests }
-    func visibleCursorConversations(): ArrayList<CursorConversationSnapshot> { this.cursorConversations }
-    func visibleCursorModels(): ArrayList<CursorModelSnapshot> { this.cursorModels }
-    func hasCursorConversations(): Bool { this.cursorConversations.size > 0 }
-    func hasCursorConnectionReady(): Bool { this.cursorConnectionReady }
-    func currentCursorConversationTitle(): String {
-        if (this.cursorConversationTitle != "") {
-            return this.cursorConversationTitle
-        }
-        this.t("cursor_new_conversation")
-    }
-    func currentCursorModelTitle(): String {
-        let title = findCursorModelTitle(this.cursorModels, this.cursorSelectedModelId)
-        if (title == "") { this.t("cursor_default_model") } else { title }
-    }
-    func currentCursorModelId(): String { this.cursorSelectedModelId }
-    func selectedLiveRepositoryDetail(): GitHubRepositoryDetailSnapshot { this.liveRepositoryDetail }
-    func currentLiveIssue(): GitHubIssueSnapshot {
-        for (item in this.liveIssues) {
-            if (item.id == this.selectedIssue) {
-                return item
-            }
-        }
-        GitHubIssueSnapshot("", "", "Issue not loaded", "Select a repository issue to continue.", "", "", "")
-    }
-    func currentLivePullRequest(): GitHubPullRequestSnapshot {
-        for (item in this.livePullRequests) {
-            if (item.id == this.selectedPullRequest) {
-                return item
-            }
-        }
-        GitHubPullRequestSnapshot("", "Pull request not loaded", "Select a repository pull request to continue.", "", "", "")
-    }
     func applyRootPreference(kind: String, value: String): Unit {
         getUIContext().animateTo(AnimateParam(duration: 180, curve: Curve.Ease), { =>
             if (kind == "theme") {
@@ -911,33 +713,6 @@ public class AppShell {
             { message => this.handleGitHubApiFailure(message) }
         )
     }
-    func handleDataRefreshRequest(kind: String, onComplete: () -> Unit): Unit {
-        if (kind == "profile") {
-            this.refreshHomeData(onComplete: onComplete)
-            return
-        }
-        onComplete()
-    }
-    func refreshHomeData(showRefreshIndicator!: Bool = false, onComplete!: () -> Unit = { => }): Unit {
-        if (showRefreshIndicator) {
-            this.homeRefreshing = true
-        }
-        if (this.authAccessToken == "") {
-            this.runOnUi({ =>
-                this.homeRefreshing = false
-                onComplete()
-            })
-            return
-        }
-        this.refreshGitHubProfile()
-        if (this.selectedRepository != "") {
-            this.refreshSelectedRepositoryData()
-        }
-        this.runOnUi({ =>
-            this.homeRefreshing = false
-            onComplete()
-        })
-    }
     /**
      * 更新当前登录用户的展示信息。
      * Updates the display metadata of the current GitHub viewer.
@@ -947,7 +722,6 @@ public class AppShell {
             =>
             logInfo("AppShell", "Viewer applied: ${snapshot.login}")
             this.viewerLogin = snapshot.login
-            this.viewerDisplayName = snapshot.displayName
             this.viewerAvatarUrl = snapshot.avatarUrl
             this.viewerProfileUrl = snapshot.profileUrl
             logDebug("AppShell", "Viewer state applied on UI thread.")
@@ -1096,203 +870,4 @@ public class AppShell {
     func navSelectionColor(): Int64 { appThemeColor("navSelection", this.isDarkTheme()) }
     func topBarOverlayColor(): Int64 { if (this.isDarkTheme()) { 0xE0090B10 } else { 0xEAF2F3F7 } }
     func shadowColor(): Int64 { appThemeColor("shadow", this.isDarkTheme()) }
-
-    /**
-     * 初始化 Cursor 会话页的本地演示状态，后续接入真实 API 时只替换数据来源。
-     * Initializes local Cursor conversation state so the UI flow can be validated before live API wiring.
-     */
-    func ensureCursorState(): Unit {
-        if (this.cursorModels.size == 0) {
-            this.cursorModels = defaultCursorModels()
-        }
-    }
-
-    /**
-     * 如果用户已经提供了 Cursor API key，则用真实 agents 列表覆盖本地演示会话。
-     * Replaces local demo conversations with live Cursor agents once the user has provided an API key.
-     */
-    func refreshCursorHomeData(showRefreshIndicator!: Bool = false): Unit {
-        if (showRefreshIndicator) {
-            this.cursorRefreshing = true
-        }
-        this.refreshCursorConversations()
-    }
-
-    func refreshCursorConversations(): Unit {
-        refreshStoredCursorSession(
-            { items => this.applyCursorConversations(items) },
-            {
-                =>
-                this.runOnUi({
-                    =>
-                    this.cursorConnectionReady = false
-                    this.cursorConversations = ArrayList<CursorConversationSnapshot>()
-                    this.cursorRefreshing = false
-                })
-            },
-            { _ =>
-                this.runOnUi({
-                    =>
-                    this.cursorConnectionReady = false
-                    this.cursorConversations = ArrayList<CursorConversationSnapshot>()
-                    this.cursorRefreshing = false
-                })
-            }
-        )
-    }
-
-    func applyCursorConversations(items: ArrayList<CursorConversationSnapshot>): Unit {
-        this.runOnUi({
-            =>
-            this.cursorConnectionReady = true
-            this.cursorRefreshing = false
-            if (items.size > 0) {
-                this.cursorConversations = items
-                if (this.cursorConversationId == "") {
-                    this.cursorConversationId = items[0].id
-                    this.cursorConversationTitle = items[0].title
-                    this.cursorSelectedModelId = items[0].modelId
-                }
-            } else {
-                this.cursorConversations = ArrayList<CursorConversationSnapshot>()
-            }
-        })
-    }
-
-    /**
-     * 切换当前会话上下文并装载对应的本地消息历史。
-     * Switches the active Cursor conversation and loads its local message history.
-     */
-    func selectCursorConversation(conversationId: String): Unit {
-        this.ensureCursorState()
-        this.cursorConversationId = conversationId
-        this.cursorConversationTitle = findCursorConversationTitle(this.cursorConversations, conversationId)
-        for (item in this.cursorConversations) {
-            if (item.id == conversationId) {
-                this.cursorSelectedModelId = item.modelId
-            }
-        }
-    }
-
-    /**
-     * 进入新的空白会话，保留当前模型选择并等待后续输入。
-     * Opens a blank conversation shell while preserving the current model selection.
-     */
-    func startCursorConversation(): Unit {
-        this.ensureCursorState()
-        this.cursorConversationId = ""
-        this.cursorConversationTitle = this.t("cursor_new_conversation")
-        if (this.cursorSelectedModelId == "") {
-            this.cursorSelectedModelId = "claude-haiku-4.5"
-        }
-    }
-
-    /**
-     * 追加一轮本地消息，先让会话页的发送链路跑通，后续再接真实 Cursor API。
-     * Appends a local user/assistant exchange so the conversation flow works before live API integration.
-     */
-    func selectCursorModel(modelId: String): Unit {
-        this.cursorSelectedModelId = modelId
-    }
-
-    func openNewCursorConversation(): Unit {
-        this.startCursorConversation()
-        this.stack.pushPath(NavPathInfo(name: "cursorConversation", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func startCursorConversationEntry(): Unit {
-        if (!this.hasCursorConnectionReady()) {
-            this.openCursorAccountSettings()
-            return
-        }
-        this.openNewCursorConversation()
-    }
-
-    func openCursorConversation(conversationId: String): Unit {
-        this.selectCursorConversation(conversationId)
-        this.stack.pushPath(NavPathInfo(name: "cursorConversation", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openCursorConversationList(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "cursorConversationList", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openCursorModelPicker(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "cursorModelPicker", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openCursorAccountSettings(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "cursorAccountSettings", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openRepository(repositoryId: String): Unit {
-        this.selectedRepository = repositoryId
-        if (this.authAccessToken == "") {
-            let repository = repositorySnapshot(repositoryId)
-            this.selectedIssue = repository.primaryIssueId
-            this.selectedPullRequest = repository.primaryPullRequestId
-            this.selectedTask = taskIdForIssue(this.selectedIssue)
-        } else {
-            this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot(
-                repositoryId,
-                "Loading repository details...",
-                "",
-                "",
-                "0",
-                "0",
-                "main"
-            )
-            this.liveIssues = ArrayList<GitHubIssueSnapshot>()
-            this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
-            this.selectedIssue = ""
-            this.selectedPullRequest = ""
-            this.selectedTask = ""
-            this.refreshSelectedRepositoryData()
-        }
-        this.stack.pushPath(NavPathInfo(name: "repositoryDetail", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openSelectedIssue(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "issueDetail", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openSelectedPullRequest(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openLivePullRequest(pullRequestId: String): Unit {
-        this.selectedPullRequest = pullRequestId
-        this.openSelectedPullRequest()
-    }
-
-    func openCreateTask(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openTaskDetail(taskId: String): Unit {
-        this.selectedTask = taskId
-        this.stack.pushPath(NavPathInfo(name: "taskDetail", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openDiffReview(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "diffReview", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openSettings(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "settings", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    func openProfilePage(): Unit {
-        this.stack.pushPath(NavPathInfo(name: "profilePage", param: ""), options: NavigationOptions(animated: true))
-    }
-
-    /**
-     * 将未完成功能统一导向占位页，避免跳转到语义不匹配的现有页面。
-     * Routes unfinished interactions into a shared placeholder page.
-     */
-    func openPendingPage(title: String, message: String): Unit {
-        this.pendingPageTitle = title
-        this.pendingPageMessage = message
-        this.stack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
-    }
 }

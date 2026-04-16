@@ -3,10 +3,12 @@ package ohos_app_cangjie_entry.pages.profile
 import kit.AbilityKit.Want
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
+import ohos.base.UIThread
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.domain.GitHubRepositoryCardSnapshot
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext, notifyAppDataRefresh}
+import ohos_app_cangjie_entry.domain.{GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
+import ohos_app_cangjie_entry.services.app.refreshGitHubProfileData
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -18,6 +20,7 @@ public class ProfilePage {
     @Consume var viewerLogin: String
     @Consume var viewerAvatarUrl: String
     @Consume var viewerProfileUrl: String
+    @Consume var sharedAuthAccessToken: String
     @Consume var liveRepositoryCount: String
     @Consume var liveStarredCount: String
     @Consume var liveOrganizationCount: String
@@ -36,6 +39,7 @@ public class ProfilePage {
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
+        this.refreshProfileContent()
     }
 
     public func build() {
@@ -62,10 +66,7 @@ public class ProfilePage {
                     .layoutWeight(1)
                     .width(100.percent)
                     .onRefreshing({ =>
-                        notifyAppDataRefresh("profile", {
-                            =>
-                            this.profileRefreshing = false
-                        })
+                        this.refreshProfileContent(showRefreshIndicator: true)
                     })
                     .align(Alignment.Top)
                 }
@@ -86,6 +87,53 @@ public class ProfilePage {
 
     func goBack(): Unit {
         this.stack.pop(animated: true)
+    }
+
+    func runOnUi(task: () -> Unit): Unit {
+        spawn(UIThread) { => task() }
+    }
+
+    func refreshProfileContent(showRefreshIndicator!: Bool = false): Unit {
+        if (showRefreshIndicator) {
+            this.profileRefreshing = true
+        }
+        if (this.sharedAuthAccessToken == "") {
+            this.profileRefreshing = false
+            return
+        }
+        refreshGitHubProfileData(
+            this.sharedAuthAccessToken,
+            { snapshot => this.applyViewer(snapshot) },
+            { snapshot => this.applyMetrics(snapshot) },
+            { repositories => this.applyRepositories(repositories) },
+            { _ => this.runOnUi({ => this.profileRefreshing = false }) }
+        )
+    }
+
+    func applyViewer(snapshot: GitHubViewerSnapshot): Unit {
+        this.runOnUi({
+            =>
+            this.viewerLogin = snapshot.login
+            this.viewerAvatarUrl = snapshot.avatarUrl
+            this.viewerProfileUrl = snapshot.profileUrl
+        })
+    }
+
+    func applyMetrics(snapshot: GitHubProfileMetricsSnapshot): Unit {
+        this.runOnUi({
+            =>
+            this.liveRepositoryCount = snapshot.repositoryCount
+            this.liveStarredCount = snapshot.starredCount
+            this.liveOrganizationCount = snapshot.organizationCount
+        })
+    }
+
+    func applyRepositories(repositories: ArrayList<GitHubRepositoryCardSnapshot>): Unit {
+        this.runOnUi({
+            =>
+            this.liveRepositories = repositories
+            this.profileRefreshing = false
+        })
     }
 
     func shareProfile(): Unit {

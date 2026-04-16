@@ -24,6 +24,7 @@ public class CursorConversationPage {
     @Consume var cursorConversationTitle: String
     @Consume var cursorSelectedModelId: String
     @Consume var cursorConnectionReady: Bool
+    @Consume var cursorAtRoot: Bool
     @State var cursorComposerDraft: String = ""
     @State var cursorMenuActionMessage: String = ""
     @Consume var selectedRepository: String
@@ -45,6 +46,7 @@ public class CursorConversationPage {
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
+        this.cursorAtRoot = false
         this.refreshModelsIfPossible()
         if (this.cursorConversationId == "") {
             this.cursorMessages = ObservedArrayList<CursorMessageSnapshot>()
@@ -52,6 +54,10 @@ public class CursorConversationPage {
         }
         this.refreshConversationIfPossible()
         this.scrollMessagesToBottom()
+    }
+
+    protected override func aboutToDisappear(): Unit {
+        this.cursorAtRoot = true
     }
 
     public func build() {

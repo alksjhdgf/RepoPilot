@@ -18,6 +18,7 @@ public class CursorConversationListPage {
     @Consume var cursorConversationId: String
     @Consume var cursorConversationTitle: String
     @Consume var cursorSelectedModelId: String
+    @Consume var cursorAtRoot: Bool
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
 
@@ -26,6 +27,11 @@ public class CursorConversationListPage {
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
+        this.cursorAtRoot = false
+    }
+
+    protected override func aboutToDisappear(): Unit {
+        this.cursorAtRoot = true
     }
 
     public func build() {

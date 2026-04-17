@@ -15,7 +15,6 @@ public class CursorModelPickerPage {
     @Consume var languagePreference: String
     @Consume var cursorModels: ArrayList<CursorModelSnapshot>
     @Consume var cursorSelectedModelId: String
-    @Consume var cursorAtRoot: Bool
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -25,11 +24,6 @@ public class CursorModelPickerPage {
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
-        this.cursorAtRoot = false
-    }
-
-    protected override func aboutToDisappear(): Unit {
-        this.cursorAtRoot = true
     }
 
     public func build() {

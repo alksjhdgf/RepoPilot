@@ -8,7 +8,7 @@ import ohos.business_exception.BusinessException
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.CursorConversationSnapshot
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
-import ohos_app_cangjie_entry.services.cursor.{clearStoredCursorApiKey, loadStoredCursorApiKey, validateCursorSession, persistStoredCursorApiKey}
+import ohos_app_cangjie_entry.services.cursor.{clearStoredCursorApiKey, loadStoredCursorApiKey, loadStoredCursorConversations, validateCursorSession, persistStoredCursorApiKey}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -22,7 +22,6 @@ public class CursorAccountSettingsPage {
     @Consume var cursorConversationId: String
     @Consume var cursorConversationTitle: String
     @Consume var cursorSelectedModelId: String
-    @Consume var cursorAtRoot: Bool
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -40,14 +39,9 @@ public class CursorAccountSettingsPage {
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
-        this.cursorAtRoot = false
         let storedApiKey = loadStoredCursorApiKey()
         this.cursorApiKeyDraft = storedApiKey
         this.hasStoredApiKey = storedApiKey != ""
-    }
-
-    protected override func aboutToDisappear(): Unit {
-        this.cursorAtRoot = true
     }
 
     public func build() {
@@ -214,7 +208,7 @@ public class CursorAccountSettingsPage {
         if (this.cursorApiKeyDraft == "") {
             this.connectionValidated = false
             this.cursorConnectionReady = false
-            this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+            this.cursorConversations = loadStoredCursorConversations()
             this.cursorConversationId = ""
             this.cursorConversationTitle = this.t("cursor_new_conversation")
             this.validationMessage = this.t("cursor_api_key_cleared")
@@ -229,7 +223,7 @@ public class CursorAccountSettingsPage {
         spawn { => clearStoredCursorApiKey() }
         this.connectionValidated = false
         this.cursorConnectionReady = false
-        this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+        this.cursorConversations = loadStoredCursorConversations()
         this.cursorConversationId = ""
         this.cursorConversationTitle = this.t("cursor_new_conversation")
         this.validationMessage = this.t("cursor_api_key_cleared")

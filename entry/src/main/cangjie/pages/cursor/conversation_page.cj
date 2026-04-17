@@ -7,7 +7,7 @@ import kit.BasicServicesKit.SystemDateTime
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorMessageSnapshot, CursorModelSnapshot, GitHubRepositoryDetailSnapshot}
 import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
-import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorModels, findCursorModelTitle, launchCursorAgent, loadStoredCursorApiKey, sendCursorAgentFollowup}
+import ohos_app_cangjie_entry.services.cursor.{fetchCursorAgentConversation, fetchCursorModels, findCursorModelTitle, isLocalCursorConversationId, launchCursorAgent, loadStoredCursorApiKey, loadStoredCursorMessages, mergeStoredCursorMessages, migrateStoredCursorMessages, persistStoredCursorMessages, replaceStoredCursorConversation, sendCursorAgentFollowup, upsertStoredCursorConversation}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.infra.logging.logWarn
@@ -24,7 +24,6 @@ public class CursorConversationPage {
     @Consume var cursorConversationTitle: String
     @Consume var cursorSelectedModelId: String
     @Consume var cursorConnectionReady: Bool
-    @Consume var cursorAtRoot: Bool
     @Consume var hideFloatingNavigation: Bool
     @State var cursorComposerDraft: String = ""
     @State var cursorMenuActionMessage: String = ""
@@ -51,7 +50,6 @@ public class CursorConversationPage {
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
-        this.cursorAtRoot = false
         this.refreshModelsIfPossible()
         if (this.cursorConversationId == "") {
             this.cursorMessages = ObservedArrayList<CursorMessageSnapshot>()
@@ -62,7 +60,6 @@ public class CursorConversationPage {
     }
 
     protected override func aboutToDisappear(): Unit {
-        this.cursorAtRoot = true
         this.hideFloatingNavigation = false
     }
 
@@ -364,8 +361,16 @@ public class CursorConversationPage {
         )
     }
     func refreshConversationIfPossible(): Unit {
+        if (this.cursorConversationId == "") {
+            return
+        }
+        let localItems = loadStoredCursorMessages(this.cursorConversationId)
+        if (localItems.size > 0) {
+            this.cursorMessages = ObservedArrayList<CursorMessageSnapshot>(localItems)
+            this.scrollMessagesToBottom()
+        }
         let apiKey = this.currentCursorApiKey()
-        if (apiKey == "" || this.cursorConversationId == "") {
+        if (apiKey == "" || isLocalCursorConversationId(this.cursorConversationId)) {
             return
         }
         fetchCursorAgentConversation(
@@ -373,7 +378,7 @@ public class CursorConversationPage {
             this.cursorConversationId,
             { items =>
                 spawn(UIThread) {
-                    this.cursorMessages = ObservedArrayList<CursorMessageSnapshot>(items)
+                    this.cursorMessages = ObservedArrayList<CursorMessageSnapshot>(mergeStoredCursorMessages(this.cursorConversationId, items))
                     this.scrollMessagesToBottom()
                 }
             },
@@ -384,32 +389,35 @@ public class CursorConversationPage {
             }
         )
     }
-    func appendLocalPrompt(prompt: String): Unit {
-        let text = prompt
-        if (text == "") {
+    func ensureLocalConversation(prompt: String): Unit {
+        if (this.cursorConversationId != "") {
             return
         }
-        if (this.cursorConversationId == "") {
-            let conversationId = "conv_local_${SystemDateTime.getTime()}"
-            this.cursorConversationId = conversationId
-            this.cursorConversationTitle = this.t("cursor_new_conversation")
-            this.cursorConversations.add(
-                CursorConversationSnapshot(
-                    conversationId,
-                    this.cursorConversationTitle,
-                    this.cursorSelectedModelId,
-                    text,
-                    this.t("cursor_now")
-                )
-            )
+        let conversationId = "conv_local_${SystemDateTime.getTime()}"
+        let snapshot = CursorConversationSnapshot(
+            conversationId,
+            this.t("cursor_new_conversation"),
+            this.cursorSelectedModelId,
+            prompt,
+            this.t("cursor_now")
+        )
+        this.cursorConversationId = conversationId
+        this.cursorConversationTitle = snapshot.title
+        this.cursorConversations.add(snapshot)
+        upsertStoredCursorConversation(snapshot)
+    }
+    func snapshotMessagesForStorage(): ArrayList<CursorMessageSnapshot> {
+        let snapshots = ArrayList<CursorMessageSnapshot>()
+        for (i in 0..this.cursorMessages.size) {
+            snapshots.add(CursorMessageSnapshot(this.cursorMessages[i]))
         }
-        this.cursorMessages.append(CursorMessageSnapshot("user_${SystemDateTime.getTime()}", "user", text))
-        this.cursorMessages.append(CursorMessageSnapshot("assistant_${SystemDateTime.getTime()}", "assistant", this.t("cursor_local_agent_reply")))
-        this.scrollMessagesToBottom()
+        snapshots
     }
     func appendUserPrompt(prompt: String): String {
+        this.ensureLocalConversation(prompt)
         let messageId = "user_${SystemDateTime.getTime()}"
         this.cursorMessages.append(CursorMessageSnapshot(messageId, "user", prompt))
+        persistStoredCursorMessages(this.cursorConversationId, this.snapshotMessagesForStorage())
         this.scrollMessagesToBottom()
         messageId
     }
@@ -423,6 +431,7 @@ public class CursorConversationPage {
                 break
             }
         }
+        persistStoredCursorMessages(this.cursorConversationId, this.snapshotMessagesForStorage())
         this.scrollMessagesToBottom()
     }
     func submitPrompt(): Unit {
@@ -440,7 +449,8 @@ public class CursorConversationPage {
         this.cursorComposerDraft = ""
         let messageId = this.appendUserPrompt(prompt)
         this.cursorMenuActionMessage = ""
-        if (this.cursorConversationId == "") {
+        if (isLocalCursorConversationId(this.cursorConversationId)) {
+            let localConversationId = this.cursorConversationId
             let repositoryUrl = this.currentRepositoryUrl()
             launchCursorAgent(
                 apiKey,
@@ -450,9 +460,19 @@ public class CursorConversationPage {
                 this.cursorSelectedModelId,
                 { snapshot =>
                     spawn(UIThread) {
+                        replaceStoredCursorConversation(localConversationId, snapshot)
+                        migrateStoredCursorMessages(localConversationId, snapshot.id)
+                        let updatedItems = ArrayList<CursorConversationSnapshot>()
+                        for (item in this.cursorConversations) {
+                            if (item.id != localConversationId && item.id != snapshot.id) {
+                                updatedItems.add(item)
+                            }
+                        }
+                        updatedItems.add(snapshot)
+                        this.cursorConversations = updatedItems
                         this.cursorConversationId = snapshot.id
                         this.cursorConversationTitle = snapshot.title
-                        this.cursorConversations.add(snapshot)
+                        this.cursorMessages = ObservedArrayList<CursorMessageSnapshot>(loadStoredCursorMessages(snapshot.id))
                         this.scrollMessagesToBottom()
                     }
                 },
@@ -471,6 +491,8 @@ public class CursorConversationPage {
             {
                 =>
                 spawn(UIThread) {
+                    persistStoredCursorMessages(this.cursorConversationId, this.snapshotMessagesForStorage())
+                    this.refreshConversationIfPossible()
                     this.scrollMessagesToBottom()
                 }
             },

@@ -6,7 +6,7 @@ import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.pages.maps.cursorPageMap
 import ohos_app_cangjie_entry.domain.{CursorConversationSnapshot, CursorModelSnapshot}
-import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, refreshStoredCursorSession}
+import ohos_app_cangjie_entry.services.cursor.{defaultCursorModels, findCursorConversationTitle, loadStoredCursorConversations, refreshStoredCursorSession}
 
 @Component
 public class CursorTabHost {
@@ -16,7 +16,6 @@ public class CursorTabHost {
     @Provide var cursorConversationTitle: String = ""
     @Provide var cursorSelectedModelId: String = "claude-haiku-4.5"
     @Provide var cursorConnectionReady: Bool = false
-    @Provide var cursorAtRoot: Bool = true
     @Provide var pendingPageTitle: String = "Pending"
     @Provide var pendingPageMessage: String = "该页面待开发"
 
@@ -33,14 +32,13 @@ public class CursorTabHost {
     @State var cursorRefreshing: Bool = false
 
     protected override func aboutToAppear(): Unit {
-        this.cursorAtRoot = true
         this.ensureCursorState()
         this.refreshCursorContent()
     }
 
     public func build() {
         Navigation(this.cursorStack) {
-            Stack(alignContent: Alignment.Top) {
+            Stack(alignContent: Alignment.BottomEnd) {
                 this.buildTabBackground()
 
                 Column(space: 0) {
@@ -67,19 +65,10 @@ public class CursorTabHost {
                 .width(100.percent)
                 .height(100.percent)
 
-                if (this.cursorAtRoot) {
-                    Column() {
-                        Blank()
-                        Row() {
-                            Blank()
-                            this.buildFloatingNewChatButton()
-                        }
-                        .width(100.percent)
-                        .padding(left: 18, right: 18, bottom: 90)
+                    Row() {
+                        this.buildFloatingNewChatButton()
                     }
-                    .width(100.percent)
-                    .height(100.percent)
-                }
+                    .margin(right: 18, bottom: 90)
             }
             .width(100.percent)
             .height(100.percent)
@@ -113,7 +102,11 @@ public class CursorTabHost {
 
     func clearCursorSessionState(): Unit {
         this.cursorConnectionReady = false
-        this.cursorConversations = ArrayList<CursorConversationSnapshot>()
+        this.cursorConversations = loadStoredCursorConversations()
+        if (this.cursorConversations.size == 0) {
+            this.cursorConversationId = ""
+            this.cursorConversationTitle = this.t("cursor_new_conversation")
+        }
         this.cursorRefreshing = false
     }
 
@@ -151,12 +144,10 @@ public class CursorTabHost {
 
     func openCursorConversation(conversationId: String): Unit {
         this.selectCursorConversation(conversationId)
-        this.cursorAtRoot = false
         this.cursorStack.pushPath(NavPathInfo(name: "cursorConversation", param: ""), options: NavigationOptions(animated: true))
     }
 
     func openCursorAccountSettings(): Unit {
-        this.cursorAtRoot = false
         this.cursorStack.pushPath(NavPathInfo(name: "cursorAccountSettings", param: ""), options: NavigationOptions(animated: true))
     }
 
@@ -166,7 +157,6 @@ public class CursorTabHost {
             return
         }
         this.startCursorConversation()
-        this.cursorAtRoot = false
         this.cursorStack.pushPath(NavPathInfo(name: "cursorConversation", param: ""), options: NavigationOptions(animated: true))
     }
 

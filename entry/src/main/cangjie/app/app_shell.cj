@@ -206,15 +206,33 @@ public class AppShell {
     func buildMainScene() {
         Navigation(this.shellStack) {
             Stack(alignContent: Alignment.Bottom) {
-                if (this.activeTab == "home") {
+                Column() {
                     HomeTabHost()
-                } else if (this.activeTab == "inbox") {
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .visibility(if (this.activeTab == "home") { Visibility.Visible } else { Visibility.None })
+
+                Column() {
                     InboxTabHost()
-                } else if (this.activeTab == "explore") {
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .visibility(if (this.activeTab == "inbox") { Visibility.Visible } else { Visibility.None })
+
+                Column() {
                     ExploreTabHost()
-                } else {
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .visibility(if (this.activeTab == "explore") { Visibility.Visible } else { Visibility.None })
+
+                Column() {
                     CursorTabHost()
                 }
+                .width(100.percent)
+                .height(100.percent)
+                .visibility(if (this.activeTab == "cursor") { Visibility.Visible } else { Visibility.None })
 
                 Column(space: 10) {
                     if (this.showWorkplacePicker && !this.hideFloatingNavigation) {
@@ -614,10 +632,8 @@ public class AppShell {
             this.toggleWorkplacePicker(!this.showWorkplacePicker)
             return
         }
-        getUIContext().animateTo(AnimateParam(duration: 200, curve: Curve.Ease), { =>
-            this.activeTab = tab
-            this.showWorkplacePicker = false
-        })
+        this.activeTab = tab
+        this.showWorkplacePicker = false
     }
 
     func toggleWorkplacePicker(show: Bool): Unit {

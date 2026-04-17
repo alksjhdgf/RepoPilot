@@ -235,6 +235,41 @@ public func createGitHubIssueComment(
 }
 
 /**
+ * 在指定仓库中创建一个新的 Issue，供客户端打通基础创建工作流。
+ * Creates a new issue in the selected repository.
+ */
+public func createGitHubIssue(
+    token: String,
+    repositoryName: String,
+    title: String,
+    body: String,
+    onSuccess: (GitHubIssueSnapshot) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestGitHubRepositoryJson(
+        "https://api.github.com/repos/${repositoryName}/issues",
+        token,
+        { payload =>
+            let issueNumber = extractJsonIntField(payload, "number")
+            onSuccess(
+                GitHubIssueSnapshot(
+                    if (issueNumber > 0) { "${issueNumber}" } else { "0" },
+                    extractJsonStringField(payload, "node_id"),
+                    extractJsonStringField(payload, "title"),
+                    extractJsonStringField(payload, "body"),
+                    extractJsonStringField(payload, "state"),
+                    extractJsonStringField(payload, "login"),
+                    extractJsonStringField(payload, "html_url")
+                )
+            )
+        },
+        onFailure,
+        method: RequestMethod.Post,
+        payload: "{\"title\":\"${escapeRepositoryJson(title)}\",\"body\":\"${escapeRepositoryJson(body)}\"}"
+    )
+}
+
+/**
  * 创建一个新的 GitHub 仓库，用于验证客户端侧仓库写操作是否落地。
  * Creates a new GitHub repository to verify end-to-end repository mutations.
  */
@@ -379,5 +414,68 @@ public func fetchGitHubRepositoryPullRequests(
             onSuccess(pullRequests)
         },
         onFailure
+    )
+}
+
+/**
+ * 读取指定仓库的分支列表，供 Issue / Pull Request 编辑页选择 base 分支。
+ * Fetches repository branches so composer pages can offer base branch choices.
+ */
+public func fetchGitHubRepositoryBranches(
+    token: String,
+    repositoryName: String,
+    onSuccess: (ArrayList<String>) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestGitHubRepositoryJson(
+        "https://api.github.com/repos/${repositoryName}/branches?per_page=100",
+        token,
+        { body =>
+            let branches = ArrayList<String>()
+            for (item in extractTopLevelObjectArray(body)) {
+                let branchName = extractJsonStringField(item, "name")
+                if (branchName != "") {
+                    branches.add(branchName)
+                }
+            }
+            onSuccess(branches)
+        },
+        onFailure
+    )
+}
+
+/**
+ * 创建一个新的 Pull Request。
+ * Creates a new pull request for the selected repository.
+ */
+public func createGitHubPullRequest(
+    token: String,
+    repositoryName: String,
+    title: String,
+    body: String,
+    head: String,
+    base: String,
+    onSuccess: (GitHubPullRequestSnapshot) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestGitHubRepositoryJson(
+        "https://api.github.com/repos/${repositoryName}/pulls",
+        token,
+        { payload =>
+            let pullNumber = extractJsonIntField(payload, "number")
+            onSuccess(
+                GitHubPullRequestSnapshot(
+                    if (pullNumber > 0) { "${pullNumber}" } else { "0" },
+                    extractJsonStringField(payload, "title"),
+                    extractJsonStringField(payload, "body"),
+                    if (extractJsonBoolField(payload, "draft")) { "draft" } else { extractJsonStringField(payload, "state") },
+                    extractJsonStringField(payload, "login"),
+                    extractJsonStringField(payload, "html_url")
+                )
+            )
+        },
+        onFailure,
+        method: RequestMethod.Post,
+        payload: "{\"title\":\"${escapeRepositoryJson(title)}\",\"body\":\"${escapeRepositoryJson(body)}\",\"head\":\"${escapeRepositoryJson(head)}\",\"base\":\"${escapeRepositoryJson(base)}\"}"
     )
 }

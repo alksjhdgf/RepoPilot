@@ -3,7 +3,7 @@ package ohos_app_cangjie_entry.services.github
 import std.collection.{ArrayList, HashMap}
 import kit.NetworkKit.*
 import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
-import ohos_app_cangjie_entry.domain.{GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubOrganizationSnapshot, GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
 let GITHUB_API_ACCEPT = "application/vnd.github+json"
@@ -187,6 +187,40 @@ public func fetchGitHubProfileMetrics(
                 },
                 onFailure
             )
+        },
+        onFailure
+    )
+}
+
+/**
+ * 获取当前用户所属组织列表，用于个人页和 Home 的组织入口。
+ * Fetches the organizations for the current authenticated user.
+ */
+public func fetchGitHubOrganizations(
+    token: String,
+    onSuccess: (ArrayList<GitHubOrganizationSnapshot>) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestGitHubJson(
+        "https://api.github.com/user/orgs?per_page=100",
+        token,
+        { body =>
+            let organizations = ArrayList<GitHubOrganizationSnapshot>()
+            for (item in extractTopLevelObjectArray(body)) {
+                let login = extractJsonStringField(item, "login")
+                if (login == "") {
+                    continue
+                }
+                organizations.add(
+                    GitHubOrganizationSnapshot(
+                        login,
+                        if (extractJsonStringField(item, "description") == "") { "GitHub organization" } else { extractJsonStringField(item, "description") },
+                        extractJsonStringField(item, "html_url")
+                    )
+                )
+            }
+            logInfo("GitHubApi", "Loaded ${organizations.size} organizations.")
+            onSuccess(organizations)
         },
         onFailure
     )

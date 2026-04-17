@@ -6,9 +6,10 @@ import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.domain.{GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
-import ohos_app_cangjie_entry.services.app.refreshGitHubProfileData
+import ohos_app_cangjie_entry.services.agent.taskIdForIssue
+import ohos_app_cangjie_entry.services.app.{refreshGitHubProfileData, refreshGitHubRepositoryBundle}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -25,8 +26,13 @@ public class ProfilePage {
     @Consume var liveStarredCount: String
     @Consume var liveOrganizationCount: String
     @Consume var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot>
-    @Consume var pendingPageTitle: String
-    @Consume var pendingPageMessage: String
+    @Consume var selectedRepository: String
+    @Consume var selectedIssue: String
+    @Consume var selectedPullRequest: String
+    @Consume var selectedTask: String
+    @Consume var liveRepositoryDetail: GitHubRepositoryDetailSnapshot
+    @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
+    @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -194,17 +200,48 @@ public class ProfilePage {
         topItems
     }
 
-    func openPlaceholder(title: String, message: String): Unit {
-        this.pendingPageTitle = title
-        this.pendingPageMessage = message
-        this.homeStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+    func openRepositories(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "repositoriesPage", param: ""), options: NavigationOptions(animated: true))
     }
-
-    func openRepositories(): Unit { this.openPlaceholder(this.t("repositories"), "Repository list is not fully implemented yet.") }
-    func openStarred(): Unit { this.openPlaceholder(this.t("starred"), "Starred repositories page is not implemented yet.") }
-    func openOrganizations(): Unit { this.openPlaceholder(this.t("organizations"), "Organizations page is not implemented yet.") }
+    func openStarred(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "starredRepositoriesPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openOrganizations(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "organizationsPage", param: ""), options: NavigationOptions(animated: true))
+    }
     func openRepositoryCard(snapshot: GitHubRepositoryCardSnapshot): Unit {
-        this.openPlaceholder(snapshot.name, "Repository actions from profile are not implemented yet.")
+        this.openRepository(snapshot.name)
+    }
+    func openRepository(repositoryId: String): Unit {
+        this.selectedRepository = repositoryId
+        this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot(repositoryId, "Loading repository details...", "", "", "0", "0", "main")
+        this.liveIssues = ArrayList<GitHubIssueSnapshot>()
+        this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
+        this.selectedIssue = ""
+        this.selectedPullRequest = ""
+        this.selectedTask = ""
+        if (this.sharedAuthAccessToken != "") {
+            refreshGitHubRepositoryBundle(
+                this.sharedAuthAccessToken,
+                repositoryId,
+                { snapshot => this.liveRepositoryDetail = snapshot },
+                { items =>
+                    this.liveIssues = items
+                    if (items.size > 0) {
+                        this.selectedIssue = items[0].id
+                        this.selectedTask = taskIdForIssue(items[0].id)
+                    }
+                },
+                { items =>
+                    this.livePullRequests = items
+                    if (items.size > 0) {
+                        this.selectedPullRequest = items[0].id
+                    }
+                },
+                { _ => }
+            )
+        }
+        this.homeStack.pushPath(NavPathInfo(name: "repositoryDetail", param: ""), options: NavigationOptions(animated: true))
     }
 
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }

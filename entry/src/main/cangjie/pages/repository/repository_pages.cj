@@ -1,15 +1,17 @@
 package ohos_app_cangjie_entry.pages.repository
 
 import kit.ArkUI.*
-import kit.BasicServicesKit.SystemDateTime
 import ohos.base.UIThread
+import kit.BasicServicesKit.SystemDateTime
 import ohos.arkui.state_macro_manage.*
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.domain.{GitHubCommentSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryDetailSnapshot}
+import std.convert.*
+import ohos_app_cangjie_entry.domain.{GitHubCommentSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot}
 import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
 import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
-import ohos_app_cangjie_entry.services.github.{closeGitHubIssue, createGitHubIssueComment, deleteGitHubRepository, fetchGitHubIssueComments, forkGitHubRepository, submitGitHubPullRequestReview}
+import ohos_app_cangjie_entry.services.github.{closeGitHubIssue, deleteGitHubRepository, fetchGitHubIssueComments, forkGitHubRepository}
+import ohos_app_cangjie_entry.services.github.fetchGitHubRepositories
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
@@ -23,6 +25,8 @@ public class RepositoryDetailPage {
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var sharedAuthAccessToken: String
+    @Consume var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot>
+    @Consume var liveRepositoryCount: String
     @Consume var liveRepositoryDetail: GitHubRepositoryDetailSnapshot
     @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
     @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
@@ -95,11 +99,23 @@ public class RepositoryDetailPage {
         this.selectedPullRequest = pullRequestId
         this.homeStack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
     }
+    func openIssuesPage(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "issuesPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openPullRequestsPage(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "pullRequestsPage", param: ""), options: NavigationOptions(animated: true))
+    }
     func openCreateTask(): Unit {
         this.selectedTask = taskIdForIssue(this.selectedIssue)
         this.homeStack.pushPath(NavPathInfo(name: "createTask", param: ""), options: NavigationOptions(animated: true))
     }
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
+    func openIssueComposer(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "issueComposer", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openPullRequestComposer(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "pullRequestComposer", param: ""), options: NavigationOptions(animated: true))
+    }
     func forkRepository(): Unit {
         if (this.sharedAuthAccessToken == "") {
             this.repositoryActionMessage = "Connect GitHub first."
@@ -108,7 +124,21 @@ public class RepositoryDetailPage {
         forkGitHubRepository(
             this.sharedAuthAccessToken,
             this.selectedRepository,
-            { => this.runOnUi({ => this.repositoryActionMessage = "Fork requested on GitHub." }) },
+            {
+                =>
+                fetchGitHubRepositories(
+                    this.sharedAuthAccessToken,
+                    { repositories =>
+                        this.runOnUi({
+                            =>
+                            this.liveRepositories = repositories
+                            this.liveRepositoryCount = "${repositories.size}"
+                            this.repositoryActionMessage = "Fork requested on GitHub."
+                        })
+                    },
+                    { message => this.runOnUi({ => this.repositoryActionMessage = message }) }
+                )
+            },
             { message => this.runOnUi({ => this.repositoryActionMessage = message }) }
         )
     }
@@ -120,7 +150,22 @@ public class RepositoryDetailPage {
         deleteGitHubRepository(
             this.sharedAuthAccessToken,
             this.selectedRepository,
-            { => this.runOnUi({ => this.repositoryActionMessage = "Repository deleted on GitHub." }) },
+            {
+                =>
+                this.runOnUi({
+                    =>
+                    let nextRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
+                    for (item in this.liveRepositories) {
+                        if (item.name != this.selectedRepository) {
+                            nextRepositories.add(item)
+                        }
+                    }
+                    this.liveRepositories = nextRepositories
+                    this.liveRepositoryCount = "${nextRepositories.size}"
+                    this.repositoryActionMessage = "Repository deleted on GitHub."
+                    this.homeStack.pop()
+                })
+            },
             { message => this.runOnUi({ => this.repositoryActionMessage = message }) }
         )
     }
@@ -141,21 +186,25 @@ func buildRepositoryActionGrid(page: RepositoryDetailPage) {
             .height(48)
             .backgroundColor(page.surfaceColor())
             .fontColor(page.primaryTextColor())
-            .onClick({ _ =>
-                if (page.currentIssues().size > 0) {
-                    page.openIssue(page.currentIssues()[0].id)
-                }
-            })
+            .onClick({ _ => page.openIssuesPage() })
         Button(page.t("review_pr"))
             .width(100.percent)
             .height(48)
             .backgroundColor(page.surfaceColor())
             .fontColor(page.primaryTextColor())
-            .onClick({ _ =>
-                if (page.currentPullRequests().size > 0) {
-                    page.openPullRequest(page.currentPullRequests()[0].id)
-                }
-            })
+            .onClick({ _ => page.openPullRequestsPage() })
+        Button(page.t("create_issue"))
+            .width(100.percent)
+            .height(48)
+            .backgroundColor(page.surfaceColor())
+            .fontColor(page.primaryTextColor())
+            .onClick({ _ => page.openIssueComposer() })
+        Button(page.t("create_pull_request"))
+            .width(100.percent)
+            .height(48)
+            .backgroundColor(page.surfaceColor())
+            .fontColor(page.primaryTextColor())
+            .onClick({ _ => page.openPullRequestComposer() })
         Button(page.t("create_task"))
             .width(100.percent)
             .height(48)
@@ -223,6 +272,7 @@ public class IssueDetailPage {
     @Consume var languagePreference: String
     @Consume var sharedAuthAccessToken: String
     @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
+    @Consume var pendingPullRequestReviewEvent: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -264,6 +314,12 @@ public class IssueDetailPage {
                             .backgroundColor(this.surfaceColor())
                             .fontColor(this.primaryTextColor())
                             .onClick({ _ => this.commentOnIssue() })
+                        Button(this.t("create_pull_request"))
+                            .width(100.percent)
+                            .height(48)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .onClick({ _ => this.homeStack.pushPath(NavPathInfo(name: "pullRequestComposer", param: ""), options: NavigationOptions(animated: true)) })
                         Button(this.t("ask_agent"))
                             .width(100.percent)
                             .height(48)
@@ -322,22 +378,7 @@ public class IssueDetailPage {
             this.actionMessage = "Connect GitHub first."
             return
         }
-        let commentBody = "RepoPilot mobile note @ ${SystemDateTime.getTime()}"
-        createGitHubIssueComment(
-            this.sharedAuthAccessToken,
-            this.selectedRepository,
-            this.selectedIssue,
-            commentBody,
-            {
-                comment =>
-                this.runOnUi({
-                    =>
-                    this.issueComments.add(comment)
-                    this.actionMessage = "Posted a live GitHub issue comment."
-                })
-            },
-            { message => this.runOnUi({ => this.actionMessage = message }) }
-        )
+        this.homeStack.pushPath(NavPathInfo(name: "issueCommentComposer", param: ""), options: NavigationOptions(animated: true))
     }
     func closeIssueOnGitHub(): Unit {
         if (this.sharedAuthAccessToken == "") {
@@ -356,6 +397,25 @@ public class IssueDetailPage {
                 this.runOnUi({
                     =>
                     this.issueStatusOverride = "closed"
+                    let nextItems = ArrayList<GitHubIssueSnapshot>()
+                    for (item in this.liveIssues) {
+                        if (item.id == this.currentIssue().id) {
+                            nextItems.add(
+                                GitHubIssueSnapshot(
+                                    item.id,
+                                    item.nodeId,
+                                    item.title,
+                                    item.summary,
+                                    "closed",
+                                    item.authorLogin,
+                                    item.issueUrl
+                                )
+                            )
+                        } else {
+                            nextItems.add(item)
+                        }
+                    }
+                    this.liveIssues = nextItems
                     this.actionMessage = "Closed the issue on GitHub."
                 })
             },
@@ -379,6 +439,7 @@ public class PullRequestDetailPage {
     @Consume var languagePreference: String
     @Consume var sharedAuthAccessToken: String
     @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
+    @Consume var pendingPullRequestReviewEvent: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -412,19 +473,19 @@ public class PullRequestDetailPage {
                             .height(48)
                             .backgroundColor(this.primaryTextColor())
                             .fontColor(this.surfaceColor())
-                            .onClick({ _ => this.submitReview("APPROVE", "Approved from RepoPilot mobile.") })
+                            .onClick({ _ => this.openReviewComposer("APPROVE") })
                         Button(this.t("request_changes"))
                             .width(100.percent)
                             .height(48)
                             .backgroundColor(this.surfaceColor())
                             .fontColor(this.primaryTextColor())
-                            .onClick({ _ => this.submitReview("REQUEST_CHANGES", "Please address the mobile review notes from RepoPilot.") })
+                            .onClick({ _ => this.openReviewComposer("REQUEST_CHANGES") })
                         Button(this.t("comment_pr"))
                             .width(100.percent)
                             .height(48)
                             .backgroundColor(this.surfaceColor())
                             .fontColor(this.primaryTextColor())
-                            .onClick({ _ => this.submitReview("COMMENT", "RepoPilot mobile review comment @ ${SystemDateTime.getTime()}") })
+                            .onClick({ _ => this.openReviewComposer("COMMENT") })
                         if (this.reviewComments.size > 0) {
                             ForEach(this.reviewComments, itemGeneratorFunc: { item: GitHubCommentSnapshot, _: Int64 =>
                                 buildCommentStrip(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
@@ -453,6 +514,10 @@ public class PullRequestDetailPage {
         }
         GitHubPullRequestSnapshot("", "Pull request not loaded", "Open a repository pull request first.", "", "", "")
     }
+    func openReviewComposer(event: String): Unit {
+        this.pendingPullRequestReviewEvent = event
+        this.homeStack.pushPath(NavPathInfo(name: "pullRequestReviewComposer", param: ""), options: NavigationOptions(animated: true))
+    }
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func refreshPullRequestComments(): Unit {
         if (this.sharedAuthAccessToken == "" || this.selectedRepository == "" || this.selectedPullRequest == "") {
@@ -463,28 +528,6 @@ public class PullRequestDetailPage {
             this.selectedRepository,
             this.selectedPullRequest,
             { comments => this.runOnUi({ => this.reviewComments = comments }) },
-            { message => this.runOnUi({ => this.actionMessage = message }) }
-        )
-    }
-    func submitReview(event: String, body: String): Unit {
-        if (this.sharedAuthAccessToken == "") {
-            this.actionMessage = "Connect GitHub first."
-            return
-        }
-        submitGitHubPullRequestReview(
-            this.sharedAuthAccessToken,
-            this.selectedRepository,
-            this.selectedPullRequest,
-            event,
-            body,
-            {
-                =>
-                this.runOnUi({
-                    =>
-                    this.actionMessage = "Submitted live pull request review."
-                    this.refreshPullRequestComments()
-                })
-            },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
     }

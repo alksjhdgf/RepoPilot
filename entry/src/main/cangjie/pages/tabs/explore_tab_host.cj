@@ -15,6 +15,7 @@ public class ExploreTabHost {
 
     @Provide var pendingPageTitle: String = "Pending"
     @Provide var pendingPageMessage: String = "该页面待开发"
+    @Provide var pendingPullRequestReviewEvent: String = "COMMENT"
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light

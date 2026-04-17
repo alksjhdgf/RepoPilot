@@ -1,24 +1,8 @@
 {
   "app": {
-    "signingConfigs": [
-      {
-        "name": "default",
-        "type": "HarmonyOS",
-        "material": {
-          "certpath": "/Users/ppp/.ohos/config/default_RepoRilot_3q0MjbBq3p49-lk7zVFrEnhggpw48jsiH7qr3sON1ww=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001B7D65373D26E3A817B479B0AE73DA4A45B6A779897946103B39A6A0D14E6A8109943FBFF3EB24FE",
-          "profile": "/Users/ppp/.ohos/config/default_RepoRilot_3q0MjbBq3p49-lk7zVFrEnhggpw48jsiH7qr3sON1ww=.p7b",
-          "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/ppp/.ohos/config/default_RepoRilot_3q0MjbBq3p49-lk7zVFrEnhggpw48jsiH7qr3sON1ww=.p12",
-          "storePassword": "0000001B05BE062FB480387AD66DD0EF53CD190E22A1831CCDBA4095A3600885EB8115037BB96BEC1798A9"
-        }
-      }
-    ],
     "products": [
       {
         "name": "default",
-        "signingConfig": "default",
         "targetSdkVersion": "6.0.2(22)",
         "compatibleSdkVersion": "6.0.2(22)",
         "runtimeOS": "HarmonyOS",

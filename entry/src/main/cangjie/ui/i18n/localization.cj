@@ -127,6 +127,11 @@ func localizedEn(key: String): String {
     else if (key == "app_lock") { "App Lock" }
     else if (key == "clear_cache") { "Clear cache" }
     else if (key == "repositories") { "Repositories" }
+    else if (key == "repositories_empty") { "No repositories available yet." }
+    else if (key == "starred_empty") { "No starred repositories yet." }
+    else if (key == "issues_empty") { "No issues available yet." }
+    else if (key == "pull_requests_empty") { "No pull requests available yet." }
+    else if (key == "organizations_empty") { "No organizations available yet." }
     else if (key == "system") { "Automatic" }
     else if (key == "light") { "Light" }
     else if (key == "dark") { "Dark" }
@@ -157,8 +162,44 @@ func localizedEn(key: String): String {
     else if (key == "diff_review") { "Diff Review" }
     else if (key == "open_issue") { "Open issue" }
     else if (key == "review_pr") { "Review pull request" }
+    else if (key == "create_issue") { "Create issue" }
+    else if (key == "create_pull_request") { "Create pull request" }
     else if (key == "context") { "Context" }
     else if (key == "status") { "Status" }
+    else if (key == "sign_in_required") { "Connect GitHub first." }
+    else if (key == "issue_editor") { "New issue" }
+    else if (key == "pull_request_editor") { "New pull request" }
+    else if (key == "composer_title_placeholder") { "Issue title" }
+    else if (key == "composer_body_placeholder") { "Write in Markdown..." }
+    else if (key == "composer_pr_title_placeholder") { "Pull request title" }
+    else if (key == "composer_pr_body_placeholder") { "Describe the pull request in Markdown..." }
+    else if (key == "composer_head_branch_placeholder") { "Head branch" }
+    else if (key == "composer_base_branch_placeholder") { "Base branch" }
+    else if (key == "composer_write") { "Write" }
+    else if (key == "composer_preview") { "Preview" }
+    else if (key == "composer_h1") { "H1" }
+    else if (key == "composer_h2") { "H2" }
+    else if (key == "composer_bullets") { "Bullets" }
+    else if (key == "composer_checklist") { "Checklist" }
+    else if (key == "composer_quote") { "Quote" }
+    else if (key == "composer_code") { "Code" }
+    else if (key == "composer_link") { "Link" }
+    else if (key == "composer_bold") { "Bold" }
+    else if (key == "composer_title_required") { "Please enter a title first." }
+    else if (key == "composer_branch_required") { "Please provide both head and base branches." }
+    else if (key == "publish_issue") { "Publish issue" }
+    else if (key == "publish_pull_request") { "Publish pull request" }
+    else if (key == "issue_comment_editor") { "New issue comment" }
+    else if (key == "pull_request_review_editor") { "New review" }
+    else if (key == "composer_comment_placeholder") { "Write your comment in Markdown..." }
+    else if (key == "composer_review_placeholder") { "Write your review in Markdown..." }
+    else if (key == "publish_comment") { "Publish comment" }
+    else if (key == "publish_review") { "Publish review" }
+    else if (key == "composer_body_required") { "Please enter some content first." }
+    else if (key == "review_type") { "Review type" }
+    else if (key == "review_comment") { "Comment" }
+    else if (key == "review_approve") { "Approve" }
+    else if (key == "review_request_changes") { "Request changes" }
     else if (key == "close_issue") { "Close issue" }
     else if (key == "comment_issue") { "Comment on issue" }
     else if (key == "ask_agent") { "Ask agent to handle it" }
@@ -359,6 +400,11 @@ func localizedZh(key: String): String {
     else if (key == "app_lock") { "应用锁" }
     else if (key == "clear_cache") { "清理缓存" }
     else if (key == "repositories") { "仓库" }
+    else if (key == "repositories_empty") { "暂时没有可展示的仓库。" }
+    else if (key == "starred_empty") { "暂时没有已收藏的仓库。" }
+    else if (key == "issues_empty") { "暂时没有可展示的 Issue。" }
+    else if (key == "pull_requests_empty") { "暂时没有可展示的 Pull Request。" }
+    else if (key == "organizations_empty") { "暂时没有可展示的组织。" }
     else if (key == "system") { "跟随系统" }
     else if (key == "light") { "浅色" }
     else if (key == "dark") { "深色" }
@@ -387,8 +433,44 @@ func localizedZh(key: String): String {
     else if (key == "diff_review") { "差异审阅" }
     else if (key == "open_issue") { "打开 Issue" }
     else if (key == "review_pr") { "审阅 Pull Request" }
+    else if (key == "create_issue") { "创建 Issue" }
+    else if (key == "create_pull_request") { "创建 Pull Request" }
     else if (key == "context") { "上下文" }
     else if (key == "status") { "状态" }
+    else if (key == "sign_in_required") { "请先连接 GitHub。" }
+    else if (key == "issue_editor") { "新建 Issue" }
+    else if (key == "pull_request_editor") { "新建 Pull Request" }
+    else if (key == "composer_title_placeholder") { "Issue 标题" }
+    else if (key == "composer_body_placeholder") { "使用 Markdown 编写内容..." }
+    else if (key == "composer_pr_title_placeholder") { "Pull Request 标题" }
+    else if (key == "composer_pr_body_placeholder") { "使用 Markdown 描述这次 Pull Request..." }
+    else if (key == "composer_head_branch_placeholder") { "Head 分支" }
+    else if (key == "composer_base_branch_placeholder") { "Base 分支" }
+    else if (key == "composer_write") { "编辑" }
+    else if (key == "composer_preview") { "预览" }
+    else if (key == "composer_h1") { "一级标题" }
+    else if (key == "composer_h2") { "二级标题" }
+    else if (key == "composer_bullets") { "列表" }
+    else if (key == "composer_checklist") { "清单" }
+    else if (key == "composer_quote") { "引用" }
+    else if (key == "composer_code") { "代码" }
+    else if (key == "composer_link") { "链接" }
+    else if (key == "composer_bold") { "加粗" }
+    else if (key == "composer_title_required") { "请先填写标题。" }
+    else if (key == "composer_branch_required") { "请同时填写 head 和 base 分支。" }
+    else if (key == "publish_issue") { "发布 Issue" }
+    else if (key == "publish_pull_request") { "发布 Pull Request" }
+    else if (key == "issue_comment_editor") { "新建 Issue 评论" }
+    else if (key == "pull_request_review_editor") { "新建审阅" }
+    else if (key == "composer_comment_placeholder") { "使用 Markdown 编写评论..." }
+    else if (key == "composer_review_placeholder") { "使用 Markdown 编写审阅内容..." }
+    else if (key == "publish_comment") { "发布评论" }
+    else if (key == "publish_review") { "发布审阅" }
+    else if (key == "composer_body_required") { "请先填写内容。" }
+    else if (key == "review_type") { "审阅类型" }
+    else if (key == "review_comment") { "评论" }
+    else if (key == "review_approve") { "批准" }
+    else if (key == "review_request_changes") { "请求修改" }
     else if (key == "close_issue") { "关闭 Issue" }
     else if (key == "comment_issue") { "评论 Issue" }
     else if (key == "ask_agent") { "交给 Agent 处理" }

@@ -118,6 +118,18 @@ public class GitHubRepositoryCardSnapshot {
     }
 }
 
+public class GitHubOrganizationSnapshot {
+    public let login: String
+    public let description: String
+    public let profileUrl: String
+
+    public init(login: String, description: String, profileUrl: String) {
+        this.login = login
+        this.description = description
+        this.profileUrl = profileUrl
+    }
+}
+
 public class GitHubRepositoryDetailSnapshot {
     public let name: String
     public let summary: String

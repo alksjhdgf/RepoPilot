@@ -6,7 +6,7 @@ import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.pages.maps.homePageMap
 import ohos_app_cangjie_entry.domain.{GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot}
-import ohos_app_cangjie_entry.services.app.{refreshGitHubProfileData, refreshGitHubRepositoryBundle, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId}
+import ohos_app_cangjie_entry.services.app.{createScratchGitHubRepository, refreshGitHubProfileData, refreshGitHubRepositoryBundle, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.platform.repositorySnapshot
 
@@ -34,6 +34,7 @@ public class HomeTabHost {
 
     @Provide var pendingPageTitle: String = "Pending"
     @Provide var pendingPageMessage: String = "该页面待开发"
+    @Provide var pendingPullRequestReviewEvent: String = "COMMENT"
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -42,6 +43,7 @@ public class HomeTabHost {
     let systemLanguageCode: String = "en"
 
     @State var homeRefreshing: Bool = false
+    @State var homeActionMessage: String = ""
 
     protected override func aboutToAppear(): Unit {
         this.refreshHomeContent()
@@ -220,11 +222,31 @@ public class HomeTabHost {
     }
 
     func openSelectedIssue(): Unit {
-        this.homeStack.pushPath(NavPathInfo(name: "issueDetail", param: ""), options: NavigationOptions(animated: true))
+        this.homeStack.pushPath(NavPathInfo(name: "issuesPage", param: ""), options: NavigationOptions(animated: true))
     }
 
     func openSelectedPullRequest(): Unit {
-        this.homeStack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
+        this.homeStack.pushPath(NavPathInfo(name: "pullRequestsPage", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func createRepository(): Unit {
+        if (this.sharedAuthAccessToken == "") {
+            this.homeActionMessage = "Sign in to GitHub before creating a repository."
+            return
+        }
+        createScratchGitHubRepository(
+            this.sharedAuthAccessToken,
+            { repositoryName =>
+                this.runOnUi({
+                    =>
+                    this.homeActionMessage = "Created ${repositoryName}."
+                    this.refreshHomeContent()
+                })
+            },
+            { message =>
+                this.runOnUi({ => this.homeActionMessage = message })
+            }
+        )
     }
 
     @Builder
@@ -260,7 +282,7 @@ public class HomeTabHost {
                 if (this.canCreateFromCurrentWorkplace()) {
                     Button(this.t("add_short"))
                         .width(40).height(40).borderRadius(20).backgroundColor(this.surfaceColor()).fontColor(this.primaryTextColor()).fontSize(16)
-                        .onClick({ _ => this.openPendingPage("Create", "该页面待开发") })
+                        .onClick({ _ => this.createRepository() })
                 }
                 Button(this.t("find_short"))
                     .width(40).height(40).borderRadius(20).backgroundColor(this.surfaceColor()).fontColor(this.primaryTextColor()).fontSize(16)
@@ -275,6 +297,9 @@ public class HomeTabHost {
     @Builder
     func buildHomeContent() {
         Column(space: 16) {
+            if (this.homeActionMessage != "") {
+                this.buildActionMessageCard()
+            }
             this.buildSectionHeader(this.t("my_work"))
             this.buildHomeWorkPanel()
             this.buildSectionHeader(this.t("favorites"))
@@ -288,25 +313,32 @@ public class HomeTabHost {
     }
 
     @Builder
+    func buildActionMessageCard() {
+        Text(this.homeActionMessage)
+            .width(100.percent)
+            .padding(left: 16, right: 16, top: 14, bottom: 14)
+            .backgroundColor(this.surfaceColor())
+            .borderRadius(18)
+            .fontSize(14)
+            .fontColor(this.primaryTextColor())
+    }
+
+    @Builder
     func buildHomeWorkPanel() {
         Column() {
-            this.buildHomeWorkRow(0x68D968, "◎", this.t("issues"), { =>
-                if (this.liveIssues.size > 0) { this.openSelectedIssue() } else { this.openPendingPage(this.t("issues"), "该页面待开发") }
-            })
+            this.buildHomeWorkRow(0x68D968, "◎", this.t("issues"), { => this.openSelectedIssue() })
             this.buildDivider()
-            this.buildHomeWorkRow(0x4B88FF, "⎇", this.t("pull_requests"), { =>
-                if (this.livePullRequests.size > 0) { this.openSelectedPullRequest() } else { this.openPendingPage(this.t("pull_requests"), "该页面待开发") }
-            })
+            this.buildHomeWorkRow(0x4B88FF, "⎇", this.t("pull_requests"), { => this.openSelectedPullRequest() })
             this.buildDivider()
             this.buildHomeWorkRow(0x7B56E8, "◫", this.t("discussions"), { => this.openPendingPage(this.t("discussions"), "该页面待开发") })
             this.buildDivider()
             this.buildHomeWorkRow(0xB0B4C0, "□", this.t("projects"), { => this.openPendingPage(this.t("projects"), "该页面待开发") })
             this.buildDivider()
-            this.buildHomeWorkRow(0x4B4F5C, "⌘", this.t("top_repositories"), { => this.openPendingPage(this.t("top_repositories"), "该页面待开发") })
+            this.buildHomeWorkRow(0x4B4F5C, "⌘", this.t("top_repositories"), { => this.homeStack.pushPath(NavPathInfo(name: "topRepositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
             this.buildDivider()
-            this.buildHomeWorkRow(0xF4A24B, "⌂", this.t("organizations"), { => this.openPendingPage(this.t("organizations"), "该页面待开发") })
+            this.buildHomeWorkRow(0xF4A24B, "⌂", this.t("organizations"), { => this.homeStack.pushPath(NavPathInfo(name: "organizationsPage", param: ""), options: NavigationOptions(animated: true)) })
             this.buildDivider()
-            this.buildHomeWorkRow(0xFFD54A, "☆", this.t("starred"), { => this.openPendingPage(this.t("starred"), "该页面待开发") })
+            this.buildHomeWorkRow(0xFFD54A, "☆", this.t("starred"), { => this.homeStack.pushPath(NavPathInfo(name: "starredRepositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())

@@ -686,7 +686,7 @@ public class AppShell {
 
     func createScratchRepository(): Unit {
         if (this.authAccessToken == "") {
-            this.authMessage = "Sign in to GitHub before creating a repository."
+            this.authMessage = this.t("repository_create_sign_in_required")
             return
         }
         createScratchGitHubRepository(
@@ -694,7 +694,7 @@ public class AppShell {
             { repositoryName =>
                 this.runOnUi({
                     =>
-            this.authMessage = "Created ${repositoryName}."
+            this.authMessage = this.t("repository_created")
             this.activeTab = "home"
             this.refreshGitHubProfile()
         })

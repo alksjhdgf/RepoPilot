@@ -142,6 +142,12 @@ func localizedEn(key: String): String {
     else if (key == "updated") { "Updated" }
     else if (key == "open_in_app") { "Open in app" }
     else if (key == "connect_github_first") { "Connect GitHub first." }
+    else if (key == "repository_create_sign_in_required") { "Sign in to GitHub before creating a repository." }
+    else if (key == "repository_created") { "Repository created on GitHub." }
+    else if (key == "repository_fork_requested") { "Fork requested on GitHub." }
+    else if (key == "repository_deleted") { "Repository deleted on GitHub." }
+    else if (key == "issue_node_id_missing") { "This issue is missing a GitHub node id." }
+    else if (key == "issue_closed") { "Closed the issue on GitHub." }
     else if (key == "not_available") { "This action is not available right now." }
     else if (key == "notification_opened_on_github") { "Opened on GitHub because this notification type does not yet have an in-app page." }
     else if (key == "search_placeholder") { "Enter a search query first." }
@@ -493,6 +499,12 @@ func localizedZh(key: String): String {
     else if (key == "updated") { "更新时间" }
     else if (key == "open_in_app") { "在应用中打开" }
     else if (key == "connect_github_first") { "请先连接 GitHub。" }
+    else if (key == "repository_create_sign_in_required") { "创建仓库前请先连接 GitHub。" }
+    else if (key == "repository_created") { "仓库已在 GitHub 上创建。" }
+    else if (key == "repository_fork_requested") { "已在 GitHub 上发起 fork。" }
+    else if (key == "repository_deleted") { "仓库已从 GitHub 删除。" }
+    else if (key == "issue_node_id_missing") { "当前 Issue 缺少 GitHub 节点标识。" }
+    else if (key == "issue_closed") { "Issue 已在 GitHub 上关闭。" }
     else if (key == "not_available") { "当前操作暂不可用。" }
     else if (key == "notification_opened_on_github") { "该通知类型暂时没有应用内页面，已为你转到 GitHub。" }
     else if (key == "search_placeholder") { "请先输入搜索内容。" }

@@ -193,7 +193,7 @@ public class RepositoryDetailPage {
     }
     func forkRepository(): Unit {
         if (this.sharedAuthAccessToken == "") {
-            this.repositoryActionMessage = "Connect GitHub first."
+            this.repositoryActionMessage = this.t("connect_github_first")
             return
         }
         forkGitHubRepository(
@@ -208,7 +208,7 @@ public class RepositoryDetailPage {
                             =>
                             this.liveRepositories = repositories
                             this.liveRepositoryCount = "${repositories.size}"
-                            this.repositoryActionMessage = "Fork requested on GitHub."
+                            this.repositoryActionMessage = this.t("repository_fork_requested")
                         })
                     },
                     { message => this.runOnUi({ => this.repositoryActionMessage = message }) }
@@ -219,7 +219,7 @@ public class RepositoryDetailPage {
     }
     func deleteRepository(): Unit {
         if (this.sharedAuthAccessToken == "") {
-            this.repositoryActionMessage = "Connect GitHub first."
+            this.repositoryActionMessage = this.t("connect_github_first")
             return
         }
         deleteGitHubRepository(
@@ -237,7 +237,7 @@ public class RepositoryDetailPage {
                     }
                     this.liveRepositories = nextRepositories
                     this.liveRepositoryCount = "${nextRepositories.size}"
-                    this.repositoryActionMessage = "Repository deleted on GitHub."
+                    this.repositoryActionMessage = this.t("repository_deleted")
                     this.homeStack.pop()
                 })
             },
@@ -589,18 +589,18 @@ public class IssueDetailPage {
     }
     func commentOnIssue(): Unit {
         if (this.sharedAuthAccessToken == "") {
-            this.actionMessage = "Connect GitHub first."
+            this.actionMessage = this.t("connect_github_first")
             return
         }
         this.homeStack.pushPath(NavPathInfo(name: "issueCommentComposer", param: ""), options: NavigationOptions(animated: true))
     }
     func closeIssueOnGitHub(): Unit {
         if (this.sharedAuthAccessToken == "") {
-            this.actionMessage = "Connect GitHub first."
+            this.actionMessage = this.t("connect_github_first")
             return
         }
         if (this.currentIssue().nodeId == "") {
-            this.actionMessage = "This issue is missing a GitHub node id."
+            this.actionMessage = this.t("issue_node_id_missing")
             return
         }
         closeGitHubIssue(
@@ -630,7 +630,7 @@ public class IssueDetailPage {
                         }
                     }
                     this.liveIssues = nextItems
-                    this.actionMessage = "Closed the issue on GitHub."
+                    this.actionMessage = this.t("issue_closed")
                 })
             },
             { message => this.runOnUi({ => this.actionMessage = message }) }

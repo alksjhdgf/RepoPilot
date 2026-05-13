@@ -276,7 +276,7 @@ public class HomeTabHost {
 
     func createRepository(): Unit {
         if (this.sharedAuthAccessToken == "") {
-            this.homeActionMessage = "Sign in to GitHub before creating a repository."
+            this.homeActionMessage = this.t("repository_create_sign_in_required")
             return
         }
         createScratchGitHubRepository(
@@ -284,7 +284,7 @@ public class HomeTabHost {
             { repositoryName =>
                 this.runOnUi({
                     =>
-                    this.homeActionMessage = "Created ${repositoryName}."
+                    this.homeActionMessage = this.t("repository_created")
                     this.refreshHomeContent()
                 })
             },

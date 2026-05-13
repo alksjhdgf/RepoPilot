@@ -33,6 +33,7 @@ func localizedEn(key: String): String {
     else if (key == "favorites") { "Favorites" }
     else if (key == "shortcuts") { "Shortcuts" }
     else if (key == "recent") { "Recent" }
+    else if (key == "activity") { "Activity" }
     else if (key == "issues") { "Issues" }
     else if (key == "pull_requests") { "Pull Requests" }
     else if (key == "discussions") { "Discussions" }
@@ -42,11 +43,29 @@ func localizedEn(key: String): String {
     else if (key == "starred") { "Starred" }
     else if (key == "favorites_empty") { "Add favorite repositories here to have quick access at any time, without having to search" }
     else if (key == "add_favorites") { "Add Favorites" }
+    else if (key == "manage_favorites") { "Manage Favorites" }
+    else if (key == "repository_summary_empty") { "No description provided." }
     else if (key == "shortcuts_title") { "The things you need, one tap away" }
     else if (key == "shortcuts_desc") { "Fast access to your lists of Issues, Pull Requests, or Discussions." }
     else if (key == "get_started") { "Get started" }
     else if (key == "recent_desc") { "Recent activity from GitHub will surface here. Open issues and pull requests you touched last appear first." }
     else if (key == "recent_empty") { "Issues and Pull Requests that you've interacted with recently will appear here." }
+    else if (key == "activity_empty") { "No recent public activity yet." }
+    else if (key == "event_issue_opened") { "Opened issue" }
+    else if (key == "event_issue_closed") { "Closed issue" }
+    else if (key == "event_issue_updated") { "Updated issue" }
+    else if (key == "event_issue_commented") { "Commented on issue" }
+    else if (key == "event_pr_opened") { "Opened pull request" }
+    else if (key == "event_pr_closed") { "Closed pull request" }
+    else if (key == "event_pr_updated") { "Updated pull request" }
+    else if (key == "event_pr_reviewed") { "Reviewed pull request" }
+    else if (key == "event_pr_commented") { "Commented on pull request" }
+    else if (key == "event_push") { "Pushed commits" }
+    else if (key == "event_starred") { "Starred repository" }
+    else if (key == "event_forked") { "Forked repository" }
+    else if (key == "event_created") { "Created" }
+    else if (key == "event_deleted") { "Deleted" }
+    else if (key == "event_released") { "Published release" }
     else if (key == "inbox_subtitle") { "Prioritize what needs your attention next." }
     else if (key == "explore_subtitle") { "Find code, trends and queues worth opening." }
     else if (key == "popular") { "Popular" }
@@ -116,6 +135,15 @@ func localizedEn(key: String): String {
     else if (key == "app_icon") { "App Icon" }
     else if (key == "default_option") { "Default" }
     else if (key == "notifications") { "Notifications" }
+    else if (key == "notifications_empty") { "No notifications available yet." }
+    else if (key == "loading_more") { "Loading more..." }
+    else if (key == "people") { "People" }
+    else if (key == "open_on_github") { "Open on GitHub" }
+    else if (key == "updated") { "Updated" }
+    else if (key == "open_in_app") { "Open in app" }
+    else if (key == "connect_github_first") { "Connect GitHub first." }
+    else if (key == "not_available") { "This action is not available right now." }
+    else if (key == "search_placeholder") { "Enter a search query first." }
     else if (key == "setup_needed") { "Setup Needed" }
     else if (key == "code_options") { "Code Options" }
     else if (key == "external_links") { "External Links" }
@@ -127,6 +155,41 @@ func localizedEn(key: String): String {
     else if (key == "app_lock") { "App Lock" }
     else if (key == "clear_cache") { "Clear cache" }
     else if (key == "repositories") { "Repositories" }
+    else if (key == "gists") { "Gists" }
+    else if (key == "repository_owner") { "Repository owner" }
+    else if (key == "repositories_empty") { "No repositories available yet." }
+    else if (key == "no_open_issues") { "No open issues." }
+    else if (key == "no_open_pull_requests") { "No open pull requests." }
+    else if (key == "view_all") { "View all" }
+    else if (key == "gists_empty") { "No gists available yet." }
+    else if (key == "starred_empty") { "No starred repositories yet." }
+    else if (key == "issues_empty") { "No issues available yet." }
+    else if (key == "pull_requests_empty") { "No pull requests available yet." }
+    else if (key == "organizations_empty") { "No organizations available yet." }
+    else if (key == "followers") { "Followers" }
+    else if (key == "following") { "Following" }
+    else if (key == "followers_empty") { "No followers available yet." }
+    else if (key == "following_empty") { "No following accounts available yet." }
+    else if (key == "watchers") { "Watchers" }
+    else if (key == "watchers_empty") { "No watchers available yet." }
+    else if (key == "stargazers") { "Stargazers" }
+    else if (key == "stargazers_empty") { "No stargazers available yet." }
+    else if (key == "forks") { "Forks" }
+    else if (key == "forks_empty") { "No forks available yet." }
+    else if (key == "commits") { "Commits" }
+    else if (key == "commits_empty") { "No commits available yet." }
+    else if (key == "commit_message") { "Commit message" }
+    else if (key == "commit_sha") { "Commit" }
+    else if (key == "commit_date") { "Date" }
+    else if (key == "additions") { "Additions" }
+    else if (key == "deletions") { "Deletions" }
+    else if (key == "default_branch") { "Default branch" }
+    else if (key == "view_more") { "View more" }
+    else if (key == "open") { "Open" }
+    else if (key == "browse_code") { "Browse code" }
+    else if (key == "files") { "files" }
+    else if (key == "public") { "Public" }
+    else if (key == "private") { "Private" }
     else if (key == "system") { "Automatic" }
     else if (key == "light") { "Light" }
     else if (key == "dark") { "Dark" }
@@ -150,6 +213,8 @@ func localizedEn(key: String): String {
     else if (key == "workplace") { "Workplace" }
     else if (key == "back") { "Back" }
     else if (key == "repository_detail") { "Repository Detail" }
+    else if (key == "readme") { "README" }
+    else if (key == "readme_empty") { "No README was found for this repository." }
     else if (key == "issue_detail") { "Issue Detail" }
     else if (key == "pull_request_detail") { "Pull Request" }
     else if (key == "create_task") { "Create Task" }
@@ -157,8 +222,46 @@ func localizedEn(key: String): String {
     else if (key == "diff_review") { "Diff Review" }
     else if (key == "open_issue") { "Open issue" }
     else if (key == "review_pr") { "Review pull request" }
+    else if (key == "create_issue") { "Create issue" }
+    else if (key == "create_pull_request") { "Create pull request" }
     else if (key == "context") { "Context" }
     else if (key == "status") { "Status" }
+    else if (key == "sign_in_required") { "Connect GitHub first." }
+    else if (key == "issue_editor") { "New issue" }
+    else if (key == "pull_request_editor") { "New pull request" }
+    else if (key == "composer_title_placeholder") { "Issue title" }
+    else if (key == "composer_body_placeholder") { "Write in Markdown..." }
+    else if (key == "composer_pr_title_placeholder") { "Pull request title" }
+    else if (key == "composer_pr_body_placeholder") { "Describe the pull request in Markdown..." }
+    else if (key == "composer_head_branch_placeholder") { "Head branch" }
+    else if (key == "composer_base_branch_placeholder") { "Base branch" }
+    else if (key == "composer_write") { "Write" }
+    else if (key == "composer_preview") { "Preview" }
+    else if (key == "composer_h1") { "H1" }
+    else if (key == "composer_h2") { "H2" }
+    else if (key == "composer_bullets") { "Bullets" }
+    else if (key == "composer_checklist") { "Checklist" }
+    else if (key == "composer_quote") { "Quote" }
+    else if (key == "composer_code") { "Code" }
+    else if (key == "composer_link") { "Link" }
+    else if (key == "composer_bold") { "Bold" }
+    else if (key == "composer_title_required") { "Please enter a title first." }
+    else if (key == "composer_branch_required") { "Please provide both head and base branches." }
+    else if (key == "composer_branch_same") { "Head and base branches must be different." }
+    else if (key == "composer_branch_unknown") { "Choose branches from the repository branch list." }
+    else if (key == "publish_issue") { "Publish issue" }
+    else if (key == "publish_pull_request") { "Publish pull request" }
+    else if (key == "issue_comment_editor") { "New issue comment" }
+    else if (key == "pull_request_review_editor") { "New review" }
+    else if (key == "composer_comment_placeholder") { "Write your comment in Markdown..." }
+    else if (key == "composer_review_placeholder") { "Write your review in Markdown..." }
+    else if (key == "publish_comment") { "Publish comment" }
+    else if (key == "publish_review") { "Publish review" }
+    else if (key == "composer_body_required") { "Please enter some content first." }
+    else if (key == "review_type") { "Review type" }
+    else if (key == "review_comment") { "Comment" }
+    else if (key == "review_approve") { "Approve" }
+    else if (key == "review_request_changes") { "Request changes" }
     else if (key == "close_issue") { "Close issue" }
     else if (key == "comment_issue") { "Comment on issue" }
     else if (key == "ask_agent") { "Ask agent to handle it" }
@@ -265,6 +368,7 @@ func localizedZh(key: String): String {
     else if (key == "favorites") { "收藏" }
     else if (key == "shortcuts") { "快捷入口" }
     else if (key == "recent") { "最近" }
+    else if (key == "activity") { "活动" }
     else if (key == "issues") { "问题" }
     else if (key == "pull_requests") { "拉取请求" }
     else if (key == "discussions") { "讨论" }
@@ -274,11 +378,29 @@ func localizedZh(key: String): String {
     else if (key == "starred") { "已收藏" }
     else if (key == "favorites_empty") { "将常用仓库加入收藏后，就能随时快速进入，无需再次搜索。" }
     else if (key == "add_favorites") { "添加收藏" }
+    else if (key == "manage_favorites") { "管理收藏" }
+    else if (key == "repository_summary_empty") { "暂无仓库描述。" }
     else if (key == "shortcuts_title") { "常用内容，一键直达" }
     else if (key == "shortcuts_desc") { "快速访问你的 Issues、Pull Requests 或 Discussions 列表。" }
     else if (key == "get_started") { "开始使用" }
     else if (key == "recent_desc") { "GitHub 上最近的活动会显示在这里，你最近接触过的 Issue 和 Pull Request 会优先出现。" }
     else if (key == "recent_empty") { "你最近交互过的 Issues 和 Pull Requests 会显示在这里。" }
+    else if (key == "activity_empty") { "暂时还没有最近的公开活动。" }
+    else if (key == "event_issue_opened") { "创建了问题" }
+    else if (key == "event_issue_closed") { "关闭了问题" }
+    else if (key == "event_issue_updated") { "更新了问题" }
+    else if (key == "event_issue_commented") { "评论了问题" }
+    else if (key == "event_pr_opened") { "创建了拉取请求" }
+    else if (key == "event_pr_closed") { "关闭了拉取请求" }
+    else if (key == "event_pr_updated") { "更新了拉取请求" }
+    else if (key == "event_pr_reviewed") { "审阅了拉取请求" }
+    else if (key == "event_pr_commented") { "评论了拉取请求" }
+    else if (key == "event_push") { "推送了提交" }
+    else if (key == "event_starred") { "收藏了仓库" }
+    else if (key == "event_forked") { "Fork 了仓库" }
+    else if (key == "event_created") { "创建了" }
+    else if (key == "event_deleted") { "删除了" }
+    else if (key == "event_released") { "发布了版本" }
     else if (key == "inbox_subtitle") { "优先处理下一步最值得关注的事项。" }
     else if (key == "explore_subtitle") { "发现值得打开的代码、趋势和队列。" }
     else if (key == "popular") { "热门" }
@@ -348,6 +470,15 @@ func localizedZh(key: String): String {
     else if (key == "app_icon") { "应用图标" }
     else if (key == "default_option") { "默认" }
     else if (key == "notifications") { "通知" }
+    else if (key == "notifications_empty") { "暂时没有可展示的通知。" }
+    else if (key == "loading_more") { "正在加载更多..." }
+    else if (key == "people") { "用户" }
+    else if (key == "open_on_github") { "在 GitHub 中打开" }
+    else if (key == "updated") { "更新时间" }
+    else if (key == "open_in_app") { "在应用中打开" }
+    else if (key == "connect_github_first") { "请先连接 GitHub。" }
+    else if (key == "not_available") { "当前操作暂不可用。" }
+    else if (key == "search_placeholder") { "请先输入搜索内容。" }
     else if (key == "setup_needed") { "待设置" }
     else if (key == "code_options") { "代码选项" }
     else if (key == "external_links") { "外部链接" }
@@ -359,6 +490,41 @@ func localizedZh(key: String): String {
     else if (key == "app_lock") { "应用锁" }
     else if (key == "clear_cache") { "清理缓存" }
     else if (key == "repositories") { "仓库" }
+    else if (key == "gists") { "Gists" }
+    else if (key == "repository_owner") { "仓库所有者" }
+    else if (key == "repositories_empty") { "暂时没有可展示的仓库。" }
+    else if (key == "no_open_issues") { "没有打开的问题。" }
+    else if (key == "no_open_pull_requests") { "没有打开的拉取请求。" }
+    else if (key == "view_all") { "查看全部" }
+    else if (key == "gists_empty") { "暂时没有可展示的 Gist。" }
+    else if (key == "starred_empty") { "暂时没有已收藏的仓库。" }
+    else if (key == "issues_empty") { "暂时没有可展示的 Issue。" }
+    else if (key == "pull_requests_empty") { "暂时没有可展示的 Pull Request。" }
+    else if (key == "organizations_empty") { "暂时没有可展示的组织。" }
+    else if (key == "followers") { "关注者" }
+    else if (key == "following") { "正在关注" }
+    else if (key == "followers_empty") { "暂时没有可展示的关注者。" }
+    else if (key == "following_empty") { "暂时没有可展示的正在关注账号。" }
+    else if (key == "watchers") { "关注" }
+    else if (key == "watchers_empty") { "暂时没有可展示的关注者。" }
+    else if (key == "stargazers") { "Star 用户" }
+    else if (key == "stargazers_empty") { "暂时没有可展示的 Star 用户。" }
+    else if (key == "forks") { "Fork" }
+    else if (key == "forks_empty") { "暂时没有可展示的 Fork 仓库。" }
+    else if (key == "commits") { "提交" }
+    else if (key == "commits_empty") { "暂时没有可展示的提交记录。" }
+    else if (key == "commit_message") { "提交信息" }
+    else if (key == "commit_sha") { "提交" }
+    else if (key == "commit_date") { "日期" }
+    else if (key == "additions") { "新增" }
+    else if (key == "deletions") { "删除" }
+    else if (key == "default_branch") { "默认分支" }
+    else if (key == "view_more") { "查看更多" }
+    else if (key == "open") { "打开" }
+    else if (key == "browse_code") { "浏览代码" }
+    else if (key == "files") { "个文件" }
+    else if (key == "public") { "公开" }
+    else if (key == "private") { "私有" }
     else if (key == "system") { "跟随系统" }
     else if (key == "light") { "浅色" }
     else if (key == "dark") { "深色" }
@@ -380,6 +546,8 @@ func localizedZh(key: String): String {
     else if (key == "workplace") { "工作区" }
     else if (key == "back") { "返回" }
     else if (key == "repository_detail") { "仓库详情" }
+    else if (key == "readme") { "README" }
+    else if (key == "readme_empty") { "这个仓库暂时没有可展示的 README。" }
     else if (key == "issue_detail") { "Issue 详情" }
     else if (key == "pull_request_detail") { "Pull Request" }
     else if (key == "create_task") { "创建任务" }
@@ -387,8 +555,46 @@ func localizedZh(key: String): String {
     else if (key == "diff_review") { "差异审阅" }
     else if (key == "open_issue") { "打开 Issue" }
     else if (key == "review_pr") { "审阅 Pull Request" }
+    else if (key == "create_issue") { "创建 Issue" }
+    else if (key == "create_pull_request") { "创建 Pull Request" }
     else if (key == "context") { "上下文" }
     else if (key == "status") { "状态" }
+    else if (key == "sign_in_required") { "请先连接 GitHub。" }
+    else if (key == "issue_editor") { "新建 Issue" }
+    else if (key == "pull_request_editor") { "新建 Pull Request" }
+    else if (key == "composer_title_placeholder") { "Issue 标题" }
+    else if (key == "composer_body_placeholder") { "使用 Markdown 编写内容..." }
+    else if (key == "composer_pr_title_placeholder") { "Pull Request 标题" }
+    else if (key == "composer_pr_body_placeholder") { "使用 Markdown 描述这次 Pull Request..." }
+    else if (key == "composer_head_branch_placeholder") { "Head 分支" }
+    else if (key == "composer_base_branch_placeholder") { "Base 分支" }
+    else if (key == "composer_write") { "编辑" }
+    else if (key == "composer_preview") { "预览" }
+    else if (key == "composer_h1") { "一级标题" }
+    else if (key == "composer_h2") { "二级标题" }
+    else if (key == "composer_bullets") { "列表" }
+    else if (key == "composer_checklist") { "清单" }
+    else if (key == "composer_quote") { "引用" }
+    else if (key == "composer_code") { "代码" }
+    else if (key == "composer_link") { "链接" }
+    else if (key == "composer_bold") { "加粗" }
+    else if (key == "composer_title_required") { "请先填写标题。" }
+    else if (key == "composer_branch_required") { "请同时填写 head 和 base 分支。" }
+    else if (key == "composer_branch_same") { "head 和 base 分支不能相同。" }
+    else if (key == "composer_branch_unknown") { "请选择仓库里真实存在的分支。" }
+    else if (key == "publish_issue") { "发布 Issue" }
+    else if (key == "publish_pull_request") { "发布 Pull Request" }
+    else if (key == "issue_comment_editor") { "新建 Issue 评论" }
+    else if (key == "pull_request_review_editor") { "新建审阅" }
+    else if (key == "composer_comment_placeholder") { "使用 Markdown 编写评论..." }
+    else if (key == "composer_review_placeholder") { "使用 Markdown 编写审阅内容..." }
+    else if (key == "publish_comment") { "发布评论" }
+    else if (key == "publish_review") { "发布审阅" }
+    else if (key == "composer_body_required") { "请先填写内容。" }
+    else if (key == "review_type") { "审阅类型" }
+    else if (key == "review_comment") { "评论" }
+    else if (key == "review_approve") { "批准" }
+    else if (key == "review_request_changes") { "请求修改" }
     else if (key == "close_issue") { "关闭 Issue" }
     else if (key == "comment_issue") { "评论 Issue" }
     else if (key == "ask_agent") { "交给 Agent 处理" }

@@ -116,3 +116,150 @@ func extractTopLevelObjectArray(payload: String): ArrayList<String> {
     }
     items
 }
+
+func extractJsonObjectField(payload: String, key: String): String {
+    let marker = "\"${key}\":"
+    match (payload.indexOf(marker)) {
+        case Some(start) =>
+            let afterMarker = Int64(start + marker.size)
+            var objectStart = Int64(-1)
+            var depth = 0
+            var inString = false
+            var escaping = false
+            for (index in afterMarker..payload.size - 1) {
+                let current = payload[index]
+                if (escaping) {
+                    escaping = false
+                    continue
+                }
+                if (current == UInt8(UInt32(r'\\'))) {
+                    escaping = true
+                    continue
+                }
+                if (current == UInt8(UInt32(r'"'))) {
+                    inString = !inString
+                    continue
+                }
+                if (inString) {
+                    continue
+                }
+                if (current == UInt8(UInt32(r' ')) || current == UInt8(UInt32(r'\n'))) {
+                    continue
+                }
+                if (current != UInt8(UInt32(r'{'))) {
+                    return ""
+                }
+                objectStart = index
+                depth = 1
+                for (inner in index + 1..payload.size - 1) {
+                    let next = payload[inner]
+                    if (escaping) {
+                        escaping = false
+                        continue
+                    }
+                    if (next == UInt8(UInt32(r'\\'))) {
+                        escaping = true
+                        continue
+                    }
+                    if (next == UInt8(UInt32(r'"'))) {
+                        inString = !inString
+                        continue
+                    }
+                    if (inString) {
+                        continue
+                    }
+                    if (next == UInt8(UInt32(r'{'))) {
+                        depth++
+                    } else if (next == UInt8(UInt32(r'}'))) {
+                        depth--
+                        if (depth == 0) {
+                            return payload[objectStart..inner + 1]
+                        }
+                    }
+                }
+                return ""
+            }
+            ""
+        case None => ""
+    }
+}
+
+func extractGitHubUserLogin(payload: String): String {
+    let userPayload = extractJsonObjectField(payload, "user")
+    if (userPayload != "") {
+        let nestedLogin = extractJsonStringField(userPayload, "login")
+        if (nestedLogin != "") {
+            return nestedLogin
+        }
+    }
+    extractJsonStringField(payload, "login")
+}
+
+func extractNamedObjectArray(payload: String, key: String): ArrayList<String> {
+    let marker = "\"${key}\":"
+    match (payload.indexOf(marker)) {
+        case Some(start) =>
+            let afterMarker = Int64(start + marker.size)
+            var arrayStart = Int64(-1)
+            var inString = false
+            var escaping = false
+            for (index in afterMarker..payload.size - 1) {
+                let current = payload[index]
+                if (escaping) {
+                    escaping = false
+                    continue
+                }
+                if (current == UInt8(UInt32(r'\\'))) {
+                    escaping = true
+                    continue
+                }
+                if (current == UInt8(UInt32(r'"'))) {
+                    inString = !inString
+                    continue
+                }
+                if (inString) {
+                    continue
+                }
+                if (current == UInt8(UInt32(r' ')) || current == UInt8(UInt32(r'\n'))) {
+                    continue
+                }
+                if (current != UInt8(UInt32(r'['))) {
+                    return ArrayList<String>()
+                }
+                arrayStart = index
+                break
+            }
+            if (arrayStart < 0) {
+                return ArrayList<String>()
+            }
+            var depth = 0
+            for (index in arrayStart..payload.size - 1) {
+                let current = payload[index]
+                if (escaping) {
+                    escaping = false
+                    continue
+                }
+                if (current == UInt8(UInt32(r'\\'))) {
+                    escaping = true
+                    continue
+                }
+                if (current == UInt8(UInt32(r'"'))) {
+                    inString = !inString
+                    continue
+                }
+                if (inString) {
+                    continue
+                }
+                if (current == UInt8(UInt32(r'['))) {
+                    depth++
+                } else if (current == UInt8(UInt32(r']'))) {
+                    depth--
+                    if (depth == 0) {
+                        return extractTopLevelObjectArray(payload[arrayStart..index + 1])
+                    }
+                }
+            }
+            ArrayList<String>()
+        case None => ArrayList<String>()
+    }
+}

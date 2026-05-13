@@ -3,7 +3,7 @@ package ohos_app_cangjie_entry.services.github
 import std.collection.{ArrayList, HashMap}
 import kit.NetworkKit.*
 import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
-import ohos_app_cangjie_entry.domain.{GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubOrganizationSnapshot, GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
 let GITHUB_API_ACCEPT = "application/vnd.github+json"
@@ -17,7 +17,9 @@ func requestGitHubJson(
     url: String,
     token: String,
     onSuccess: (String) -> Unit,
-    onFailure: (String) -> Unit
+    onFailure: (String) -> Unit,
+    method!: RequestMethod = RequestMethod.Get,
+    payload!: String = ""
 ): Unit {
     logInfo("GitHubApi", "Requesting ${url}")
     let httpRequest = createHttp()
@@ -25,9 +27,13 @@ func requestGitHubJson(
     headers.add("Accept", GITHUB_API_ACCEPT)
     headers.add("Authorization", "Bearer ${token}")
     headers.add("X-GitHub-Api-Version", GITHUB_API_VERSION)
+    if (payload != "") {
+        headers.add("Content-Type", "application/json")
+    }
     let options = HttpRequestOptions(
-        method: RequestMethod.Get,
+        method: method,
         header: headers,
+        extraData: HttpData.StringData(payload),
         expectDataType: HttpDataType.StringValue
     )
     httpRequest.request(
@@ -174,12 +180,22 @@ public func fetchGitHubProfileMetrics(
                         "https://api.github.com/user/repos?sort=updated&per_page=100",
                         token,
                         { repositoriesBody =>
-                            onSuccess(
-                                GitHubProfileMetricsSnapshot(
-                                    "${extractTopLevelObjectArray(repositoriesBody).size}",
-                                    starredCount,
-                                    organizationCount
-                                )
+                            requestGitHubJson(
+                                "https://api.github.com/user",
+                                token,
+                                { viewerBody =>
+                                    onSuccess(
+                                        GitHubProfileMetricsSnapshot(
+                                            "${extractTopLevelObjectArray(repositoriesBody).size}",
+                                            starredCount,
+                                            organizationCount,
+                                            gistCount: "${extractJsonIntField(viewerBody, "public_gists")}",
+                                            followersCount: "${extractJsonIntField(viewerBody, "followers")}",
+                                            followingCount: "${extractJsonIntField(viewerBody, "following")}"
+                                        )
+                                    )
+                                },
+                                onFailure
                             )
                         },
                         onFailure
@@ -187,6 +203,40 @@ public func fetchGitHubProfileMetrics(
                 },
                 onFailure
             )
+        },
+        onFailure
+    )
+}
+
+/**
+ * 获取当前用户所属组织列表，用于个人页和 Home 的组织入口。
+ * Fetches the organizations for the current authenticated user.
+ */
+public func fetchGitHubOrganizations(
+    token: String,
+    onSuccess: (ArrayList<GitHubOrganizationSnapshot>) -> Unit,
+    onFailure: (String) -> Unit
+): Unit {
+    requestGitHubJson(
+        "https://api.github.com/user/orgs?per_page=100",
+        token,
+        { body =>
+            let organizations = ArrayList<GitHubOrganizationSnapshot>()
+            for (item in extractTopLevelObjectArray(body)) {
+                let login = extractJsonStringField(item, "login")
+                if (login == "") {
+                    continue
+                }
+                organizations.add(
+                    GitHubOrganizationSnapshot(
+                        login,
+                        if (extractJsonStringField(item, "description") == "") { "GitHub organization" } else { extractJsonStringField(item, "description") },
+                        extractJsonStringField(item, "html_url")
+                    )
+                )
+            }
+            logInfo("GitHubApi", "Loaded ${organizations.size} organizations.")
+            onSuccess(organizations)
         },
         onFailure
     )

@@ -6,9 +6,11 @@ import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.domain.{GitHubProfileMetricsSnapshot, GitHubRepositoryCardSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubGistSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
-import ohos_app_cangjie_entry.services.app.refreshGitHubProfileData
+import ohos_app_cangjie_entry.services.agent.taskIdForIssue
+import ohos_app_cangjie_entry.services.app.{refreshGitHubProfileData, refreshGitHubRepositoryBundle}
+import ohos_app_cangjie_entry.services.github.{fetchGitHubUserFollowers, fetchGitHubUserFollowing, fetchGitHubUserGists, fetchGitHubUserProfile, fetchGitHubUserRepositories}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -24,9 +26,23 @@ public class ProfilePage {
     @Consume var liveRepositoryCount: String
     @Consume var liveStarredCount: String
     @Consume var liveOrganizationCount: String
+    @Consume var liveGistCount: String
+    @Consume var liveFollowerCount: String
+    @Consume var liveFollowingCount: String
     @Consume var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot>
-    @Consume var pendingPageTitle: String
-    @Consume var pendingPageMessage: String
+    @Consume var selectedRepository: String
+    @Consume var selectedIssue: String
+    @Consume var selectedPullRequest: String
+    @Consume var selectedTask: String
+    @Consume var liveRepositoryDetail: GitHubRepositoryDetailSnapshot
+    @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
+    @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
+    @Consume var selectedGitHubUserLogin: String
+    @Consume var selectedGitHubUserProfile: GitHubUserProfileSnapshot
+    @Consume var selectedGitHubUserRepositories: ArrayList<GitHubRepositoryCardSnapshot>
+    @Consume var selectedGitHubUserGists: ArrayList<GitHubGistSnapshot>
+    @Consume var selectedGitHubFollowers: ArrayList<GitHubSimpleUserSnapshot>
+    @Consume var selectedGitHubFollowing: ArrayList<GitHubSimpleUserSnapshot>
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -58,7 +74,7 @@ public class ProfilePage {
                                 this.buildProfilePopular()
                             }
                             .width(100.percent)
-                            .padding(left: 18, right: 18, top: 18, bottom: 32)
+                            .padding(left: 18, right: 18, top: 18, bottom: 120)
                         }
                         .width(100.percent)
                         .scrollBar(BarState.Off)
@@ -194,17 +210,77 @@ public class ProfilePage {
         topItems
     }
 
-    func openPlaceholder(title: String, message: String): Unit {
-        this.pendingPageTitle = title
-        this.pendingPageMessage = message
-        this.homeStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+    func openRepositories(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "repositoriesPage", param: ""), options: NavigationOptions(animated: true))
     }
-
-    func openRepositories(): Unit { this.openPlaceholder(this.t("repositories"), "Repository list is not fully implemented yet.") }
-    func openStarred(): Unit { this.openPlaceholder(this.t("starred"), "Starred repositories page is not implemented yet.") }
-    func openOrganizations(): Unit { this.openPlaceholder(this.t("organizations"), "Organizations page is not implemented yet.") }
+    func openStarred(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "starredRepositoriesPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openOrganizations(): Unit {
+        this.homeStack.pushPath(NavPathInfo(name: "organizationsPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openGists(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.homeStack.pushPath(NavPathInfo(name: "userGistsPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openFollowers(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.homeStack.pushPath(NavPathInfo(name: "userFollowersPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openFollowing(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.homeStack.pushPath(NavPathInfo(name: "userFollowingPage", param: ""), options: NavigationOptions(animated: true))
+    }
     func openRepositoryCard(snapshot: GitHubRepositoryCardSnapshot): Unit {
-        this.openPlaceholder(snapshot.name, "Repository actions from profile are not implemented yet.")
+        this.openRepository(snapshot.name)
+    }
+    func prepareCurrentViewerDetail(): Unit {
+        if (this.sharedAuthAccessToken == "" || this.viewerLogin == "") {
+            return
+        }
+        this.selectedGitHubUserLogin = this.viewerLogin
+        this.selectedGitHubUserProfile = GitHubUserProfileSnapshot("", "", "", "", "", "", "", "", "0", "0", "0", "0")
+        this.selectedGitHubUserRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
+        this.selectedGitHubUserGists = ArrayList<GitHubGistSnapshot>()
+        this.selectedGitHubFollowers = ArrayList<GitHubSimpleUserSnapshot>()
+        this.selectedGitHubFollowing = ArrayList<GitHubSimpleUserSnapshot>()
+        fetchGitHubUserProfile(this.sharedAuthAccessToken, this.viewerLogin, { snapshot => this.runOnUi({ => this.selectedGitHubUserProfile = snapshot }) }, { _ => })
+        fetchGitHubUserRepositories(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubUserRepositories = items }) }, { _ => })
+        fetchGitHubUserGists(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubUserGists = items }) }, { _ => })
+        fetchGitHubUserFollowers(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubFollowers = items }) }, { _ => })
+        fetchGitHubUserFollowing(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubFollowing = items }) }, { _ => })
+    }
+    func openRepository(repositoryId: String): Unit {
+        this.selectedRepository = repositoryId
+        this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot(repositoryId, "Loading repository details...", "", "", "0", "0", "main")
+        this.liveIssues = ArrayList<GitHubIssueSnapshot>()
+        this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
+        this.selectedIssue = ""
+        this.selectedPullRequest = ""
+        this.selectedTask = ""
+        if (this.sharedAuthAccessToken != "") {
+            refreshGitHubRepositoryBundle(
+                this.sharedAuthAccessToken,
+                repositoryId,
+                { snapshot => this.liveRepositoryDetail = snapshot },
+                { _ => },
+                { items =>
+                    this.liveIssues = items
+                    if (items.size > 0) {
+                        this.selectedIssue = items[0].id
+                        this.selectedTask = taskIdForIssue(items[0].id)
+                    }
+                },
+                { items =>
+                    this.livePullRequests = items
+                    if (items.size > 0) {
+                        this.selectedPullRequest = items[0].id
+                    }
+                },
+                { _ => }
+            )
+        }
+        this.homeStack.pushPath(NavPathInfo(name: "repositoryDetail", param: ""), options: NavigationOptions(animated: true))
     }
 
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
@@ -294,6 +370,12 @@ public class ProfilePage {
             this.buildProfileStatRow(0xFFD54A, "☆", "starred", this.liveStarredCount, { => this.openStarred() })
             this.buildProfileDivider()
             this.buildProfileStatRow(0xF4A24B, "⌂", "organizations", this.liveOrganizationCount, { => this.openOrganizations() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0x4B88FF, "◌", "gists", this.liveGistCount, { => this.openGists() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0x68D968, "◎", "followers", this.liveFollowerCount, { => this.openFollowers() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0x7B56E8, "⇄", "following", this.liveFollowingCount, { => this.openFollowing() })
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())

@@ -33,7 +33,7 @@ public class ExploreCreateTaskPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
 
                 Scroll {
@@ -51,11 +51,12 @@ public class ExploreCreateTaskPage {
                             .onClick({ _ => this.exploreStack.pushPath(NavPathInfo(name: "taskDetail", param: ""), options: NavigationOptions(animated: true)) })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -133,7 +134,7 @@ public class ExploreTaskDetailPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
 
                 Scroll {
@@ -150,11 +151,12 @@ public class ExploreTaskDetailPage {
                             .onClick({ _ => this.exploreStack.pushPath(NavPathInfo(name: "diffReview", param: ""), options: NavigationOptions(animated: true)) })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -229,7 +231,7 @@ public class ExploreDiffReviewPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
 
                 Scroll {
@@ -241,11 +243,12 @@ public class ExploreDiffReviewPage {
                         detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("status"), this.currentDraftPrStatus())
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)

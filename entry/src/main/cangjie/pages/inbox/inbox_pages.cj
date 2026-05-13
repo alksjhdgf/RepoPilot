@@ -109,7 +109,15 @@ public class InboxNotificationDetailPage {
     }
 
     func openNotificationTargetInApp(): Unit {
-        if (this.selectedNotificationRepository == "") {
+        let route = this.resolveNotificationRoute()
+        if (route == "external") {
+            this.openNotificationTarget()
+            if (this.actionMessage == "") {
+                this.actionMessage = this.t("notification_opened_on_github")
+            }
+            return
+        }
+        if (route == "unavailable" || this.selectedNotificationRepository == "") {
             this.actionMessage = this.t("not_available")
             return
         }
@@ -129,16 +137,29 @@ public class InboxNotificationDetailPage {
                 { _ => }
             )
         }
-        if (this.selectedNotificationType == "Issue") {
+        if (route == "issue") {
             this.selectedIssue = resourceNumberFromApiUrl(this.selectedNotificationApiUrl)
             this.selectedTask = taskIdForIssue(this.selectedIssue)
             this.inboxStack.pushPath(NavPathInfo(name: "issueDetail", param: ""), options: NavigationOptions(animated: true))
-        } else if (this.selectedNotificationType == "PullRequest") {
+        } else if (route == "pullRequest") {
             this.selectedPullRequest = resourceNumberFromApiUrl(this.selectedNotificationApiUrl)
             this.inboxStack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
         } else {
             this.inboxStack.pushPath(NavPathInfo(name: "repositoryDetail", param: ""), options: NavigationOptions(animated: true))
         }
+    }
+
+    func resolveNotificationRoute(): String {
+        if (this.selectedNotificationType == "PullRequest" || this.selectedNotificationApiUrl.contains("/pulls/")) {
+            return "pullRequest"
+        }
+        if (this.selectedNotificationType == "Issue" || this.selectedNotificationApiUrl.contains("/issues/")) {
+            return "issue"
+        }
+        if (this.selectedNotificationType == "Repository" || this.selectedNotificationApiUrl == "") {
+            return "repository"
+        }
+        "external"
     }
 
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }

@@ -143,6 +143,7 @@ func localizedEn(key: String): String {
     else if (key == "open_in_app") { "Open in app" }
     else if (key == "connect_github_first") { "Connect GitHub first." }
     else if (key == "not_available") { "This action is not available right now." }
+    else if (key == "notification_opened_on_github") { "Opened on GitHub because this notification type does not yet have an in-app page." }
     else if (key == "search_placeholder") { "Enter a search query first." }
     else if (key == "setup_needed") { "Setup Needed" }
     else if (key == "code_options") { "Code Options" }
@@ -263,6 +264,7 @@ func localizedEn(key: String): String {
     else if (key == "composer_branch_required") { "Please provide both head and base branches." }
     else if (key == "composer_branch_same") { "Head and base branches must be different." }
     else if (key == "composer_branch_unknown") { "Choose branches from the repository branch list." }
+    else if (key == "composer_branch_source_required") { "Create another branch first, or enter owner:branch from a fork." }
     else if (key == "publish_issue") { "Publish issue" }
     else if (key == "publish_pull_request") { "Publish pull request" }
     else if (key == "issue_comment_editor") { "New issue comment" }
@@ -492,6 +494,7 @@ func localizedZh(key: String): String {
     else if (key == "open_in_app") { "在应用中打开" }
     else if (key == "connect_github_first") { "请先连接 GitHub。" }
     else if (key == "not_available") { "当前操作暂不可用。" }
+    else if (key == "notification_opened_on_github") { "该通知类型暂时没有应用内页面，已为你转到 GitHub。" }
     else if (key == "search_placeholder") { "请先输入搜索内容。" }
     else if (key == "setup_needed") { "待设置" }
     else if (key == "code_options") { "代码选项" }
@@ -610,6 +613,7 @@ func localizedZh(key: String): String {
     else if (key == "composer_branch_required") { "请同时填写 head 和 base 分支。" }
     else if (key == "composer_branch_same") { "head 和 base 分支不能相同。" }
     else if (key == "composer_branch_unknown") { "请选择仓库里真实存在的分支。" }
+    else if (key == "composer_branch_source_required") { "请先创建另一个分支，或填写 fork 的 owner:branch。" }
     else if (key == "publish_issue") { "发布 Issue" }
     else if (key == "publish_pull_request") { "发布 Pull Request" }
     else if (key == "issue_comment_editor") { "新建 Issue 评论" }

@@ -213,6 +213,10 @@ func branchExists(branchNames: ArrayList<String>, value: String): Bool {
     false
 }
 
+func isForkHeadValue(value: String): Bool {
+    normalizedBranchValue(value).contains(":")
+}
+
 func preferredHeadBranch(branchNames: ArrayList<String>, baseBranch: String): String {
     let base = normalizedBranchValue(baseBranch)
     for (branch in branchNames) {
@@ -601,6 +605,9 @@ public class HomePullRequestComposerPage {
                 if (normalizedBranchValue(this.headDraft) == "") {
                     this.headDraft = preferredHeadBranch(branches, this.baseDraft)
                 }
+                if (branches.size <= 1 && normalizedBranchValue(this.headDraft) == "") {
+                    this.actionMessage = this.t("composer_branch_source_required")
+                }
             }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
@@ -626,7 +633,11 @@ public class HomePullRequestComposerPage {
             this.actionMessage = this.t("composer_branch_same")
             return
         }
-        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedHead) || !branchExists(this.branchNames, normalizedBase))) {
+        if (this.branchNames.size <= 1 && !isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)) {
+            this.actionMessage = this.t("composer_branch_source_required")
+            return
+        }
+        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedBase) || (!isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)))) {
             this.actionMessage = this.t("composer_branch_unknown")
             return
         }
@@ -1055,6 +1066,9 @@ public class ExplorePullRequestComposerPage {
                 if (normalizedBranchValue(this.headDraft) == "") {
                     this.headDraft = preferredHeadBranch(branches, this.baseDraft)
                 }
+                if (branches.size <= 1 && normalizedBranchValue(this.headDraft) == "") {
+                    this.actionMessage = this.t("composer_branch_source_required")
+                }
             }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
@@ -1080,7 +1094,11 @@ public class ExplorePullRequestComposerPage {
             this.actionMessage = this.t("composer_branch_same")
             return
         }
-        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedHead) || !branchExists(this.branchNames, normalizedBase))) {
+        if (this.branchNames.size <= 1 && !isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)) {
+            this.actionMessage = this.t("composer_branch_source_required")
+            return
+        }
+        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedBase) || (!isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)))) {
             this.actionMessage = this.t("composer_branch_unknown")
             return
         }

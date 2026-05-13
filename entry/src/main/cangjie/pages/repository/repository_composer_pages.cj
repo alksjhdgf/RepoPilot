@@ -227,6 +227,145 @@ func preferredHeadBranch(branchNames: ArrayList<String>, baseBranch: String): St
     ""
 }
 
+func appendMarkdownToDraft(current: String, snippet: String): String {
+    if (current == "") { snippet } else { "${current}\n${snippet}" }
+}
+
+func loadBranchesForComposer(
+    authToken: String,
+    repository: String,
+    baseDraft: String,
+    headDraft: String,
+    branchRequiredMessage: String,
+    onLoaded: (ArrayList<String>, String, String, String) -> Unit,
+    onError: (String) -> Unit
+): Unit {
+    if (authToken == "" || repository == "") {
+        return
+    }
+    fetchGitHubRepositoryBranches(
+        authToken,
+        repository,
+        { branches =>
+            let nextBase = if (normalizedBranchValue(baseDraft) == "" && branches.size > 0) { branches[0] } else { baseDraft }
+            let nextHead = if (normalizedBranchValue(headDraft) == "") { preferredHeadBranch(branches, nextBase) } else { headDraft }
+            let nextMessage = if (branches.size <= 1 && normalizedBranchValue(nextHead) == "") { branchRequiredMessage } else { "" }
+            onLoaded(branches, nextBase, nextHead, nextMessage)
+        },
+        onError
+    )
+}
+
+func submitIssueComposerRequest(
+    authToken: String,
+    repository: String,
+    titleDraft: String,
+    bodyDraft: String,
+    signInRequiredMessage: String,
+    titleRequiredMessage: String,
+    onSuccess: (GitHubIssueSnapshot) -> Unit,
+    onError: (String) -> Unit
+): Unit {
+    if (authToken == "" || repository == "") {
+        onError(signInRequiredMessage)
+        return
+    }
+    if (compactInputValue(titleDraft) == "") {
+        onError(titleRequiredMessage)
+        return
+    }
+    createGitHubIssue(authToken, repository, titleDraft, bodyDraft, onSuccess, onError)
+}
+
+func submitPullRequestComposerRequest(
+    authToken: String,
+    repository: String,
+    titleDraft: String,
+    bodyDraft: String,
+    headDraft: String,
+    baseDraft: String,
+    branchNames: ArrayList<String>,
+    signInRequiredMessage: String,
+    titleRequiredMessage: String,
+    branchRequiredMessage: String,
+    branchSameMessage: String,
+    branchUnknownMessage: String,
+    branchSourceRequiredMessage: String,
+    onSuccess: (GitHubPullRequestSnapshot) -> Unit,
+    onError: (String) -> Unit
+): Unit {
+    if (authToken == "" || repository == "") {
+        onError(signInRequiredMessage)
+        return
+    }
+    if (compactInputValue(titleDraft) == "") {
+        onError(titleRequiredMessage)
+        return
+    }
+    if (compactInputValue(headDraft) == "" || compactInputValue(baseDraft) == "") {
+        onError(branchRequiredMessage)
+        return
+    }
+    let normalizedHead = normalizedBranchValue(headDraft)
+    let normalizedBase = normalizedBranchValue(baseDraft)
+    if (normalizedHead == normalizedBase) {
+        onError(branchSameMessage)
+        return
+    }
+    if (branchNames.size <= 1 && !isForkHeadValue(normalizedHead) && !branchExists(branchNames, normalizedHead)) {
+        onError(branchSourceRequiredMessage)
+        return
+    }
+    if (branchNames.size > 0 && (!branchExists(branchNames, normalizedBase) || (!isForkHeadValue(normalizedHead) && !branchExists(branchNames, normalizedHead)))) {
+        onError(branchUnknownMessage)
+        return
+    }
+    createGitHubPullRequest(authToken, repository, titleDraft, bodyDraft, normalizedHead, normalizedBase, onSuccess, onError)
+}
+
+func submitIssueCommentComposerRequest(
+    authToken: String,
+    repository: String,
+    issueId: String,
+    bodyDraft: String,
+    signInRequiredMessage: String,
+    bodyRequiredMessage: String,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+): Unit {
+    if (authToken == "" || repository == "" || issueId == "") {
+        onError(signInRequiredMessage)
+        return
+    }
+    if (compactInputValue(bodyDraft) == "") {
+        onError(bodyRequiredMessage)
+        return
+    }
+    createGitHubIssueComment(authToken, repository, issueId, bodyDraft, { _ => onSuccess() }, onError)
+}
+
+func submitPullRequestReviewComposerRequest(
+    authToken: String,
+    repository: String,
+    pullRequestId: String,
+    reviewEvent: String,
+    bodyDraft: String,
+    signInRequiredMessage: String,
+    bodyRequiredMessage: String,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+): Unit {
+    if (authToken == "" || repository == "" || pullRequestId == "") {
+        onError(signInRequiredMessage)
+        return
+    }
+    if (compactInputValue(bodyDraft) == "") {
+        onError(bodyRequiredMessage)
+        return
+    }
+    submitGitHubPullRequestReview(authToken, repository, pullRequestId, reviewEvent, bodyDraft, onSuccess, onError)
+}
+
 @Component
 public class HomeIssueComposerPage {
     @Consume var homeStack: NavPathStack
@@ -349,29 +488,17 @@ public class HomeIssueComposerPage {
                 .align(Alignment.Top)
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishIssue(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.titleDraft) == "") {
-            this.actionMessage = this.t("composer_title_required")
-            return
-        }
-        createGitHubIssue(
+        submitIssueComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.titleDraft,
             this.bodyDraft,
+            this.t("sign_in_required"),
+            this.t("composer_title_required"),
             { issue =>
                 this.runOnUi({
                     =>
@@ -581,73 +708,44 @@ public class HomePullRequestComposerPage {
         }
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func loadBranches(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "") {
-            return
-        }
-        fetchGitHubRepositoryBranches(
+        loadBranchesForComposer(
             this.sharedAuthAccessToken,
             this.selectedRepository,
-            { branches => this.runOnUi({
-                =>
-                this.branchNames = branches
-                if (normalizedBranchValue(this.baseDraft) == "" && branches.size > 0) {
-                    this.baseDraft = branches[0]
-                }
-                if (normalizedBranchValue(this.headDraft) == "") {
-                    this.headDraft = preferredHeadBranch(branches, this.baseDraft)
-                }
-                if (branches.size <= 1 && normalizedBranchValue(this.headDraft) == "") {
-                    this.actionMessage = this.t("composer_branch_source_required")
-                }
-            }) },
+            this.baseDraft,
+            this.headDraft,
+            this.t("composer_branch_source_required"),
+            { branches, nextBase, nextHead, message =>
+                this.runOnUi({
+                    =>
+                    this.branchNames = branches
+                    this.baseDraft = nextBase
+                    this.headDraft = nextHead
+                    this.actionMessage = message
+                })
+            },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
     }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishPullRequest(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.titleDraft) == "") {
-            this.actionMessage = this.t("composer_title_required")
-            return
-        }
-        if (compactInputValue(this.headDraft) == "" || compactInputValue(this.baseDraft) == "") {
-            this.actionMessage = this.t("composer_branch_required")
-            return
-        }
-        let normalizedHead = normalizedBranchValue(this.headDraft)
-        let normalizedBase = normalizedBranchValue(this.baseDraft)
-        if (normalizedHead == normalizedBase) {
-            this.actionMessage = this.t("composer_branch_same")
-            return
-        }
-        if (this.branchNames.size <= 1 && !isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)) {
-            this.actionMessage = this.t("composer_branch_source_required")
-            return
-        }
-        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedBase) || (!isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)))) {
-            this.actionMessage = this.t("composer_branch_unknown")
-            return
-        }
-        createGitHubPullRequest(
+        submitPullRequestComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.titleDraft,
             this.bodyDraft,
-            normalizedHead,
-            normalizedBase,
+            this.headDraft,
+            this.baseDraft,
+            this.branchNames,
+            this.t("sign_in_required"),
+            this.t("composer_title_required"),
+            this.t("composer_branch_required"),
+            this.t("composer_branch_same"),
+            this.t("composer_branch_unknown"),
+            this.t("composer_branch_source_required"),
             { pullRequest =>
                 this.runOnUi({
                     =>
@@ -810,29 +908,17 @@ public class ExploreIssueComposerPage {
                 .align(Alignment.Top)
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishIssue(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.titleDraft) == "") {
-            this.actionMessage = this.t("composer_title_required")
-            return
-        }
-        createGitHubIssue(
+        submitIssueComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.titleDraft,
             this.bodyDraft,
+            this.t("sign_in_required"),
+            this.t("composer_title_required"),
             { issue =>
                 this.runOnUi({
                     =>
@@ -1042,73 +1128,44 @@ public class ExplorePullRequestComposerPage {
         }
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func loadBranches(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "") {
-            return
-        }
-        fetchGitHubRepositoryBranches(
+        loadBranchesForComposer(
             this.sharedAuthAccessToken,
             this.selectedRepository,
-            { branches => this.runOnUi({
-                =>
-                this.branchNames = branches
-                if (normalizedBranchValue(this.baseDraft) == "" && branches.size > 0) {
-                    this.baseDraft = branches[0]
-                }
-                if (normalizedBranchValue(this.headDraft) == "") {
-                    this.headDraft = preferredHeadBranch(branches, this.baseDraft)
-                }
-                if (branches.size <= 1 && normalizedBranchValue(this.headDraft) == "") {
-                    this.actionMessage = this.t("composer_branch_source_required")
-                }
-            }) },
+            this.baseDraft,
+            this.headDraft,
+            this.t("composer_branch_source_required"),
+            { branches, nextBase, nextHead, message =>
+                this.runOnUi({
+                    =>
+                    this.branchNames = branches
+                    this.baseDraft = nextBase
+                    this.headDraft = nextHead
+                    this.actionMessage = message
+                })
+            },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
     }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishPullRequest(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.titleDraft) == "") {
-            this.actionMessage = this.t("composer_title_required")
-            return
-        }
-        if (compactInputValue(this.headDraft) == "" || compactInputValue(this.baseDraft) == "") {
-            this.actionMessage = this.t("composer_branch_required")
-            return
-        }
-        let normalizedHead = normalizedBranchValue(this.headDraft)
-        let normalizedBase = normalizedBranchValue(this.baseDraft)
-        if (normalizedHead == normalizedBase) {
-            this.actionMessage = this.t("composer_branch_same")
-            return
-        }
-        if (this.branchNames.size <= 1 && !isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)) {
-            this.actionMessage = this.t("composer_branch_source_required")
-            return
-        }
-        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedBase) || (!isForkHeadValue(normalizedHead) && !branchExists(this.branchNames, normalizedHead)))) {
-            this.actionMessage = this.t("composer_branch_unknown")
-            return
-        }
-        createGitHubPullRequest(
+        submitPullRequestComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.titleDraft,
             this.bodyDraft,
-            normalizedHead,
-            normalizedBase,
+            this.headDraft,
+            this.baseDraft,
+            this.branchNames,
+            this.t("sign_in_required"),
+            this.t("composer_title_required"),
+            this.t("composer_branch_required"),
+            this.t("composer_branch_same"),
+            this.t("composer_branch_unknown"),
+            this.t("composer_branch_source_required"),
             { pullRequest =>
                 this.runOnUi({
                     =>
@@ -1266,30 +1323,18 @@ public class HomeIssueCommentComposerPage {
                 .align(Alignment.Top)
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishComment(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "" || this.selectedIssue == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.bodyDraft) == "") {
-            this.actionMessage = this.t("composer_body_required")
-            return
-        }
-        createGitHubIssueComment(
+        submitIssueCommentComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.selectedIssue,
             this.bodyDraft,
-            { _ => this.runOnUi({ => this.homeStack.pop(animated: true) }) },
+            this.t("sign_in_required"),
+            this.t("composer_body_required"),
+            { => this.runOnUi({ => this.homeStack.pop(animated: true) }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
     }
@@ -1450,30 +1495,18 @@ public class HomePullRequestReviewComposerPage {
                 .align(Alignment.Top)
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishReview(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "" || this.selectedPullRequest == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.bodyDraft) == "") {
-            this.actionMessage = this.t("composer_body_required")
-            return
-        }
-        submitGitHubPullRequestReview(
+        submitPullRequestReviewComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.selectedPullRequest,
             this.pendingPullRequestReviewEvent,
             this.bodyDraft,
+            this.t("sign_in_required"),
+            this.t("composer_body_required"),
             { => this.runOnUi({ => this.homeStack.pop(animated: true) }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
@@ -1603,30 +1636,18 @@ public class ExploreIssueCommentComposerPage {
                 .align(Alignment.Top)
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishComment(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "" || this.selectedIssue == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.bodyDraft) == "") {
-            this.actionMessage = this.t("composer_body_required")
-            return
-        }
-        createGitHubIssueComment(
+        submitIssueCommentComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.selectedIssue,
             this.bodyDraft,
-            { _ => this.runOnUi({ => this.exploreStack.pop(animated: true) }) },
+            this.t("sign_in_required"),
+            this.t("composer_body_required"),
+            { => this.runOnUi({ => this.exploreStack.pop(animated: true) }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
     }
@@ -1784,30 +1805,18 @@ public class ExplorePullRequestReviewComposerPage {
                 .align(Alignment.Top)
     }
 
-    func appendMarkdown(snippet: String): Unit {
-        if (this.bodyDraft == "") {
-            this.bodyDraft = snippet
-        } else {
-            this.bodyDraft = "${this.bodyDraft}\n${snippet}"
-        }
-    }
+    func appendMarkdown(snippet: String): Unit { this.bodyDraft = appendMarkdownToDraft(this.bodyDraft, snippet) }
 
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func publishReview(): Unit {
-        if (this.sharedAuthAccessToken == "" || this.selectedRepository == "" || this.selectedPullRequest == "") {
-            this.actionMessage = this.t("sign_in_required")
-            return
-        }
-        if (compactInputValue(this.bodyDraft) == "") {
-            this.actionMessage = this.t("composer_body_required")
-            return
-        }
-        submitGitHubPullRequestReview(
+        submitPullRequestReviewComposerRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.selectedPullRequest,
             this.pendingPullRequestReviewEvent,
             this.bodyDraft,
+            this.t("sign_in_required"),
+            this.t("composer_body_required"),
             { => this.runOnUi({ => this.exploreStack.pop(animated: true) }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )

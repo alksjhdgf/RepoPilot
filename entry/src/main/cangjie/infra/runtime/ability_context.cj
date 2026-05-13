@@ -1,7 +1,9 @@
 package ohos_app_cangjie_entry.infra.runtime
 
-import kit.AbilityKit.UIAbilityContext
+import kit.AbilityKit.{Params, UIAbilityContext, Want, WantValueType}
 import kit.ArkUI.{SystemBarProperties, Window}
+import ohos.business_exception.BusinessException
+import std.collection.HashMap
 
 public let KEYBOARD_HEIGHT_STORAGE_KEY = "keyboardHeight"
 
@@ -36,6 +38,37 @@ public func setAppMainWindow(window: Window): Unit {
  */
 public func getAppAbilityContext(): UIAbilityContext {
     appAbilityContext.getOrThrow()
+}
+
+/**
+ * 拉起系统分享面板分享外部链接；若分享链不可用则回退为浏览器打开。
+ * Opens the system share sheet for a URL and falls back to opening the URL directly.
+ */
+public func shareExternalLink(url: String, title!: String = "", abstract!: String = ""): Unit {
+    if (url == "") {
+        return
+    }
+    let parameters = HashMap<String, WantValueType>()
+    parameters.add(Params.SHARE_URL_KEY, WantValueType.StringValue(url))
+    if (title != "") {
+        parameters.add(Params.CONTENT_TITLE_KEY, WantValueType.StringValue(title))
+    }
+    if (abstract != "") {
+        parameters.add(Params.SHARE_ABSTRACT_KEY, WantValueType.StringValue(abstract))
+    }
+    try {
+        getAppAbilityContext().startAbility(
+            Want(
+                action: "ohos.want.action.sendData",
+                dataType: "text/plain",
+                parameters: parameters
+            )
+        )
+    } catch (_: BusinessException) {
+        try {
+            getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData"))
+        } catch (_: BusinessException) {}
+    }
 }
 
 /**

@@ -5,11 +5,11 @@ import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.pages.maps.explorePageMap
-import ohos_app_cangjie_entry.domain.{GitHubCommitDetailSnapshot, GitHubCommitSnapshot, GitHubGistFileSnapshot, GitHubGistSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSearchUserSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubCommitDetailSnapshot, GitHubCommitSnapshot, GitHubGistFileSnapshot, GitHubGistSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot}
 import ohos_app_cangjie_entry.pages.common.detailCardCommon
 import ohos_app_cangjie_entry.services.app.refreshGitHubRepositoryBundle
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
-import ohos_app_cangjie_entry.services.github.{repositoryNameFromApiUrl, resourceNumberFromApiUrl, searchGitHubIssuesAndPullRequests, searchGitHubRepositories, searchGitHubUsers}
+import ohos_app_cangjie_entry.services.github.{repositoryNameFromApiUrl, resourceNumberFromApiUrl}
 
 @Component
 public class ExploreTabHost {
@@ -37,6 +37,9 @@ public class ExploreTabHost {
     @Provide var selectedGitHubUserGists: ArrayList<GitHubGistSnapshot> = ArrayList<GitHubGistSnapshot>()
     @Provide var selectedGitHubGistFiles: ArrayList<GitHubGistFileSnapshot> = ArrayList<GitHubGistFileSnapshot>()
     @Provide var selectedGitHubGistId: String = ""
+    @Provide var selectedGitHubGistUrl: String = ""
+    @Provide var selectedGitHubGistFile: GitHubGistFileSnapshot = GitHubGistFileSnapshot("", "", "", "0", "", "")
+    @Provide var exploreSearchQuery: String = ""
     @Provide var selectedGitHubFollowers: ArrayList<GitHubSimpleUserSnapshot> = ArrayList<GitHubSimpleUserSnapshot>()
     @Provide var selectedGitHubFollowing: ArrayList<GitHubSimpleUserSnapshot> = ArrayList<GitHubSimpleUserSnapshot>()
     @Provide var liveRepositoryWatchers: ArrayList<GitHubSimpleUserSnapshot> = ArrayList<GitHubSimpleUserSnapshot>()
@@ -53,12 +56,7 @@ public class ExploreTabHost {
     let systemLanguageCode: String = "en"
 
     @State var searchQuery: String = ""
-    @State var searching: Bool = false
     @State var actionMessage: String = ""
-    @State var searchRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
-    @State var searchIssues: ArrayList<GitHubIssueSnapshot> = ArrayList<GitHubIssueSnapshot>()
-    @State var searchPullRequests: ArrayList<GitHubPullRequestSnapshot> = ArrayList<GitHubPullRequestSnapshot>()
-    @State var searchUsers: ArrayList<GitHubSearchUserSnapshot> = ArrayList<GitHubSearchUserSnapshot>()
 
     public func build() {
         Navigation(this.exploreStack) {
@@ -72,10 +70,7 @@ public class ExploreTabHost {
                             if (this.actionMessage != "") {
                                 this.buildActionMessage()
                             }
-                            this.buildRepositoryResults()
-                            this.buildIssueResults()
-                            this.buildPullRequestResults()
-                            this.buildUserResults()
+                            this.buildSearchEntrySection()
                         }
                         .width(100.percent)
                         .padding(left: 18, right: 18, top: 18, bottom: 100)
@@ -175,60 +170,8 @@ public class ExploreTabHost {
             this.actionMessage = this.t("search_placeholder")
             return
         }
-        this.searching = true
         this.actionMessage = ""
-        searchGitHubRepositories(
-            this.sharedAuthAccessToken,
-            trimmed,
-            { items =>
-                this.runOnUi({
-                    =>
-                    this.searchRepositories = items
-                })
-            },
-            { message =>
-                this.runOnUi({
-                    =>
-                    this.searching = false
-                    this.actionMessage = message
-                })
-            }
-        )
-        searchGitHubIssuesAndPullRequests(
-            this.sharedAuthAccessToken,
-            trimmed,
-            { items =>
-                this.runOnUi({
-                    =>
-                    this.searchIssues = items
-                })
-            },
-            { items =>
-                this.runOnUi({
-                    =>
-                    this.searchPullRequests = items
-                    this.searching = false
-                })
-            },
-            { message =>
-                this.runOnUi({
-                    =>
-                    this.searching = false
-                    this.actionMessage = message
-                })
-            }
-        )
-        searchGitHubUsers(
-            this.sharedAuthAccessToken,
-            trimmed,
-            { items =>
-                this.runOnUi({
-                    =>
-                    this.searchUsers = items
-                })
-            },
-            { _ => }
-        )
+        this.exploreSearchQuery = trimmed
     }
 
     func openUserProfile(login: String): Unit {
@@ -270,7 +213,7 @@ public class ExploreTabHost {
                 .borderRadius(14)
                 .padding(left: 16, right: 16)
                 .onChange({ value => this.searchQuery = value })
-            Button(if (this.searching) { this.t("status") } else { this.t("explore") })
+            Button(this.t("explore"))
                 .width(100.percent)
                 .height(48)
                 .backgroundColor(this.surfaceColor())
@@ -293,115 +236,56 @@ public class ExploreTabHost {
     }
 
     @Builder
-    func buildRepositoryResults() {
+    func buildSearchEntrySection() {
         Column(space: 12) {
-            this.buildSectionTitle(this.t("repositories"))
-            if (this.searchRepositories.size > 0) {
-                ForEach(this.searchRepositories, itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
-                    Button() {
-                        Column(space: 8) {
-                            Text(item.name).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-                            Text(item.summary).fontSize(12).fontColor(this.secondaryTextColor())
-                        }
-                        .width(100.percent)
-                        .alignItems(HorizontalAlign.Start)
-                    }
-                    .width(100.percent)
-                    .padding(18)
-                    .backgroundColor(this.surfaceColor())
-                    .borderRadius(24)
-                    .onClick({ _ => this.openRepository(item.name) })
-                })
+            if (this.exploreSearchQuery == "") {
+                detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("explore"), this.t("search_placeholder"))
             } else {
-                detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("repositories"), this.t("repositories_empty"))
+                this.buildSearchCategoryRow(this.t("repositories"), { =>
+                    this.performSearch()
+                    this.exploreStack.pushPath(NavPathInfo(name: "searchRepositoriesPage", param: ""), options: NavigationOptions(animated: true))
+                })
+                this.buildSearchCategoryRow(this.t("issues"), { =>
+                    this.performSearch()
+                    this.exploreStack.pushPath(NavPathInfo(name: "searchIssuesPage", param: ""), options: NavigationOptions(animated: true))
+                })
+                this.buildSearchCategoryRow(this.t("pull_requests"), { =>
+                    this.performSearch()
+                    this.exploreStack.pushPath(NavPathInfo(name: "searchPullRequestsPage", param: ""), options: NavigationOptions(animated: true))
+                })
+                this.buildSearchCategoryRow(this.t("people"), { =>
+                    this.performSearch()
+                    this.exploreStack.pushPath(NavPathInfo(name: "searchUsersPage", param: ""), options: NavigationOptions(animated: true))
+                })
+                this.buildSearchCategoryRow(this.t("organizations"), { =>
+                    this.pendingPageTitle = this.t("organizations")
+                    this.pendingPageMessage = this.t("not_available")
+                    this.exploreStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+                })
             }
         }
         .width(100.percent)
     }
 
     @Builder
-    func buildIssueResults() {
-        Column(space: 12) {
-            this.buildSectionTitle(this.t("issues"))
-            if (this.searchIssues.size > 0) {
-                ForEach(this.searchIssues, itemGeneratorFunc: { item: GitHubIssueSnapshot, _: Int64 =>
-                    Button() {
-                        Column(space: 8) {
-                            Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-                            Text(item.summary).fontSize(12).fontColor(this.secondaryTextColor())
-                        }
-                        .width(100.percent)
-                        .alignItems(HorizontalAlign.Start)
-                    }
-                    .width(100.percent)
-                    .padding(18)
-                    .backgroundColor(this.surfaceColor())
-                    .borderRadius(24)
-                    .onClick({ _ => this.openIssue(item) })
-                })
-            } else {
-                detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("issues"), this.t("issues_empty"))
-            }
-        }
-        .width(100.percent)
-    }
-
-    @Builder
-    func buildPullRequestResults() {
-        Column(space: 12) {
-            this.buildSectionTitle(this.t("pull_requests"))
-            if (this.searchPullRequests.size > 0) {
-                ForEach(this.searchPullRequests, itemGeneratorFunc: { item: GitHubPullRequestSnapshot, _: Int64 =>
-                    Button() {
-                        Column(space: 8) {
-                            Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-                            Text(item.summary).fontSize(12).fontColor(this.secondaryTextColor())
-                        }
-                        .width(100.percent)
-                        .alignItems(HorizontalAlign.Start)
-                    }
-                    .width(100.percent)
-                    .padding(18)
-                    .backgroundColor(this.surfaceColor())
-                    .borderRadius(24)
-                    .onClick({ _ => this.openPullRequest(item) })
-                })
-            } else {
-                detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("pull_requests"), this.t("pull_requests_empty"))
-            }
-        }
-        .width(100.percent)
-    }
-
-    @Builder
-    func buildUserResults() {
-        if (this.searchUsers.size > 0) {
-            Column(space: 12) {
-                this.buildSectionTitle(this.t("people"))
-                ForEach(this.searchUsers, itemGeneratorFunc: { item: GitHubSearchUserSnapshot, _: Int64 =>
-                    Button() {
-                        Column(space: 8) {
-                            Text(item.login).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-                            Text(item.profileUrl).fontSize(12).fontColor(this.secondaryTextColor())
-                        }
-                        .width(100.percent)
-                        .alignItems(HorizontalAlign.Start)
-                    }
-                    .width(100.percent)
-                    .padding(18)
-                    .backgroundColor(this.surfaceColor())
-                    .borderRadius(24)
-                    .onClick({ _ => this.openUserProfile(item.login) })
-                })
+    func buildSearchCategoryRow(title: String, onTap: () -> Unit) {
+        Button() {
+            Row(space: 12) {
+                Text(title)
+                    .fontSize(15)
+                    .fontColor(this.primaryTextColor())
+                    .layoutWeight(1)
+                    .textAlign(TextAlign.Start)
+                Text("›").fontSize(18).fontColor(this.secondaryTextColor())
             }
             .width(100.percent)
+            .alignItems(VerticalAlign.Center)
         }
-    }
-
-    @Builder
-    func buildSectionTitle(title: String) {
-        Text(title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-            .width(100.percent)
+        .width(100.percent)
+        .padding(18)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(18)
+        .onClick({ _ => onTap() })
     }
 
     @Builder

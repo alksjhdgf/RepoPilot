@@ -66,6 +66,29 @@ func markdownPreviewBlock(
                     .fontWeight(FontWeight.Bold)
                     .fontColor(primaryTextColor)
                     .width(100.percent)
+            } else if (line.startsWith("1. ") || line.startsWith("2. ") || line.startsWith("3. ") || line.startsWith("4. ") || line.startsWith("5. ")) {
+                Row(space: 8) {
+                    Text(
+                        if (line.split(". ").size > 0) {
+                            "${line.split(". ")[0]}."
+                        } else {
+                            "1."
+                        }
+                    )
+                        .fontSize(14)
+                        .fontColor(accentStrongColor)
+                    Text(
+                        if (line.split(". ").size > 1) {
+                            line.split(". ")[1]
+                        } else {
+                            line
+                        }
+                    )
+                        .fontSize(14)
+                        .fontColor(primaryTextColor)
+                        .layoutWeight(1)
+                }
+                .width(100.percent)
             } else if (line.startsWith("- [x] ") || line.startsWith("- [ ] ")) {
                 Row(space: 8) {
                     Text(if (line.startsWith("- [x] ")) { "☑" } else { "☐" })
@@ -93,6 +116,12 @@ func markdownPreviewBlock(
                 }
                 .width(100.percent)
                 .padding(top: 4, bottom: 4)
+            } else if (line == "---") {
+                Blank()
+                    .width(100.percent)
+                    .height(1)
+                    .backgroundColor(surfaceColor)
+                    .margin(top: 8, bottom: 8)
             } else if (line == "") {
                 Blank().height(6)
             } else {
@@ -300,11 +329,14 @@ public class HomeIssueComposerPage {
                 markdownActionButton(this.t("composer_h1"), { => this.appendMarkdown("# ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_h2"), { => this.appendMarkdown("## ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bullets"), { => this.appendMarkdown("- ") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_numbers"), { => this.appendMarkdown("1. ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_checklist"), { => this.appendMarkdown("- [ ] ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_quote"), { => this.appendMarkdown("> ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_code"), { => this.appendMarkdown("```text\n\n```") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_link"), { => this.appendMarkdown("[title](https://)") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bold"), { => this.appendMarkdown("**bold**") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_italic"), { => this.appendMarkdown("_italic_") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_divider"), { => this.appendMarkdown("---") }, this.surfaceColor(), this.primaryTextColor())
             }
         }
         .width(100.percent)
@@ -500,11 +532,14 @@ public class HomePullRequestComposerPage {
                 markdownActionButton(this.t("composer_h1"), { => this.appendMarkdown("# ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_h2"), { => this.appendMarkdown("## ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bullets"), { => this.appendMarkdown("- ") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_numbers"), { => this.appendMarkdown("1. ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_checklist"), { => this.appendMarkdown("- [ ] ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_quote"), { => this.appendMarkdown("> ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_code"), { => this.appendMarkdown("```text\n\n```") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_link"), { => this.appendMarkdown("[title](https://)") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bold"), { => this.appendMarkdown("**bold**") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_italic"), { => this.appendMarkdown("_italic_") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_divider"), { => this.appendMarkdown("---") }, this.surfaceColor(), this.primaryTextColor())
             }
         }
         .width(100.percent)
@@ -748,11 +783,14 @@ public class ExploreIssueComposerPage {
                 markdownActionButton(this.t("composer_h1"), { => this.appendMarkdown("# ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_h2"), { => this.appendMarkdown("## ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bullets"), { => this.appendMarkdown("- ") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_numbers"), { => this.appendMarkdown("1. ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_checklist"), { => this.appendMarkdown("- [ ] ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_quote"), { => this.appendMarkdown("> ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_code"), { => this.appendMarkdown("```text\n\n```") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_link"), { => this.appendMarkdown("[title](https://)") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bold"), { => this.appendMarkdown("**bold**") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_italic"), { => this.appendMarkdown("_italic_") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_divider"), { => this.appendMarkdown("---") }, this.surfaceColor(), this.primaryTextColor())
             }
         }
         .width(100.percent)
@@ -948,11 +986,14 @@ public class ExplorePullRequestComposerPage {
                 markdownActionButton(this.t("composer_h1"), { => this.appendMarkdown("# ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_h2"), { => this.appendMarkdown("## ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bullets"), { => this.appendMarkdown("- ") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_numbers"), { => this.appendMarkdown("1. ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_checklist"), { => this.appendMarkdown("- [ ] ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_quote"), { => this.appendMarkdown("> ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_code"), { => this.appendMarkdown("```text\n\n```") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_link"), { => this.appendMarkdown("[title](https://)") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bold"), { => this.appendMarkdown("**bold**") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_italic"), { => this.appendMarkdown("_italic_") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_divider"), { => this.appendMarkdown("---") }, this.surfaceColor(), this.primaryTextColor())
             }
         }
         .width(100.percent)
@@ -1191,11 +1232,14 @@ public class HomeIssueCommentComposerPage {
                 markdownActionButton(this.t("composer_h1"), { => this.appendMarkdown("# ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_h2"), { => this.appendMarkdown("## ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bullets"), { => this.appendMarkdown("- ") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_numbers"), { => this.appendMarkdown("1. ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_checklist"), { => this.appendMarkdown("- [ ] ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_quote"), { => this.appendMarkdown("> ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_code"), { => this.appendMarkdown("```text\n\n```") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_link"), { => this.appendMarkdown("[title](https://)") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bold"), { => this.appendMarkdown("**bold**") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_italic"), { => this.appendMarkdown("_italic_") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_divider"), { => this.appendMarkdown("---") }, this.surfaceColor(), this.primaryTextColor())
             }
         }
         .width(100.percent)
@@ -1372,11 +1416,14 @@ public class HomePullRequestReviewComposerPage {
                 markdownActionButton(this.t("composer_h1"), { => this.appendMarkdown("# ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_h2"), { => this.appendMarkdown("## ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bullets"), { => this.appendMarkdown("- ") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_numbers"), { => this.appendMarkdown("1. ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_checklist"), { => this.appendMarkdown("- [ ] ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_quote"), { => this.appendMarkdown("> ") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_code"), { => this.appendMarkdown("```text\n\n```") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_link"), { => this.appendMarkdown("[title](https://)") }, this.surfaceColor(), this.primaryTextColor())
                 markdownActionButton(this.t("composer_bold"), { => this.appendMarkdown("**bold**") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_italic"), { => this.appendMarkdown("_italic_") }, this.surfaceColor(), this.primaryTextColor())
+                markdownActionButton(this.t("composer_divider"), { => this.appendMarkdown("---") }, this.surfaceColor(), this.primaryTextColor())
             }
         }
         .width(100.percent)

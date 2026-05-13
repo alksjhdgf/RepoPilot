@@ -1,16 +1,16 @@
 package ohos_app_cangjie_entry.pages.profile
 
-import kit.AbilityKit.Want
 import kit.ArkUI.*
+import kit.AbilityKit.Want
 import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.domain.{GitHubGistSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot, GitHubViewerSnapshot}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
+import ohos_app_cangjie_entry.domain.{GitHubEventSnapshot, GitHubGistSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext, shareExternalLink}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.app.{refreshGitHubProfileData, refreshGitHubRepositoryBundle}
-import ohos_app_cangjie_entry.services.github.{fetchGitHubUserFollowers, fetchGitHubUserFollowing, fetchGitHubUserGists, fetchGitHubUserProfile, fetchGitHubUserRepositories}
+import ohos_app_cangjie_entry.services.github.{fetchGitHubUserActivity, fetchGitHubUserFollowers, fetchGitHubUserFollowing, fetchGitHubUserGists, fetchGitHubUserIssues, fetchGitHubUserProfile, fetchGitHubUserPullRequests, fetchGitHubUserRepositories}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -40,6 +40,8 @@ public class ProfilePage {
     @Consume var selectedGitHubUserLogin: String
     @Consume var selectedGitHubUserProfile: GitHubUserProfileSnapshot
     @Consume var selectedGitHubUserRepositories: ArrayList<GitHubRepositoryCardSnapshot>
+    @Consume var selectedGitHubUserIssues: ArrayList<GitHubIssueSnapshot>
+    @Consume var selectedGitHubUserPullRequests: ArrayList<GitHubPullRequestSnapshot>
     @Consume var selectedGitHubUserGists: ArrayList<GitHubGistSnapshot>
     @Consume var selectedGitHubFollowers: ArrayList<GitHubSimpleUserSnapshot>
     @Consume var selectedGitHubFollowing: ArrayList<GitHubSimpleUserSnapshot>
@@ -52,6 +54,12 @@ public class ProfilePage {
 
     @State
     var profileRefreshing: Bool = false
+    @State
+    var currentUserIssues: ArrayList<GitHubIssueSnapshot> = ArrayList<GitHubIssueSnapshot>()
+    @State
+    var currentUserPullRequests: ArrayList<GitHubPullRequestSnapshot> = ArrayList<GitHubPullRequestSnapshot>()
+    @State
+    var currentUserActivity: ArrayList<GitHubEventSnapshot> = ArrayList<GitHubEventSnapshot>()
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
@@ -71,6 +79,7 @@ public class ProfilePage {
                             Column(space: 24) {
                                 this.buildProfileIdentity()
                                 this.buildProfileStats()
+                                this.buildProfileActivity()
                                 this.buildProfilePopular()
                             }
                             .width(100.percent)
@@ -133,6 +142,9 @@ public class ProfilePage {
             this.viewerAvatarUrl = snapshot.avatarUrl
             this.viewerProfileUrl = snapshot.profileUrl
         })
+        if (snapshot.login != "" && this.sharedAuthAccessToken != "") {
+            this.refreshCurrentUserDetails(snapshot.login)
+        }
     }
 
     func applyMetrics(snapshot: GitHubProfileMetricsSnapshot): Unit {
@@ -152,13 +164,33 @@ public class ProfilePage {
         })
     }
 
+    func refreshCurrentUserDetails(login: String): Unit {
+        fetchGitHubUserIssues(this.sharedAuthAccessToken, login, { items => this.runOnUi({ =>
+            this.currentUserIssues = items
+            this.selectedGitHubUserIssues = items
+        }) }, { _ => this.runOnUi({ =>
+            this.currentUserIssues = ArrayList<GitHubIssueSnapshot>()
+            this.selectedGitHubUserIssues = ArrayList<GitHubIssueSnapshot>()
+        }) })
+        fetchGitHubUserPullRequests(this.sharedAuthAccessToken, login, { items => this.runOnUi({ =>
+            this.currentUserPullRequests = items
+            this.selectedGitHubUserPullRequests = items
+        }) }, { _ => this.runOnUi({ =>
+            this.currentUserPullRequests = ArrayList<GitHubPullRequestSnapshot>()
+            this.selectedGitHubUserPullRequests = ArrayList<GitHubPullRequestSnapshot>()
+        }) })
+        fetchGitHubUserActivity(this.sharedAuthAccessToken, login, { items => this.runOnUi({ =>
+            this.currentUserActivity = items
+        }) }, { _ => this.runOnUi({ =>
+            this.currentUserActivity = ArrayList<GitHubEventSnapshot>()
+        }) })
+    }
+
     func shareProfile(): Unit {
         if (this.viewerProfileUrl == "") {
             return
         }
-        try {
-            getAppAbilityContext().startAbility(Want(uri: this.viewerProfileUrl, action: "ohos.want.action.viewData"))
-        } catch (_: BusinessException) {}
+        shareExternalLink(this.viewerProfileUrl, title: this.displayName(), abstract: this.t("share_profile"))
     }
 
     func displayName(): String {
@@ -219,6 +251,16 @@ public class ProfilePage {
     func openOrganizations(): Unit {
         this.homeStack.pushPath(NavPathInfo(name: "organizationsPage", param: ""), options: NavigationOptions(animated: true))
     }
+    func openCurrentUserIssues(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.selectedGitHubUserIssues = this.currentUserIssues
+        this.homeStack.pushPath(NavPathInfo(name: "userIssuesPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openCurrentUserPullRequests(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.selectedGitHubUserPullRequests = this.currentUserPullRequests
+        this.homeStack.pushPath(NavPathInfo(name: "userPullRequestsPage", param: ""), options: NavigationOptions(animated: true))
+    }
     func openGists(): Unit {
         this.prepareCurrentViewerDetail()
         this.homeStack.pushPath(NavPathInfo(name: "userGistsPage", param: ""), options: NavigationOptions(animated: true))
@@ -230,6 +272,10 @@ public class ProfilePage {
     func openFollowing(): Unit {
         this.prepareCurrentViewerDetail()
         this.homeStack.pushPath(NavPathInfo(name: "userFollowingPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openCurrentUserActivity(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.homeStack.pushPath(NavPathInfo(name: "userActivityPage", param: ""), options: NavigationOptions(animated: true))
     }
     func openRepositoryCard(snapshot: GitHubRepositoryCardSnapshot): Unit {
         this.openRepository(snapshot.name)
@@ -244,6 +290,8 @@ public class ProfilePage {
         this.selectedGitHubUserGists = ArrayList<GitHubGistSnapshot>()
         this.selectedGitHubFollowers = ArrayList<GitHubSimpleUserSnapshot>()
         this.selectedGitHubFollowing = ArrayList<GitHubSimpleUserSnapshot>()
+        this.selectedGitHubUserIssues = this.currentUserIssues
+        this.selectedGitHubUserPullRequests = this.currentUserPullRequests
         fetchGitHubUserProfile(this.sharedAuthAccessToken, this.viewerLogin, { snapshot => this.runOnUi({ => this.selectedGitHubUserProfile = snapshot }) }, { _ => })
         fetchGitHubUserRepositories(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubUserRepositories = items }) }, { _ => })
         fetchGitHubUserGists(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubUserGists = items }) }, { _ => })
@@ -367,6 +415,10 @@ public class ProfilePage {
         Column() {
             this.buildProfileStatRow(0x4B4F5C, "⌘", "repositories", this.liveRepositoryCount, { => this.openRepositories() })
             this.buildProfileDivider()
+            this.buildProfileStatRow(0x4C8DFF, "#", "issues", "${this.currentUserIssues.size}", { => this.openCurrentUserIssues() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0x7B56E8, "⇅", "pull_requests", "${this.currentUserPullRequests.size}", { => this.openCurrentUserPullRequests() })
+            this.buildProfileDivider()
             this.buildProfileStatRow(0xFFD54A, "☆", "starred", this.liveStarredCount, { => this.openStarred() })
             this.buildProfileDivider()
             this.buildProfileStatRow(0xF4A24B, "⌂", "organizations", this.liveOrganizationCount, { => this.openOrganizations() })
@@ -442,6 +494,98 @@ public class ProfilePage {
             }
         }
         .width(100.percent)
+    }
+
+    @Builder
+    func buildProfileActivity() {
+        Column(space: 12) {
+            Row() {
+                Text(this.t("activity")).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.secondaryTextColor())
+                Blank()
+                Text(this.t("view_all")).fontSize(12).fontColor(this.secondaryTextColor())
+            }
+            .width(100.percent)
+            .onClick({ _ => this.openCurrentUserActivity() })
+
+            if (this.currentUserActivity.size > 0) {
+                Column(space: 12) {
+                    ForEach(this.topActivityEvents(), itemGeneratorFunc: { item: GitHubEventSnapshot, _: Int64 =>
+                        this.buildActivityRow(item)
+                    })
+                }
+                .width(100.percent)
+            } else {
+                Text(this.t("activity_empty"))
+                    .fontSize(13)
+                    .lineHeight(20)
+                    .fontColor(this.secondaryTextColor())
+                    .width(100.percent)
+            }
+        }
+        .width(100.percent)
+    }
+
+    @Builder
+    func buildActivityRow(item: GitHubEventSnapshot) {
+        Column(space: 8) {
+            Text(if (item.repoName == "") { item.targetTitle } else { item.repoName })
+                .fontSize(14)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(this.primaryTextColor())
+                .width(100.percent)
+            Text(this.eventSummary(item))
+                .fontSize(12)
+                .lineHeight(18)
+                .fontColor(this.secondaryTextColor())
+                .width(100.percent)
+        }
+        .width(100.percent)
+        .padding(18)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(24)
+        .onClick({ _ => this.openActivityTarget(item.targetUrl) })
+    }
+
+    func topActivityEvents(): ArrayList<GitHubEventSnapshot> {
+        let top = ArrayList<GitHubEventSnapshot>()
+        var index: Int64 = 0
+        for (item in this.currentUserActivity) {
+            if (index >= 5) { break }
+            top.add(item)
+            index += 1
+        }
+        top
+    }
+
+    func eventSummary(item: GitHubEventSnapshot): String {
+        if (item.eventType == "IssuesEvent") {
+            if (item.action == "opened") { return "${this.t("event_issue_opened")} · ${item.targetTitle}" }
+            if (item.action == "closed") { return "${this.t("event_issue_closed")} · ${item.targetTitle}" }
+            return "${this.t("event_issue_updated")} · ${item.targetTitle}"
+        }
+        if (item.eventType == "IssueCommentEvent") { return "${this.t("event_issue_commented")} · ${item.targetTitle}" }
+        if (item.eventType == "PullRequestEvent") {
+            if (item.action == "opened") { return "${this.t("event_pr_opened")} · ${item.targetTitle}" }
+            if (item.action == "closed") { return "${this.t("event_pr_closed")} · ${item.targetTitle}" }
+            return "${this.t("event_pr_updated")} · ${item.targetTitle}"
+        }
+        if (item.eventType == "PullRequestReviewEvent") { return "${this.t("event_pr_reviewed")} · ${item.targetTitle}" }
+        if (item.eventType == "PullRequestReviewCommentEvent") { return "${this.t("event_pr_commented")} · ${item.targetTitle}" }
+        if (item.eventType == "PushEvent") { return "${this.t("event_push")} · ${item.targetTitle}" }
+        if (item.eventType == "WatchEvent") { return "${this.t("event_starred")} · ${item.repoName}" }
+        if (item.eventType == "ForkEvent") { return "${this.t("event_forked")} · ${item.repoName}" }
+        if (item.eventType == "CreateEvent") { return "${this.t("event_created")} · ${item.targetTitle}" }
+        if (item.eventType == "DeleteEvent") { return "${this.t("event_deleted")} · ${item.targetTitle}" }
+        if (item.eventType == "ReleaseEvent") { return "${this.t("event_released")} · ${item.targetTitle}" }
+        if (item.targetTitle != "") { return item.targetTitle }
+        item.eventType
+    }
+
+    func openActivityTarget(url: String): Unit {
+        if (url == "") { return }
+        try {
+            getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData"))
+        } catch (_: BusinessException) {}
     }
 
     @Builder

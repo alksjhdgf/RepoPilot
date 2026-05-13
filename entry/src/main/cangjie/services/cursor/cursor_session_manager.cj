@@ -301,6 +301,8 @@ public func mergeStoredCursorMessages(
     conversationId: String,
     cloudItems: ArrayList<CursorMessageSnapshot>
 ): ArrayList<CursorMessageSnapshot> {
+    // Cloud messages stay authoritative. Local failed messages are always preserved so the user
+    // can still reopen conversations that never fully synced to Cursor.
     let localItems = loadStoredCursorMessages(conversationId)
     if (localItems.size == 0) {
         persistStoredCursorMessages(conversationId, cloudItems)

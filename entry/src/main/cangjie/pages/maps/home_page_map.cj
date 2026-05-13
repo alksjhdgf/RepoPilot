@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.pages.maps
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
-import ohos_app_cangjie_entry.pages.repository.{HomeFavoriteRepositoriesPickerPage, HomeGistDetailPage, HomeIssueCommentComposerPage, HomeIssueComposerPage, HomeIssuesPage, HomeOrganizationsPage, HomePullRequestComposerPage, HomePullRequestReviewComposerPage, HomePullRequestsPage, HomeRepositoriesPage, HomeRepositoryCommitDetailPage, HomeRepositoryCommitsPage, HomeRepositoryForksPage, HomeRepositoryStargazersPage, HomeRepositoryWatchersPage, HomeStarredRepositoriesPage, HomeTopRepositoriesPage, HomeUserActivityPage, HomeUserFollowersPage, HomeUserFollowingPage, HomeUserGistsPage, HomeUserIssuesPage, HomeUserProfilePage, HomeUserPullRequestsPage, HomeUserRepositoriesPage, IssueDetailPage, PullRequestDetailPage, RepositoryDetailPage}
+import ohos_app_cangjie_entry.pages.repository.{HomeFavoriteRepositoriesPickerPage, HomeGistDetailPage, HomeGistFileContentPage, HomeIssueCommentComposerPage, HomeIssueComposerPage, HomeIssuesPage, HomeOrganizationsPage, HomePullRequestComposerPage, HomePullRequestReviewComposerPage, HomePullRequestsPage, HomeRepositoriesPage, HomeRepositoryCommitDetailPage, HomeRepositoryCommitsPage, HomeRepositoryForksPage, HomeRepositoryStargazersPage, HomeRepositoryWatchersPage, HomeStarredRepositoriesPage, HomeTopRepositoriesPage, HomeUserActivityPage, HomeUserFollowersPage, HomeUserFollowingPage, HomeUserGistsPage, HomeUserIssuesPage, HomeUserProfilePage, HomeUserPullRequestsPage, HomeUserRepositoriesPage, IssueDetailPage, PullRequestDetailPage, RepositoryDetailPage}
 import ohos_app_cangjie_entry.pages.agent.{CreateTaskPage, DiffReviewPage, TaskDetailPage}
 import ohos_app_cangjie_entry.pages.common.HomePlaceholderPage
 import ohos_app_cangjie_entry.pages.profile.ProfilePage
@@ -54,6 +54,8 @@ public func homePageMap(name: String, detailParam: Any) {
         HomeUserGistsPage()
     } else if (name == "gistDetailPage") {
         HomeGistDetailPage()
+    } else if (name == "gistFileContentPage") {
+        HomeGistFileContentPage()
     } else if (name == "issueDetail") {
         IssueDetailPage()
     } else if (name == "pullRequestDetail") {

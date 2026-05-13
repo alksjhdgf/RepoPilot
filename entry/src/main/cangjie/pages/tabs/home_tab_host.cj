@@ -49,6 +49,8 @@ public class HomeTabHost {
     @Provide var selectedGitHubUserGists: ArrayList<GitHubGistSnapshot> = ArrayList<GitHubGistSnapshot>()
     @Provide var selectedGitHubGistFiles: ArrayList<GitHubGistFileSnapshot> = ArrayList<GitHubGistFileSnapshot>()
     @Provide var selectedGitHubGistId: String = ""
+    @Provide var selectedGitHubGistUrl: String = ""
+    @Provide var selectedGitHubGistFile: GitHubGistFileSnapshot = GitHubGistFileSnapshot("", "", "", "0", "", "")
     @Provide var selectedGitHubFollowers: ArrayList<GitHubSimpleUserSnapshot> = ArrayList<GitHubSimpleUserSnapshot>()
     @Provide var selectedGitHubFollowing: ArrayList<GitHubSimpleUserSnapshot> = ArrayList<GitHubSimpleUserSnapshot>()
     @Provide var liveRepositoryWatchers: ArrayList<GitHubSimpleUserSnapshot> = ArrayList<GitHubSimpleUserSnapshot>()
@@ -120,6 +122,8 @@ public class HomeTabHost {
             this.homeRefreshing = false
             return
         }
+        // Home refresh intentionally treats profile summary and selected-repository detail as two
+        // separate streams so the top-level home data can still refresh when no repository is selected.
         refreshGitHubProfileData(
             this.sharedAuthAccessToken,
             { snapshot => this.applyViewer(snapshot) },

@@ -7,7 +7,7 @@ import ohos.base.UIThread
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.domain.{GitHubCommitDetailSnapshot, GitHubCommitSnapshot, GitHubEventSnapshot, GitHubGistFileSnapshot, GitHubGistSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext, shareExternalLink}
 import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.github.{fetchGitHubGistFiles, fetchGitHubRepositoryCommitDetail, fetchGitHubRepositoryCommits, fetchGitHubRepositoryForks, fetchGitHubRepositoryStargazers, fetchGitHubRepositoryWatchers, fetchGitHubRepositories, fetchGitHubUserActivity, fetchGitHubUserFollowers, fetchGitHubUserFollowing, fetchGitHubUserGists, fetchGitHubUserIssues, fetchGitHubUserProfile, fetchGitHubUserPullRequests, fetchGitHubUserRepositories, repositoryNameFromApiUrl}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
@@ -854,6 +854,13 @@ public class HomeUserProfilePage {
                 .fontColor(this.primaryTextColor())
                 .borderRadius(14)
                 .onClick({ _ => this.openUrl(this.selectedGitHubUserProfile.profileUrl) })
+            Button(this.t("share_profile"))
+                .width(100.percent)
+                .height(44)
+                .backgroundColor(this.mutedSurfaceColor())
+                .fontColor(this.primaryTextColor())
+                .borderRadius(14)
+                .onClick({ _ => shareExternalLink(this.selectedGitHubUserProfile.profileUrl, title: this.selectedGitHubUserLogin, abstract: this.t("share_profile")) })
         }
         .width(100.percent)
         .padding(18)
@@ -1922,6 +1929,8 @@ public class HomeUserGistsPage {
     @Consume var selectedGitHubUserGists: ArrayList<GitHubGistSnapshot>
     @Consume var selectedGitHubGistFiles: ArrayList<GitHubGistFileSnapshot>
     @Consume var selectedGitHubGistId: String
+    @Consume var selectedGitHubGistUrl: String
+    @Consume var selectedGitHubGistFile: GitHubGistFileSnapshot
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -2024,6 +2033,8 @@ public class HomeUserGistsPage {
 
     func openGist(snapshot: GitHubGistSnapshot): Unit {
         this.selectedGitHubGistId = snapshot.id
+        this.selectedGitHubGistUrl = snapshot.gistUrl
+        this.selectedGitHubGistFile = GitHubGistFileSnapshot("", "", "", "0", "", "")
         this.selectedGitHubGistFiles = ArrayList<GitHubGistFileSnapshot>()
         this.homeStack.pushPath(NavPathInfo(name: "gistDetailPage", param: ""), options: NavigationOptions(animated: true))
     }
@@ -2043,7 +2054,9 @@ public class HomeGistDetailPage {
     @Consume var languagePreference: String
     @Consume var sharedAuthAccessToken: String
     @Consume var selectedGitHubGistId: String
+    @Consume var selectedGitHubGistUrl: String
     @Consume var selectedGitHubGistFiles: ArrayList<GitHubGistFileSnapshot>
+    @Consume var selectedGitHubGistFile: GitHubGistFileSnapshot
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -2066,12 +2079,38 @@ public class HomeGistDetailPage {
                 Scroll {
                     Column(space: 12) {
                         detailHeaderCommon(this.homeStack, this.t("back"), this.t("gists"), this.primaryTextColor(), this.surfaceColor())
+                        Row(space: 10) {
+                            Button(this.t("open_on_github"))
+                                .layoutWeight(1)
+                                .height(42)
+                                .backgroundColor(this.surfaceColor())
+                                .fontColor(this.primaryTextColor())
+                                .borderRadius(14)
+                                .onClick({ _ => this.openUrl(this.selectedGitHubGistUrl) })
+                            Button(this.t("share"))
+                                .layoutWeight(1)
+                                .height(42)
+                                .backgroundColor(this.surfaceColor())
+                                .fontColor(this.primaryTextColor())
+                                .borderRadius(14)
+                                .onClick({ _ => shareExternalLink(this.selectedGitHubGistUrl, title: this.t("gists"), abstract: this.t("share_gist")) })
+                            Button(this.t("open_raw"))
+                                .layoutWeight(1)
+                                .height(42)
+                                .backgroundColor(this.surfaceColor())
+                                .fontColor(this.primaryTextColor())
+                                .borderRadius(14)
+                                .enabled(this.firstRawUrl() != "")
+                                .opacity(if (this.firstRawUrl() == "") { 0.45 } else { 1.0 })
+                                .onClick({ _ => this.openUrl(this.firstRawUrl()) })
+                        }
+                        .width(100.percent)
                         if (this.actionMessage != "") {
                             detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("gists"), this.actionMessage)
                         }
                         if (this.selectedGitHubGistFiles.size > 0) {
                             ForEach(this.selectedGitHubGistFiles, itemGeneratorFunc: { item: GitHubGistFileSnapshot, _: Int64 =>
-                                buildGistFileCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
+                                buildGistFileCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item, this.t("file_type"), this.t("file_size"), { => this.openFile(item) })
                             })
                         } else if (!this.loading) {
                             detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("gists"), this.t("gists_empty"))
@@ -2104,6 +2143,104 @@ public class HomeGistDetailPage {
             { items => spawn(UIThread) { this.selectedGitHubGistFiles = items; this.actionMessage = ""; this.loading = false } },
             { message => spawn(UIThread) { this.selectedGitHubGistFiles = ArrayList<GitHubGistFileSnapshot>(); this.actionMessage = message; this.loading = false } }
         )
+    }
+
+    func firstRawUrl(): String {
+        if (this.selectedGitHubGistFiles.size == 0) {
+            return ""
+        }
+        this.selectedGitHubGistFiles[0].rawUrl
+    }
+
+    func openFile(item: GitHubGistFileSnapshot): Unit {
+        this.selectedGitHubGistFile = item
+        this.homeStack.pushPath(NavPathInfo(name: "gistFileContentPage", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openUrl(url: String): Unit {
+        if (url == "") { return }
+        try { getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData")) } catch (_: BusinessException) {}
+    }
+
+    func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
+    func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
+    func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
+    func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
+    func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
+    func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
+}
+
+@Component
+public class HomeGistFileContentPage {
+    @Consume var homeStack: NavPathStack
+    @Consume var themePreference: String
+    @Consume var languagePreference: String
+    @Consume var selectedGitHubGistFile: GitHubGistFileSnapshot
+
+    @StorageProp["colorMode"]
+    let systemColorMode: ColorMode = ColorMode.Light
+
+    @StorageProp["languageCode"]
+    let systemLanguageCode: String = "en"
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
+
+    public func build() {
+        NavDestination() {
+            Stack(alignContent: Alignment.TopStart) {
+                detailBackgroundCommon(this.pageBackgroundColor())
+                Column(space: 12) {
+                    detailHeaderCommon(this.homeStack, this.t("back"), this.t("file_content"), this.primaryTextColor(), this.surfaceColor())
+                    Row(space: 10) {
+                        Button(this.t("open_raw"))
+                            .layoutWeight(1)
+                            .height(42)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .borderRadius(14)
+                            .enabled(this.selectedGitHubGistFile.rawUrl != "")
+                            .opacity(if (this.selectedGitHubGistFile.rawUrl == "") { 0.45 } else { 1.0 })
+                            .onClick({ _ => this.openUrl(this.selectedGitHubGistFile.rawUrl) })
+                        Button(this.t("share"))
+                            .layoutWeight(1)
+                            .height(42)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .borderRadius(14)
+                            .enabled(this.selectedGitHubGistFile.rawUrl != "")
+                            .opacity(if (this.selectedGitHubGistFile.rawUrl == "") { 0.45 } else { 1.0 })
+                            .onClick({ _ => shareExternalLink(this.selectedGitHubGistFile.rawUrl, title: this.selectedGitHubGistFile.filename, abstract: this.t("share_gist")) })
+                    }
+                    .width(100.percent)
+                    Scroll {
+                        Column(space: 12) {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile.filename, this.selectedGitHubGistFile.language)
+                            buildGistFileContentCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile, this.t("file_type"), this.t("file_size"), this.t("content_unavailable"))
+                        }
+                        .width(100.percent)
+                        .padding(bottom: 120)
+                    }
+                    .width(100.percent)
+                    .layoutWeight(1)
+                    .scrollBar(BarState.Off)
+                    .align(Alignment.Top)
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .padding(left: 18, right: 18, top: 18)
+            }
+            .width(100.percent)
+            .height(100.percent)
+        }
+        .hideTitleBar(true)
+        .backgroundColor(this.pageBackgroundColor())
+    }
+
+    func openUrl(url: String): Unit {
+        if (url == "") { return }
+        try { getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData")) } catch (_: BusinessException) {}
     }
 
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
@@ -2832,6 +2969,7 @@ public class ExploreUserProfilePage {
             if (this.selectedGitHubUserProfile.bio != "") { Text(this.selectedGitHubUserProfile.bio).fontSize(13).lineHeight(20).fontColor(this.secondaryTextColor()).width(100.percent) }
             if (this.selectedGitHubUserProfile.location != "" || this.selectedGitHubUserProfile.company != "") { Text(this.profileMetaLine()).fontSize(12).fontColor(this.secondaryTextColor()).width(100.percent) }
             Button(this.t("open_on_github")).width(100.percent).height(44).backgroundColor(this.surfaceColor()).fontColor(this.primaryTextColor()).borderRadius(14).onClick({ _ => this.openUrl(this.selectedGitHubUserProfile.profileUrl) })
+            Button(this.t("share_profile")).width(100.percent).height(44).backgroundColor(this.mutedSurfaceColor()).fontColor(this.primaryTextColor()).borderRadius(14).onClick({ _ => shareExternalLink(this.selectedGitHubUserProfile.profileUrl, title: this.selectedGitHubUserLogin, abstract: this.t("share_profile")) })
         }.width(100.percent).padding(18).backgroundColor(this.surfaceColor()).borderRadius(24)
     }
     @Builder
@@ -3811,6 +3949,8 @@ public class ExploreUserGistsPage {
     @Consume var selectedGitHubUserGists: ArrayList<GitHubGistSnapshot>
     @Consume var selectedGitHubGistFiles: ArrayList<GitHubGistFileSnapshot>
     @Consume var selectedGitHubGistId: String
+    @Consume var selectedGitHubGistUrl: String
+    @Consume var selectedGitHubGistFile: GitHubGistFileSnapshot
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -3913,6 +4053,8 @@ public class ExploreUserGistsPage {
 
     func openGist(snapshot: GitHubGistSnapshot): Unit {
         this.selectedGitHubGistId = snapshot.id
+        this.selectedGitHubGistUrl = snapshot.gistUrl
+        this.selectedGitHubGistFile = GitHubGistFileSnapshot("", "", "", "0", "", "")
         this.selectedGitHubGistFiles = ArrayList<GitHubGistFileSnapshot>()
         this.exploreStack.pushPath(NavPathInfo(name: "gistDetailPage", param: ""), options: NavigationOptions(animated: true))
     }
@@ -3932,7 +4074,9 @@ public class ExploreGistDetailPage {
     @Consume var languagePreference: String
     @Consume var sharedAuthAccessToken: String
     @Consume var selectedGitHubGistId: String
+    @Consume var selectedGitHubGistUrl: String
     @Consume var selectedGitHubGistFiles: ArrayList<GitHubGistFileSnapshot>
+    @Consume var selectedGitHubGistFile: GitHubGistFileSnapshot
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -3955,12 +4099,38 @@ public class ExploreGistDetailPage {
                 Scroll {
                     Column(space: 12) {
                         detailHeaderCommon(this.exploreStack, this.t("back"), this.t("gists"), this.primaryTextColor(), this.surfaceColor())
+                        Row(space: 10) {
+                            Button(this.t("open_on_github"))
+                                .layoutWeight(1)
+                                .height(42)
+                                .backgroundColor(this.surfaceColor())
+                                .fontColor(this.primaryTextColor())
+                                .borderRadius(14)
+                                .onClick({ _ => this.openUrl(this.selectedGitHubGistUrl) })
+                            Button(this.t("share"))
+                                .layoutWeight(1)
+                                .height(42)
+                                .backgroundColor(this.surfaceColor())
+                                .fontColor(this.primaryTextColor())
+                                .borderRadius(14)
+                                .onClick({ _ => shareExternalLink(this.selectedGitHubGistUrl, title: this.t("gists"), abstract: this.t("share_gist")) })
+                            Button(this.t("open_raw"))
+                                .layoutWeight(1)
+                                .height(42)
+                                .backgroundColor(this.surfaceColor())
+                                .fontColor(this.primaryTextColor())
+                                .borderRadius(14)
+                                .enabled(this.firstRawUrl() != "")
+                                .opacity(if (this.firstRawUrl() == "") { 0.45 } else { 1.0 })
+                                .onClick({ _ => this.openUrl(this.firstRawUrl()) })
+                        }
+                        .width(100.percent)
                         if (this.actionMessage != "") {
                             detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("gists"), this.actionMessage)
                         }
                         if (this.selectedGitHubGistFiles.size > 0) {
                             ForEach(this.selectedGitHubGistFiles, itemGeneratorFunc: { item: GitHubGistFileSnapshot, _: Int64 =>
-                                buildGistFileCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item)
+                                buildGistFileCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item, this.t("file_type"), this.t("file_size"), { => this.openFile(item) })
                             })
                         } else if (!this.loading) {
                             detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("gists"), this.t("gists_empty"))
@@ -3993,6 +4163,104 @@ public class ExploreGistDetailPage {
             { items => spawn(UIThread) { this.selectedGitHubGistFiles = items; this.actionMessage = ""; this.loading = false } },
             { message => spawn(UIThread) { this.selectedGitHubGistFiles = ArrayList<GitHubGistFileSnapshot>(); this.actionMessage = message; this.loading = false } }
         )
+    }
+
+    func firstRawUrl(): String {
+        if (this.selectedGitHubGistFiles.size == 0) {
+            return ""
+        }
+        this.selectedGitHubGistFiles[0].rawUrl
+    }
+
+    func openFile(item: GitHubGistFileSnapshot): Unit {
+        this.selectedGitHubGistFile = item
+        this.exploreStack.pushPath(NavPathInfo(name: "gistFileContentPage", param: ""), options: NavigationOptions(animated: true))
+    }
+
+    func openUrl(url: String): Unit {
+        if (url == "") { return }
+        try { getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData")) } catch (_: BusinessException) {}
+    }
+
+    func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
+    func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
+    func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
+    func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
+    func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
+    func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
+}
+
+@Component
+public class ExploreGistFileContentPage {
+    @Consume var exploreStack: NavPathStack
+    @Consume var themePreference: String
+    @Consume var languagePreference: String
+    @Consume var selectedGitHubGistFile: GitHubGistFileSnapshot
+
+    @StorageProp["colorMode"]
+    let systemColorMode: ColorMode = ColorMode.Light
+
+    @StorageProp["languageCode"]
+    let systemLanguageCode: String = "en"
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
+
+    public func build() {
+        NavDestination() {
+            Stack(alignContent: Alignment.TopStart) {
+                detailBackgroundCommon(this.pageBackgroundColor())
+                Column(space: 12) {
+                    detailHeaderCommon(this.exploreStack, this.t("back"), this.t("file_content"), this.primaryTextColor(), this.surfaceColor())
+                    Row(space: 10) {
+                        Button(this.t("open_raw"))
+                            .layoutWeight(1)
+                            .height(42)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .borderRadius(14)
+                            .enabled(this.selectedGitHubGistFile.rawUrl != "")
+                            .opacity(if (this.selectedGitHubGistFile.rawUrl == "") { 0.45 } else { 1.0 })
+                            .onClick({ _ => this.openUrl(this.selectedGitHubGistFile.rawUrl) })
+                        Button(this.t("share"))
+                            .layoutWeight(1)
+                            .height(42)
+                            .backgroundColor(this.surfaceColor())
+                            .fontColor(this.primaryTextColor())
+                            .borderRadius(14)
+                            .enabled(this.selectedGitHubGistFile.rawUrl != "")
+                            .opacity(if (this.selectedGitHubGistFile.rawUrl == "") { 0.45 } else { 1.0 })
+                            .onClick({ _ => shareExternalLink(this.selectedGitHubGistFile.rawUrl, title: this.selectedGitHubGistFile.filename, abstract: this.t("share_gist")) })
+                    }
+                    .width(100.percent)
+                    Scroll {
+                        Column(space: 12) {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile.filename, this.selectedGitHubGistFile.language)
+                            buildGistFileContentCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile, this.t("file_type"), this.t("file_size"), this.t("content_unavailable"))
+                        }
+                        .width(100.percent)
+                        .padding(bottom: 120)
+                    }
+                    .width(100.percent)
+                    .layoutWeight(1)
+                    .scrollBar(BarState.Off)
+                    .align(Alignment.Top)
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .padding(left: 18, right: 18, top: 18)
+            }
+            .width(100.percent)
+            .height(100.percent)
+        }
+        .hideTitleBar(true)
+        .backgroundColor(this.pageBackgroundColor())
+    }
+
+    func openUrl(url: String): Unit {
+        if (url == "") { return }
+        try { getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData")) } catch (_: BusinessException) {}
     }
 
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
@@ -4067,17 +4335,27 @@ func buildCommitRow(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextC
 func buildGistRow(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, item: GitHubGistSnapshot, publicLabel: String, privateLabel: String, filesLabel: String, onTap: () -> Unit) {
     Button() {
         Column(space: 8) {
-            Text(if (item.primaryFilename != "") { item.primaryFilename } else if (item.description != "") { item.description } else { item.id })
-                .fontSize(16)
+            Row(space: 10) {
+                buildTinyUserAvatar(item.ownerAvatarUrl)
+                Text(item.ownerLogin).fontSize(12).fontColor(secondaryTextColor)
+            }
+            .width(100.percent)
+            .alignItems(VerticalAlign.Center)
+            Text(if (item.primaryFilename != "") { "${item.ownerLogin}/${item.primaryFilename}" } else { "${item.ownerLogin}/${item.id}" })
+                .fontSize(15)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(primaryTextColor)
-            Text(if (item.description != "") { item.description } else { item.ownerLogin })
+            Text(if (item.description != "") { item.description } else { item.primaryFilename })
                 .fontSize(12)
                 .fontColor(secondaryTextColor)
             Row(space: 8) {
                 Text(if (item.isPublic) { publicLabel } else { privateLabel }).fontSize(12).fontColor(secondaryTextColor)
                 Text("·").fontSize(12).fontColor(secondaryTextColor)
                 Text("${item.fileCount} ${filesLabel}").fontSize(12).fontColor(secondaryTextColor)
+                if (item.updatedAt != "") {
+                    Text("·").fontSize(12).fontColor(secondaryTextColor)
+                    Text(item.updatedAt).fontSize(12).fontColor(secondaryTextColor)
+                }
             }
         }
         .width(100.percent)
@@ -4091,16 +4369,72 @@ func buildGistRow(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextCol
 }
 
 @Builder
-func buildGistFileCard(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, item: GitHubGistFileSnapshot) {
-    Column(space: 8) {
+func buildTinyUserAvatar(url: String) {
+    if (url != "") {
+        Image(url)
+            .width(20)
+            .height(20)
+            .borderRadius(10)
+    } else {
+        Text("◌")
+            .fontSize(12)
+            .fontColor(0x7A869A)
+            .width(20)
+            .height(20)
+            .textAlign(TextAlign.Center)
+    }
+}
+
+@Builder
+func buildGistFileCard(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, item: GitHubGistFileSnapshot, typeLabel: String, sizeLabel: String, onTap: () -> Unit) {
+    Button() {
+        Column(space: 8) {
+            Text(item.filename).fontSize(15).fontWeight(FontWeight.Bold).fontColor(primaryTextColor)
+            Row(space: 8) {
+                if (item.language != "") {
+                    Text(item.language).fontSize(12).fontColor(secondaryTextColor)
+                }
+                if (item.fileType != "") {
+                    Text("·").fontSize(12).fontColor(secondaryTextColor)
+                    Text("${typeLabel}: ${item.fileType}").fontSize(12).fontColor(secondaryTextColor)
+                }
+                if (item.size != "0") {
+                    Text("·").fontSize(12).fontColor(secondaryTextColor)
+                    Text("${sizeLabel}: ${item.size} B").fontSize(12).fontColor(secondaryTextColor)
+                }
+            }
+        }
+        .width(100.percent)
+        .alignItems(HorizontalAlign.Start)
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(surfaceColor)
+    .borderRadius(24)
+    .onClick({ _ => onTap() })
+}
+
+@Builder
+func buildGistFileContentCard(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, item: GitHubGistFileSnapshot, typeLabel: String, sizeLabel: String, unavailableLabel: String) {
+    Column(space: 10) {
         Text(item.filename).fontSize(15).fontWeight(FontWeight.Bold).fontColor(primaryTextColor)
-        if (item.language != "") {
-            Text(item.language).fontSize(12).fontColor(secondaryTextColor)
+        Row(space: 8) {
+            if (item.language != "") {
+                Text(item.language).fontSize(12).fontColor(secondaryTextColor)
+            }
+            if (item.fileType != "") {
+                Text("·").fontSize(12).fontColor(secondaryTextColor)
+                Text("${typeLabel}: ${item.fileType}").fontSize(12).fontColor(secondaryTextColor)
+            }
+            if (item.size != "0") {
+                Text("·").fontSize(12).fontColor(secondaryTextColor)
+                Text("${sizeLabel}: ${item.size} B").fontSize(12).fontColor(secondaryTextColor)
+            }
         }
         if (item.content != "") {
             Text(item.content).fontSize(12).lineHeight(18).fontColor(primaryTextColor)
         } else if (item.rawUrl != "") {
-            Text(item.rawUrl).fontSize(12).lineHeight(18).fontColor(secondaryTextColor)
+            Text(unavailableLabel).fontSize(12).lineHeight(18).fontColor(secondaryTextColor)
         }
     }
     .width(100.percent)

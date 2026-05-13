@@ -218,6 +218,8 @@ public class AppShell {
 
     @Builder
     func buildMainScene() {
+        // The shell keeps one global Navigation for rare cross-tab routes, while each tab host
+        // stays mounted with its own independent Navigation stack so tab switches preserve state.
         Navigation(this.shellStack) {
             Stack(alignContent: Alignment.Bottom) {
                 Column() {

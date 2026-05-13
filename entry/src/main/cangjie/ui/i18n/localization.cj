@@ -148,6 +148,10 @@ func localizedEn(key: String): String {
     else if (key == "code_options") { "Code Options" }
     else if (key == "external_links") { "External Links" }
     else if (key == "share_feedback") { "Share Feedback" }
+    else if (key == "share") { "Share" }
+    else if (key == "share_repository") { "Share Repository" }
+    else if (key == "share_profile") { "Share Profile" }
+    else if (key == "share_gist") { "Share Gist" }
     else if (key == "terms_of_service") { "Terms of Service" }
     else if (key == "privacy_policy") { "Privacy Policy & Analytics" }
     else if (key == "feature_preview") { "Feature Preview" }
@@ -156,6 +160,13 @@ func localizedEn(key: String): String {
     else if (key == "clear_cache") { "Clear cache" }
     else if (key == "repositories") { "Repositories" }
     else if (key == "gists") { "Gists" }
+    else if (key == "gist_files") { "Gist files" }
+    else if (key == "file_content") { "File content" }
+    else if (key == "open_raw") { "Open raw file" }
+    else if (key == "file_type") { "Type" }
+    else if (key == "file_size") { "Size" }
+    else if (key == "updated") { "Updated" }
+    else if (key == "content_unavailable") { "Content not returned by GitHub. Open the raw file to inspect it." }
     else if (key == "repository_owner") { "Repository owner" }
     else if (key == "repositories_empty") { "No repositories available yet." }
     else if (key == "no_open_issues") { "No open issues." }
@@ -240,11 +251,14 @@ func localizedEn(key: String): String {
     else if (key == "composer_h1") { "H1" }
     else if (key == "composer_h2") { "H2" }
     else if (key == "composer_bullets") { "Bullets" }
+    else if (key == "composer_numbers") { "Numbers" }
     else if (key == "composer_checklist") { "Checklist" }
     else if (key == "composer_quote") { "Quote" }
     else if (key == "composer_code") { "Code" }
     else if (key == "composer_link") { "Link" }
     else if (key == "composer_bold") { "Bold" }
+    else if (key == "composer_italic") { "Italic" }
+    else if (key == "composer_divider") { "Divider" }
     else if (key == "composer_title_required") { "Please enter a title first." }
     else if (key == "composer_branch_required") { "Please provide both head and base branches." }
     else if (key == "composer_branch_same") { "Head and base branches must be different." }
@@ -483,6 +497,10 @@ func localizedZh(key: String): String {
     else if (key == "code_options") { "代码选项" }
     else if (key == "external_links") { "外部链接" }
     else if (key == "share_feedback") { "分享反馈" }
+    else if (key == "share") { "分享" }
+    else if (key == "share_repository") { "分享仓库" }
+    else if (key == "share_profile") { "分享主页" }
+    else if (key == "share_gist") { "分享 Gist" }
     else if (key == "terms_of_service") { "服务条款" }
     else if (key == "privacy_policy") { "隐私政策与分析" }
     else if (key == "feature_preview") { "功能预览" }
@@ -491,6 +509,13 @@ func localizedZh(key: String): String {
     else if (key == "clear_cache") { "清理缓存" }
     else if (key == "repositories") { "仓库" }
     else if (key == "gists") { "Gists" }
+    else if (key == "gist_files") { "Gist 文件" }
+    else if (key == "file_content") { "文件内容" }
+    else if (key == "open_raw") { "打开原始文件" }
+    else if (key == "file_type") { "类型" }
+    else if (key == "file_size") { "大小" }
+    else if (key == "updated") { "更新于" }
+    else if (key == "content_unavailable") { "GitHub 没有返回文件内容，可直接打开原始文件查看。" }
     else if (key == "repository_owner") { "仓库所有者" }
     else if (key == "repositories_empty") { "暂时没有可展示的仓库。" }
     else if (key == "no_open_issues") { "没有打开的问题。" }
@@ -573,11 +598,14 @@ func localizedZh(key: String): String {
     else if (key == "composer_h1") { "一级标题" }
     else if (key == "composer_h2") { "二级标题" }
     else if (key == "composer_bullets") { "列表" }
+    else if (key == "composer_numbers") { "编号" }
     else if (key == "composer_checklist") { "清单" }
     else if (key == "composer_quote") { "引用" }
     else if (key == "composer_code") { "代码" }
     else if (key == "composer_link") { "链接" }
     else if (key == "composer_bold") { "加粗" }
+    else if (key == "composer_italic") { "斜体" }
+    else if (key == "composer_divider") { "分隔线" }
     else if (key == "composer_title_required") { "请先填写标题。" }
     else if (key == "composer_branch_required") { "请同时填写 head 和 base 分支。" }
     else if (key == "composer_branch_same") { "head 和 base 分支不能相同。" }

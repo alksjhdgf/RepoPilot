@@ -9,7 +9,7 @@ import ohos.business_exception.BusinessException
 import std.collection.ArrayList
 import std.convert.*
 import ohos_app_cangjie_entry.domain.{GitHubCommentSnapshot, GitHubCommitSnapshot, GitHubGistSnapshot, GitHubIssueSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext, shareExternalLink}
 import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.github.{closeGitHubIssue, deleteGitHubRepository, fetchGitHubIssueComments, forkGitHubRepository}
@@ -410,7 +410,9 @@ func buildRepositoryActionGrid(page: RepositoryDetailPage) {
         }
         Row(space: 12) {
             buildRepositoryActionButton(page, page.t("delete_repository"), { => page.deleteRepository() })
-            Blank()
+            buildRepositoryActionButton(page, page.t("share_repository"), {
+                => shareExternalLink(page.currentRepository().repoUrl, title: page.repositoryDisplayName(), abstract: page.t("share_repository"))
+            })
         }
     }
 }

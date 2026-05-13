@@ -420,12 +420,16 @@ public class GitHubGistSnapshot {
 public class GitHubGistFileSnapshot {
     public let filename: String
     public let language: String
+    public let fileType: String
+    public let size: String
     public let content: String
     public let rawUrl: String
 
-    public init(filename: String, language: String, content: String, rawUrl: String) {
+    public init(filename: String, language: String, fileType: String, size: String, content: String, rawUrl: String) {
         this.filename = filename
         this.language = language
+        this.fileType = fileType
+        this.size = size
         this.content = content
         this.rawUrl = rawUrl
     }

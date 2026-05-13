@@ -973,6 +973,8 @@ public func fetchGitHubGistFiles(
                     GitHubGistFileSnapshot(
                         filename,
                         extractJsonStringField(item, "language"),
+                        extractJsonStringField(item, "type"),
+                        "${extractJsonIntField(item, "size")}",
                         extractJsonStringField(item, "content"),
                         extractJsonStringField(item, "raw_url")
                     )

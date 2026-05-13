@@ -50,11 +50,12 @@ public func searchGitHubRepositories(
     token: String,
     query: String,
     onSuccess: (ArrayList<GitHubRepositoryCardSnapshot>) -> Unit,
-    onFailure: (String) -> Unit
+    onFailure: (String) -> Unit,
+    page!: Int64 = 1
 ): Unit {
     let queryParam = query.replace(" ", "+")
     requestGitHubJson(
-        "https://api.github.com/search/repositories?q=${queryParam}&per_page=20",
+        "https://api.github.com/search/repositories?q=${queryParam}&per_page=20&page=${page}",
         token,
         { body =>
             let repositories = ArrayList<GitHubRepositoryCardSnapshot>()
@@ -144,11 +145,12 @@ public func searchGitHubUsers(
     token: String,
     query: String,
     onSuccess: (ArrayList<GitHubSearchUserSnapshot>) -> Unit,
-    onFailure: (String) -> Unit
+    onFailure: (String) -> Unit,
+    page!: Int64 = 1
 ): Unit {
     let queryParam = query.replace(" ", "+")
     requestGitHubJson(
-        "https://api.github.com/search/users?q=${queryParam}&per_page=20",
+        "https://api.github.com/search/users?q=${queryParam}&per_page=20&page=${page}",
         token,
         { body =>
             let users = ArrayList<GitHubSearchUserSnapshot>()

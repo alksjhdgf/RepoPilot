@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.pages.maps
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.Builder
-import ohos_app_cangjie_entry.pages.repository.{ExploreIssueCommentComposerPage, ExploreIssueComposerPage, ExploreIssueDetailPage, ExploreIssuesPage, ExplorePullRequestComposerPage, ExplorePullRequestDetailPage, ExplorePullRequestReviewComposerPage, ExplorePullRequestsPage, ExploreRepositoryDetailPage}
+import ohos_app_cangjie_entry.pages.repository.{ExploreGistDetailPage, ExploreIssueCommentComposerPage, ExploreIssueComposerPage, ExploreIssueDetailPage, ExploreIssuesPage, ExplorePullRequestComposerPage, ExplorePullRequestDetailPage, ExplorePullRequestReviewComposerPage, ExplorePullRequestsPage, ExploreRepositoryCommitDetailPage, ExploreRepositoryCommitsPage, ExploreRepositoryForksPage, ExploreRepositoryDetailPage, ExploreRepositoryStargazersPage, ExploreRepositoryWatchersPage, ExploreUserActivityPage, ExploreUserFollowersPage, ExploreUserFollowingPage, ExploreUserGistsPage, ExploreUserIssuesPage, ExploreUserProfilePage, ExploreUserPullRequestsPage, ExploreUserRepositoriesPage}
 import ohos_app_cangjie_entry.pages.agent.{ExploreCreateTaskPage, ExploreDiffReviewPage, ExploreTaskDetailPage}
 import ohos_app_cangjie_entry.pages.common.ExplorePlaceholderPage
 
@@ -14,6 +14,34 @@ public func explorePageMap(name: String, detailParam: Any) {
         ExploreIssuesPage()
     } else if (name == "pullRequestsPage") {
         ExplorePullRequestsPage()
+    } else if (name == "watchersPage") {
+        ExploreRepositoryWatchersPage()
+    } else if (name == "stargazersPage") {
+        ExploreRepositoryStargazersPage()
+    } else if (name == "forksPage") {
+        ExploreRepositoryForksPage()
+    } else if (name == "commitsPage") {
+        ExploreRepositoryCommitsPage()
+    } else if (name == "commitDetailPage") {
+        ExploreRepositoryCommitDetailPage()
+    } else if (name == "userProfilePage") {
+        ExploreUserProfilePage()
+    } else if (name == "userFollowersPage") {
+        ExploreUserFollowersPage()
+    } else if (name == "userFollowingPage") {
+        ExploreUserFollowingPage()
+    } else if (name == "userRepositoriesPage") {
+        ExploreUserRepositoriesPage()
+    } else if (name == "userIssuesPage") {
+        ExploreUserIssuesPage()
+    } else if (name == "userPullRequestsPage") {
+        ExploreUserPullRequestsPage()
+    } else if (name == "userActivityPage") {
+        ExploreUserActivityPage()
+    } else if (name == "userGistsPage") {
+        ExploreUserGistsPage()
+    } else if (name == "gistDetailPage") {
+        ExploreGistDetailPage()
     } else if (name == "issueDetail") {
         ExploreIssueDetailPage()
     } else if (name == "pullRequestDetail") {

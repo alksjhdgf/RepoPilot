@@ -11,6 +11,7 @@ var appForegroundHandler: ?() -> Unit = None
 var appAuthCallbackHandler: ?(String) -> Unit = None
 var appPreferenceHandler: ?(String, String) -> Unit = None
 var appDataRefreshHandler: ?(String, () -> Unit) -> Unit = None
+var appTabChangeHandler: ?(String) -> Unit = None
 var pendingAuthCallbackUri: ?String = None
 
 /**
@@ -154,6 +155,32 @@ public func notifyAppDataRefresh(kind: String, onComplete: () -> Unit): Unit {
         return
     }
     onComplete()
+}
+
+/**
+ * 注册分区切换处理器，供页面将用户带到其它主分区。
+ * Registers a tab-change handler so pages can switch the active root section.
+ */
+public func setAppTabChangeHandler(handler: (String) -> Unit): Unit {
+    appTabChangeHandler = Some(handler)
+}
+
+/**
+ * 清理分区切换处理器。
+ * Clears the tab-change handler.
+ */
+public func clearAppTabChangeHandler(): Unit {
+    appTabChangeHandler = None
+}
+
+/**
+ * 将页面发起的主分区切换动作转交给壳层。
+ * Forwards page-initiated root-tab changes into the active app shell.
+ */
+public func notifyAppTabChange(tab: String): Unit {
+    if (let Some(handler) <- appTabChangeHandler) {
+        handler(tab)
+    }
 }
 
 /**

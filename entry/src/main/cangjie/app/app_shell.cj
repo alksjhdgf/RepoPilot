@@ -8,7 +8,7 @@ import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, clearAppPreferenceHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler, setAppPreferenceHandler}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, clearAppPreferenceHandler, clearAppTabChangeHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler, setAppPreferenceHandler, setAppTabChangeHandler}
 import ohos_app_cangjie_entry.services.platform.{defaultWorkplace, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, loadStoredLanguagePreference, loadStoredThemePreference, persistLanguagePreference, persistThemePreference, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
 import ohos_app_cangjie_entry.services.github.{clearStoredGitHubSession, extractUrlQueryParameter, persistStoredGitHubSession, restoreStoredGitHubSession}
@@ -119,6 +119,15 @@ public class AppShell {
     var liveOrganizationCount: String = "0"
 
     @Provide
+    var liveGistCount: String = "0"
+
+    @Provide
+    var liveFollowerCount: String = "0"
+
+    @Provide
+    var liveFollowingCount: String = "0"
+
+    @Provide
     var liveRepositoryDetail: GitHubRepositoryDetailSnapshot = GitHubRepositoryDetailSnapshot(
         "",
         "Connect GitHub to load repository details.",
@@ -128,6 +137,9 @@ public class AppShell {
         "0",
         "main"
     )
+
+    @Provide
+    var liveRepositoryReadme: String = ""
 
     @Provide
     var liveIssues: ArrayList<GitHubIssueSnapshot> = ArrayList<GitHubIssueSnapshot>()
@@ -154,6 +166,7 @@ public class AppShell {
         setAppForegroundHandler({ => this.handleAppForeground() })
         setAppAuthCallbackHandler({ uri => this.handleAuthCallbackUri(uri) })
         setAppPreferenceHandler({ kind, value => this.applyRootPreference(kind, value) })
+        setAppTabChangeHandler({ tab => this.handleTabTap(tab) })
         applyAppStatusBarStyle(this.isDarkTheme())
         if (let Some(pendingUri) <- consumePendingAuthCallback()) {
             this.handleAuthCallbackUri(pendingUri)
@@ -170,6 +183,7 @@ public class AppShell {
         clearAppForegroundHandler()
         clearAppAuthCallbackHandler()
         clearAppPreferenceHandler()
+        clearAppTabChangeHandler()
     }
 
     public func build() {
@@ -514,8 +528,12 @@ public class AppShell {
                 this.liveRepositoryCount = "0"
                 this.liveStarredCount = "0"
                 this.liveOrganizationCount = "0"
+                this.liveGistCount = "0"
+                this.liveFollowerCount = "0"
+                this.liveFollowingCount = "0"
                 this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
                 this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
+                this.liveRepositoryReadme = ""
                 this.liveIssues = ArrayList<GitHubIssueSnapshot>()
                 this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
             })
@@ -556,8 +574,12 @@ public class AppShell {
             this.liveRepositoryCount = "0"
             this.liveStarredCount = "0"
             this.liveOrganizationCount = "0"
+            this.liveGistCount = "0"
+            this.liveFollowerCount = "0"
+            this.liveFollowingCount = "0"
             this.liveRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
             this.liveRepositoryDetail = GitHubRepositoryDetailSnapshot("", "Connect GitHub to load repository details.", "", "", "0", "0", "main")
+            this.liveRepositoryReadme = ""
             this.liveIssues = ArrayList<GitHubIssueSnapshot>()
             this.livePullRequests = ArrayList<GitHubPullRequestSnapshot>()
             this.hasAttemptedSessionRestore = true
@@ -753,6 +775,9 @@ public class AppShell {
             this.liveRepositoryCount = snapshot.repositoryCount
             this.liveStarredCount = snapshot.starredCount
             this.liveOrganizationCount = snapshot.organizationCount
+            this.liveGistCount = snapshot.gistCount
+            this.liveFollowerCount = snapshot.followersCount
+            this.liveFollowingCount = snapshot.followingCount
             logInfo("AppShell", "Applied live profile metrics.")
         })
     }
@@ -788,6 +813,7 @@ public class AppShell {
             this.authAccessToken,
             repositoryName,
             { snapshot => this.applyLiveRepositoryDetail(repositoryName, snapshot) },
+            { markdown => this.applyLiveRepositoryReadme(repositoryName, markdown) },
             { items => this.applyLiveIssues(repositoryName, items) },
             { items => this.applyLivePullRequests(repositoryName, items) },
             { message => this.handleGitHubApiFailure(message) }
@@ -806,6 +832,16 @@ public class AppShell {
             }
             this.liveRepositoryDetail = snapshot
             logInfo("AppShell", "Applied live repository detail for ${repositoryName}.")
+        })
+    }
+
+    func applyLiveRepositoryReadme(repositoryName: String, markdown: String): Unit {
+        this.runOnUi({
+            =>
+            if (repositoryName != this.selectedRepository) {
+                return
+            }
+            this.liveRepositoryReadme = markdown
         })
     }
 

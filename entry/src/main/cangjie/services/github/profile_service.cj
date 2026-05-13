@@ -17,7 +17,9 @@ func requestGitHubJson(
     url: String,
     token: String,
     onSuccess: (String) -> Unit,
-    onFailure: (String) -> Unit
+    onFailure: (String) -> Unit,
+    method!: RequestMethod = RequestMethod.Get,
+    payload!: String = ""
 ): Unit {
     logInfo("GitHubApi", "Requesting ${url}")
     let httpRequest = createHttp()
@@ -25,9 +27,13 @@ func requestGitHubJson(
     headers.add("Accept", GITHUB_API_ACCEPT)
     headers.add("Authorization", "Bearer ${token}")
     headers.add("X-GitHub-Api-Version", GITHUB_API_VERSION)
+    if (payload != "") {
+        headers.add("Content-Type", "application/json")
+    }
     let options = HttpRequestOptions(
-        method: RequestMethod.Get,
+        method: method,
         header: headers,
+        extraData: HttpData.StringData(payload),
         expectDataType: HttpDataType.StringValue
     )
     httpRequest.request(
@@ -174,12 +180,22 @@ public func fetchGitHubProfileMetrics(
                         "https://api.github.com/user/repos?sort=updated&per_page=100",
                         token,
                         { repositoriesBody =>
-                            onSuccess(
-                                GitHubProfileMetricsSnapshot(
-                                    "${extractTopLevelObjectArray(repositoriesBody).size}",
-                                    starredCount,
-                                    organizationCount
-                                )
+                            requestGitHubJson(
+                                "https://api.github.com/user",
+                                token,
+                                { viewerBody =>
+                                    onSuccess(
+                                        GitHubProfileMetricsSnapshot(
+                                            "${extractTopLevelObjectArray(repositoriesBody).size}",
+                                            starredCount,
+                                            organizationCount,
+                                            gistCount: "${extractJsonIntField(viewerBody, "public_gists")}",
+                                            followersCount: "${extractJsonIntField(viewerBody, "followers")}",
+                                            followingCount: "${extractJsonIntField(viewerBody, "following")}"
+                                        )
+                                    )
+                                },
+                                onFailure
                             )
                         },
                         onFailure

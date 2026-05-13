@@ -3,6 +3,7 @@
     "products": [
       {
         "name": "default",
+        "signingConfig": "default",
         "targetSdkVersion": "6.0.2(22)",
         "compatibleSdkVersion": "6.0.2(22)",
         "runtimeOS": "HarmonyOS",
@@ -16,10 +17,25 @@
     ],
     "buildModeSet": [
       {
-        "name": "debug",
+        "name": "debug"
       },
       {
         "name": "release"
+      }
+    ],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/ppp/.ohos/config/default_RepoRilot_3q0MjbBq3p49-lk7zVFrEnhggpw48jsiH7qr3sON1ww=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B6D03CDEE26777BB5E130425F3DA197367C225EA9F8361292AA5E52DF2254F993E6F46B03BDFDEC",
+          "profile": "/Users/ppp/.ohos/config/default_RepoRilot_3q0MjbBq3p49-lk7zVFrEnhggpw48jsiH7qr3sON1ww=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/ppp/.ohos/config/default_RepoRilot_3q0MjbBq3p49-lk7zVFrEnhggpw48jsiH7qr3sON1ww=.p12",
+          "storePassword": "0000001BDD75B797B794F290ACEC650023E6D172B2F5B4E8A429AE21FAF37633A639BC688560CCD4D571C7"
+        }
       }
     ]
   },

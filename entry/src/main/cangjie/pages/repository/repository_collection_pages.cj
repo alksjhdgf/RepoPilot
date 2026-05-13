@@ -2,16 +2,19 @@ package ohos_app_cangjie_entry.pages.repository
 
 import kit.ArkUI.*
 import kit.BasicServicesKit.SystemDateTime
+import kit.AbilityKit.Want
+import ohos.business_exception.BusinessException
 import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import std.collection.ArrayList
 import std.convert.*
 import ohos_app_cangjie_entry.domain.{GitHubIssueSnapshot, GitHubOrganizationSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot}
+import ohos_app_cangjie_entry.infra.runtime.getAppAbilityContext
 import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
 import ohos_app_cangjie_entry.pages.common.{detailBackgroundCommon, detailCardCommon, detailHeaderCommon}
 import ohos_app_cangjie_entry.services.app.refreshGitHubRepositoryBundle
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
-import ohos_app_cangjie_entry.services.github.{createGitHubIssue, fetchGitHubOrganizations}
+import ohos_app_cangjie_entry.services.github.{createGitHubIssue, fetchGitHubOrganizations, persistStoredFavoriteRepositories}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -42,7 +45,7 @@ public class HomeRepositoriesPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -56,11 +59,12 @@ public class HomeRepositoriesPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -82,6 +86,7 @@ public class HomeRepositoriesPage {
                 this.sharedAuthAccessToken,
                 repositoryId,
                 { snapshot => this.liveRepositoryDetail = snapshot },
+                { _ => },
                 { items =>
                     this.liveIssues = items
                     if (items.size > 0) {
@@ -103,6 +108,7 @@ public class HomeRepositoriesPage {
 
     func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
     func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
+    func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
     func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
     func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
     func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
@@ -135,6 +141,126 @@ public class HomeRepositoriesPage {
 }
 
 @Component
+public class HomeFavoriteRepositoriesPickerPage {
+    @Consume var homeStack: NavPathStack
+    @Consume var themePreference: String
+    @Consume var languagePreference: String
+    @Consume var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot>
+    @Consume var favoriteRepositories: ArrayList<GitHubRepositoryCardSnapshot>
+
+    @StorageProp["colorMode"]
+    let systemColorMode: ColorMode = ColorMode.Light
+
+    @StorageProp["languageCode"]
+    let systemLanguageCode: String = "en"
+
+    protected override func aboutToAppear(): Unit {
+        applyAppStatusBarStyle(this.isDarkTheme())
+    }
+
+    public func build() {
+        NavDestination() {
+            Stack(alignContent: Alignment.TopStart) {
+                detailBackgroundCommon(this.pageBackgroundColor())
+                Scroll {
+                    Column(space: 12) {
+                        detailHeaderCommon(this.homeStack, this.t("back"), this.t("manage_favorites"), this.primaryTextColor(), this.surfaceColor())
+                        if (this.liveRepositories.size > 0) {
+                            ForEach(this.liveRepositories, itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
+                                Button() {
+                                    Row(space: 12) {
+                                        Row() {
+                                            Text(if (this.isFavorite(item.name)) { "✓" } else { "+" })
+                                                .fontSize(14)
+                                                .fontWeight(FontWeight.Bold)
+                                                .fontColor(if (this.isFavorite(item.name)) { 0xF8FAFC } else { this.accentStrongColor() })
+                                        }
+                                        .width(32)
+                                        .height(32)
+                                        .borderRadius(16)
+                                        .backgroundColor(if (this.isFavorite(item.name)) { this.accentStrongColor() } else { this.mutedSurfaceColor() })
+                                        .justifyContent(FlexAlign.Center)
+                                        Column(space: 4) {
+                                            Text(item.name)
+                                                .fontSize(15)
+                                                .fontWeight(FontWeight.Bold)
+                                                .fontColor(this.primaryTextColor())
+                                                .width(100.percent)
+                                            Text(if (item.summary == "") { this.t("repository_summary_empty") } else { item.summary })
+                                                .fontSize(12)
+                                                .lineHeight(18)
+                                                .fontColor(this.secondaryTextColor())
+                                                .maxLines(2)
+                                                .width(100.percent)
+                                        }
+                                        .layoutWeight(1)
+                                    }
+                                    .width(100.percent)
+                                    .alignItems(VerticalAlign.Top)
+                                }
+                                .width(100.percent)
+                                .padding(16)
+                                .backgroundColor(this.surfaceColor())
+                                .borderRadius(20)
+                                .onClick({ _ => this.toggleFavorite(item) })
+                            })
+                        } else {
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("favorites"), this.t("repositories_empty"))
+                        }
+                    }
+                    .width(100.percent)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
+                }
+                .width(100.percent)
+                .height(100.percent)
+                .scrollBar(BarState.Off)
+                .align(Alignment.Top)
+            }
+            .width(100.percent)
+            .height(100.percent)
+        }
+        .hideTitleBar(true)
+        .backgroundColor(this.pageBackgroundColor())
+    }
+
+    func isFavorite(repositoryName: String): Bool {
+        for (item in this.favoriteRepositories) {
+            if (item.name == repositoryName) {
+                return true
+            }
+        }
+        false
+    }
+
+    func toggleFavorite(snapshot: GitHubRepositoryCardSnapshot): Unit {
+        let nextItems = ArrayList<GitHubRepositoryCardSnapshot>()
+        var removed = false
+        for (item in this.favoriteRepositories) {
+            if (item.name == snapshot.name) {
+                removed = true
+                continue
+            }
+            nextItems.add(item)
+        }
+        if (!removed) {
+            nextItems.add(snapshot)
+        }
+        this.favoriteRepositories = nextItems
+        persistStoredFavoriteRepositories(nextItems)
+    }
+
+    func pageBackgroundColor(): Int64 { appThemeColor("pageBackground", this.isDarkTheme()) }
+    func surfaceColor(): Int64 { appThemeColor("surface", this.isDarkTheme()) }
+    func mutedSurfaceColor(): Int64 { appThemeColor("mutedSurface", this.isDarkTheme()) }
+    func primaryTextColor(): Int64 { appThemeColor("primaryText", this.isDarkTheme()) }
+    func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
+    func accentStrongColor(): Int64 { appThemeColor("accentStrong", this.isDarkTheme()) }
+    func isDarkTheme(): Bool { appResolveIsDarkTheme(this.themePreference, this.systemColorMode) }
+    func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
+
+}
+
+@Component
 public class HomeTopRepositoriesPage {
     @Consume var homeStack: NavPathStack
     @Consume var themePreference: String
@@ -161,7 +287,7 @@ public class HomeTopRepositoriesPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -175,11 +301,12 @@ public class HomeTopRepositoriesPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -234,6 +361,7 @@ public class HomeTopRepositoriesPage {
                 this.sharedAuthAccessToken,
                 repositoryId,
                 { snapshot => this.liveRepositoryDetail = snapshot },
+                { _ => },
                 { items =>
                     this.liveIssues = items
                     if (items.size > 0) {
@@ -313,7 +441,7 @@ public class HomeStarredRepositoriesPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -327,11 +455,12 @@ public class HomeStarredRepositoriesPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -363,6 +492,7 @@ public class HomeStarredRepositoriesPage {
                 this.sharedAuthAccessToken,
                 repositoryId,
                 { snapshot => this.liveRepositoryDetail = snapshot },
+                { _ => },
                 { items =>
                     this.liveIssues = items
                     if (items.size > 0) {
@@ -439,7 +569,7 @@ public class HomeIssuesPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -459,11 +589,12 @@ public class HomeIssuesPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -527,7 +658,7 @@ public class HomePullRequestsPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -547,11 +678,12 @@ public class HomePullRequestsPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -617,7 +749,7 @@ public class HomeOrganizationsPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -636,11 +768,12 @@ public class HomeOrganizationsPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -690,6 +823,12 @@ public class HomeOrganizationsPage {
         .padding(18)
         .backgroundColor(this.surfaceColor())
         .borderRadius(24)
+        .onClick({ _ => this.openUrl(snapshot.profileUrl) })
+    }
+
+    func openUrl(url: String): Unit {
+        if (url == "") { return }
+        try { getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData")) } catch (_: BusinessException) {}
     }
 }
 
@@ -717,7 +856,7 @@ public class ExploreIssuesPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -737,11 +876,12 @@ public class ExploreIssuesPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -805,7 +945,7 @@ public class ExplorePullRequestsPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 12) {
@@ -825,11 +965,12 @@ public class ExplorePullRequestsPage {
                         }
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)

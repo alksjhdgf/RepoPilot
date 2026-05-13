@@ -167,6 +167,33 @@ func compactInputValue(value: String): String {
     value.replace(" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
 }
 
+func normalizedBranchValue(value: String): String {
+    value.replace("\r", "").replace("\n", "").replace("\t", "").replace(" ", "")
+}
+
+func branchExists(branchNames: ArrayList<String>, value: String): Bool {
+    let candidate = normalizedBranchValue(value)
+    if (candidate == "") {
+        return false
+    }
+    for (branch in branchNames) {
+        if (branch == candidate) {
+            return true
+        }
+    }
+    false
+}
+
+func preferredHeadBranch(branchNames: ArrayList<String>, baseBranch: String): String {
+    let base = normalizedBranchValue(baseBranch)
+    for (branch in branchNames) {
+        if (branch != "" && branch != base) {
+            return branch
+        }
+    }
+    ""
+}
+
 @Component
 public class HomeIssueComposerPage {
     @Consume var homeStack: NavPathStack
@@ -196,7 +223,7 @@ public class HomeIssueComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -231,11 +258,12 @@ public class HomeIssueComposerPage {
                             .onClick({ _ => this.publishIssue() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -282,6 +310,7 @@ public class HomeIssueComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     func appendMarkdown(snippet: String): Unit {
@@ -391,7 +420,7 @@ public class HomePullRequestComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -429,11 +458,12 @@ public class HomePullRequestComposerPage {
                             .onClick({ _ => this.publishPullRequest() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -480,6 +510,7 @@ public class HomePullRequestComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     @Builder
@@ -507,6 +538,7 @@ public class HomePullRequestComposerPage {
             .width(100.percent)
             .scrollable(ScrollDirection.Horizontal)
             .scrollBar(BarState.Off)
+                .align(Alignment.Top)
         }
     }
 
@@ -525,7 +557,16 @@ public class HomePullRequestComposerPage {
         fetchGitHubRepositoryBranches(
             this.sharedAuthAccessToken,
             this.selectedRepository,
-            { branches => this.runOnUi({ => this.branchNames = branches }) },
+            { branches => this.runOnUi({
+                =>
+                this.branchNames = branches
+                if (normalizedBranchValue(this.baseDraft) == "" && branches.size > 0) {
+                    this.baseDraft = branches[0]
+                }
+                if (normalizedBranchValue(this.headDraft) == "") {
+                    this.headDraft = preferredHeadBranch(branches, this.baseDraft)
+                }
+            }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
     }
@@ -544,13 +585,23 @@ public class HomePullRequestComposerPage {
             this.actionMessage = this.t("composer_branch_required")
             return
         }
+        let normalizedHead = normalizedBranchValue(this.headDraft)
+        let normalizedBase = normalizedBranchValue(this.baseDraft)
+        if (normalizedHead == normalizedBase) {
+            this.actionMessage = this.t("composer_branch_same")
+            return
+        }
+        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedHead) || !branchExists(this.branchNames, normalizedBase))) {
+            this.actionMessage = this.t("composer_branch_unknown")
+            return
+        }
         createGitHubPullRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.titleDraft,
             this.bodyDraft,
-            this.headDraft,
-            this.baseDraft,
+            normalizedHead,
+            normalizedBase,
             { pullRequest =>
                 this.runOnUi({
                     =>
@@ -572,7 +623,9 @@ public class HomePullRequestComposerPage {
                         if (pullCount >= 0) { "${pullCount + 1}" } else { nextDetail.pullRequestCount },
                         nextDetail.defaultBranch
                     )
+                    this.actionMessage = ""
                     this.homeStack.pop(animated: true)
+                    this.homeStack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
                 })
             },
             { message => this.runOnUi({ => this.actionMessage = message }) }
@@ -618,7 +671,7 @@ public class ExploreIssueComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -653,11 +706,12 @@ public class ExploreIssueComposerPage {
                             .onClick({ _ => this.publishIssue() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -704,6 +758,7 @@ public class ExploreIssueComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     func appendMarkdown(snippet: String): Unit {
@@ -813,7 +868,7 @@ public class ExplorePullRequestComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -851,11 +906,12 @@ public class ExplorePullRequestComposerPage {
                             .onClick({ _ => this.publishPullRequest() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -902,6 +958,7 @@ public class ExplorePullRequestComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     @Builder
@@ -929,6 +986,7 @@ public class ExplorePullRequestComposerPage {
             .width(100.percent)
             .scrollable(ScrollDirection.Horizontal)
             .scrollBar(BarState.Off)
+                .align(Alignment.Top)
         }
     }
 
@@ -947,7 +1005,16 @@ public class ExplorePullRequestComposerPage {
         fetchGitHubRepositoryBranches(
             this.sharedAuthAccessToken,
             this.selectedRepository,
-            { branches => this.runOnUi({ => this.branchNames = branches }) },
+            { branches => this.runOnUi({
+                =>
+                this.branchNames = branches
+                if (normalizedBranchValue(this.baseDraft) == "" && branches.size > 0) {
+                    this.baseDraft = branches[0]
+                }
+                if (normalizedBranchValue(this.headDraft) == "") {
+                    this.headDraft = preferredHeadBranch(branches, this.baseDraft)
+                }
+            }) },
             { message => this.runOnUi({ => this.actionMessage = message }) }
         )
     }
@@ -966,13 +1033,23 @@ public class ExplorePullRequestComposerPage {
             this.actionMessage = this.t("composer_branch_required")
             return
         }
+        let normalizedHead = normalizedBranchValue(this.headDraft)
+        let normalizedBase = normalizedBranchValue(this.baseDraft)
+        if (normalizedHead == normalizedBase) {
+            this.actionMessage = this.t("composer_branch_same")
+            return
+        }
+        if (this.branchNames.size > 0 && (!branchExists(this.branchNames, normalizedHead) || !branchExists(this.branchNames, normalizedBase))) {
+            this.actionMessage = this.t("composer_branch_unknown")
+            return
+        }
         createGitHubPullRequest(
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.titleDraft,
             this.bodyDraft,
-            this.headDraft,
-            this.baseDraft,
+            normalizedHead,
+            normalizedBase,
             { pullRequest =>
                 this.runOnUi({
                     =>
@@ -994,7 +1071,9 @@ public class ExplorePullRequestComposerPage {
                         if (pullCount >= 0) { "${pullCount + 1}" } else { nextDetail.pullRequestCount },
                         nextDetail.defaultBranch
                     )
+                    this.actionMessage = ""
                     this.exploreStack.pop(animated: true)
+                    this.exploreStack.pushPath(NavPathInfo(name: "pullRequestDetail", param: ""), options: NavigationOptions(animated: true))
                 })
             },
             { message => this.runOnUi({ => this.actionMessage = message }) }
@@ -1036,7 +1115,7 @@ public class HomeIssueCommentComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -1070,11 +1149,12 @@ public class HomeIssueCommentComposerPage {
                             .onClick({ _ => this.publishComment() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -1121,6 +1201,7 @@ public class HomeIssueCommentComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     func appendMarkdown(snippet: String): Unit {
@@ -1187,7 +1268,7 @@ public class HomePullRequestReviewComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -1222,11 +1303,12 @@ public class HomePullRequestReviewComposerPage {
                             .onClick({ _ => this.publishReview() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -1300,6 +1382,7 @@ public class HomePullRequestReviewComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     func appendMarkdown(snippet: String): Unit {
@@ -1366,7 +1449,7 @@ public class ExploreIssueCommentComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -1400,11 +1483,12 @@ public class ExploreIssueCommentComposerPage {
                             .onClick({ _ => this.publishComment() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -1451,6 +1535,7 @@ public class ExploreIssueCommentComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     func appendMarkdown(snippet: String): Unit {
@@ -1517,7 +1602,7 @@ public class ExplorePullRequestReviewComposerPage {
 
     public func build() {
         NavDestination() {
-            Stack() {
+            Stack(alignContent: Alignment.TopStart) {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Scroll {
                     Column(space: 14) {
@@ -1552,11 +1637,12 @@ public class ExplorePullRequestReviewComposerPage {
                             .onClick({ _ => this.publishReview() })
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 18, bottom: 32)
+                    .padding(left: 18, right: 18, top: 18, bottom: 120)
                 }
                 .width(100.percent)
                 .height(100.percent)
                 .scrollBar(BarState.Off)
+                .align(Alignment.Top)
             }
             .width(100.percent)
             .height(100.percent)
@@ -1630,6 +1716,7 @@ public class ExplorePullRequestReviewComposerPage {
         .width(100.percent)
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+                .align(Alignment.Top)
     }
 
     func appendMarkdown(snippet: String): Unit {

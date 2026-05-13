@@ -6,10 +6,11 @@ import ohos.arkui.state_macro_manage.*
 import ohos.base.UIThread
 import ohos.business_exception.BusinessException
 import std.collection.ArrayList
-import ohos_app_cangjie_entry.domain.{GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot}
+import ohos_app_cangjie_entry.domain.{GitHubGistSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, getAppAbilityContext}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.app.{refreshGitHubProfileData, refreshGitHubRepositoryBundle}
+import ohos_app_cangjie_entry.services.github.{fetchGitHubUserFollowers, fetchGitHubUserFollowing, fetchGitHubUserGists, fetchGitHubUserProfile, fetchGitHubUserRepositories}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 
@@ -25,6 +26,9 @@ public class ProfilePage {
     @Consume var liveRepositoryCount: String
     @Consume var liveStarredCount: String
     @Consume var liveOrganizationCount: String
+    @Consume var liveGistCount: String
+    @Consume var liveFollowerCount: String
+    @Consume var liveFollowingCount: String
     @Consume var liveRepositories: ArrayList<GitHubRepositoryCardSnapshot>
     @Consume var selectedRepository: String
     @Consume var selectedIssue: String
@@ -33,6 +37,12 @@ public class ProfilePage {
     @Consume var liveRepositoryDetail: GitHubRepositoryDetailSnapshot
     @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
     @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
+    @Consume var selectedGitHubUserLogin: String
+    @Consume var selectedGitHubUserProfile: GitHubUserProfileSnapshot
+    @Consume var selectedGitHubUserRepositories: ArrayList<GitHubRepositoryCardSnapshot>
+    @Consume var selectedGitHubUserGists: ArrayList<GitHubGistSnapshot>
+    @Consume var selectedGitHubFollowers: ArrayList<GitHubSimpleUserSnapshot>
+    @Consume var selectedGitHubFollowing: ArrayList<GitHubSimpleUserSnapshot>
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -64,7 +74,7 @@ public class ProfilePage {
                                 this.buildProfilePopular()
                             }
                             .width(100.percent)
-                            .padding(left: 18, right: 18, top: 18, bottom: 32)
+                            .padding(left: 18, right: 18, top: 18, bottom: 120)
                         }
                         .width(100.percent)
                         .scrollBar(BarState.Off)
@@ -209,8 +219,36 @@ public class ProfilePage {
     func openOrganizations(): Unit {
         this.homeStack.pushPath(NavPathInfo(name: "organizationsPage", param: ""), options: NavigationOptions(animated: true))
     }
+    func openGists(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.homeStack.pushPath(NavPathInfo(name: "userGistsPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openFollowers(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.homeStack.pushPath(NavPathInfo(name: "userFollowersPage", param: ""), options: NavigationOptions(animated: true))
+    }
+    func openFollowing(): Unit {
+        this.prepareCurrentViewerDetail()
+        this.homeStack.pushPath(NavPathInfo(name: "userFollowingPage", param: ""), options: NavigationOptions(animated: true))
+    }
     func openRepositoryCard(snapshot: GitHubRepositoryCardSnapshot): Unit {
         this.openRepository(snapshot.name)
+    }
+    func prepareCurrentViewerDetail(): Unit {
+        if (this.sharedAuthAccessToken == "" || this.viewerLogin == "") {
+            return
+        }
+        this.selectedGitHubUserLogin = this.viewerLogin
+        this.selectedGitHubUserProfile = GitHubUserProfileSnapshot("", "", "", "", "", "", "", "", "0", "0", "0", "0")
+        this.selectedGitHubUserRepositories = ArrayList<GitHubRepositoryCardSnapshot>()
+        this.selectedGitHubUserGists = ArrayList<GitHubGistSnapshot>()
+        this.selectedGitHubFollowers = ArrayList<GitHubSimpleUserSnapshot>()
+        this.selectedGitHubFollowing = ArrayList<GitHubSimpleUserSnapshot>()
+        fetchGitHubUserProfile(this.sharedAuthAccessToken, this.viewerLogin, { snapshot => this.runOnUi({ => this.selectedGitHubUserProfile = snapshot }) }, { _ => })
+        fetchGitHubUserRepositories(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubUserRepositories = items }) }, { _ => })
+        fetchGitHubUserGists(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubUserGists = items }) }, { _ => })
+        fetchGitHubUserFollowers(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubFollowers = items }) }, { _ => })
+        fetchGitHubUserFollowing(this.sharedAuthAccessToken, this.viewerLogin, { items => this.runOnUi({ => this.selectedGitHubFollowing = items }) }, { _ => })
     }
     func openRepository(repositoryId: String): Unit {
         this.selectedRepository = repositoryId
@@ -225,6 +263,7 @@ public class ProfilePage {
                 this.sharedAuthAccessToken,
                 repositoryId,
                 { snapshot => this.liveRepositoryDetail = snapshot },
+                { _ => },
                 { items =>
                     this.liveIssues = items
                     if (items.size > 0) {
@@ -331,6 +370,12 @@ public class ProfilePage {
             this.buildProfileStatRow(0xFFD54A, "☆", "starred", this.liveStarredCount, { => this.openStarred() })
             this.buildProfileDivider()
             this.buildProfileStatRow(0xF4A24B, "⌂", "organizations", this.liveOrganizationCount, { => this.openOrganizations() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0x4B88FF, "◌", "gists", this.liveGistCount, { => this.openGists() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0x68D968, "◎", "followers", this.liveFollowerCount, { => this.openFollowers() })
+            this.buildProfileDivider()
+            this.buildProfileStatRow(0x7B56E8, "⇄", "following", this.liveFollowingCount, { => this.openFollowing() })
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())

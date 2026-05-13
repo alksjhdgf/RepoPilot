@@ -4,7 +4,7 @@ import std.collection.ArrayList
 import kit.BasicServicesKit.SystemDateTime
 import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubAuthLaunchSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSessionRestorePlan, GitHubStoredSessionSnapshot, GitHubViewerSnapshot, WorkspaceSelectionSnapshot}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
-import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, createGitHubRepository, exchangeGitHubWebCode, fetchGitHubProfileMetrics, fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubViewer, refreshGitHubWebToken}
+import ohos_app_cangjie_entry.services.github.{buildGitHubAuthorizationUri, createGitHubRepository, exchangeGitHubWebCode, fetchGitHubProfileMetrics, fetchGitHubRepositories, fetchGitHubRepositoryDetail, fetchGitHubRepositoryIssues, fetchGitHubRepositoryPullRequests, fetchGitHubRepositoryReadme, fetchGitHubViewer, refreshGitHubWebToken}
 import ohos_app_cangjie_entry.services.platform.{primaryRepositoryId, repositorySnapshot}
 
 public func buildGitHubAuthLaunchSnapshot(requestSequence: Int64): GitHubAuthLaunchSnapshot {
@@ -172,11 +172,20 @@ public func refreshGitHubRepositoryBundle(
     token: String,
     repositoryName: String,
     onDetailSuccess: (GitHubRepositoryDetailSnapshot) -> Unit,
+    onReadmeSuccess: (String) -> Unit,
     onIssuesSuccess: (ArrayList<GitHubIssueSnapshot>) -> Unit,
     onPullRequestsSuccess: (ArrayList<GitHubPullRequestSnapshot>) -> Unit,
     onFailure: (String) -> Unit
 ): Unit {
-    fetchGitHubRepositoryDetail(token, repositoryName, onDetailSuccess, onFailure)
+    fetchGitHubRepositoryDetail(
+        token,
+        repositoryName,
+        { snapshot =>
+            onDetailSuccess(snapshot)
+            fetchGitHubRepositoryReadme(token, repositoryName, snapshot.defaultBranch, onReadmeSuccess, { _ => onReadmeSuccess("") })
+        },
+        onFailure
+    )
     fetchGitHubRepositoryIssues(token, repositoryName, onIssuesSuccess, onFailure)
     fetchGitHubRepositoryPullRequests(token, repositoryName, onPullRequestsSuccess, onFailure)
 }

@@ -1949,27 +1949,7 @@ public class HomeUserActivityPage {
     func loadMore(): Unit { this.loadItems(reset: false) }
 
     func eventSummary(item: GitHubEventSnapshot): String {
-        if (item.eventType == "IssuesEvent") {
-            if (item.action == "opened") { return "${this.t("event_issue_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_issue_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_issue_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "IssueCommentEvent") { return "${this.t("event_issue_commented")} · ${item.targetTitle}" }
-        if (item.eventType == "PullRequestEvent") {
-            if (item.action == "opened") { return "${this.t("event_pr_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_pr_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_pr_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "PullRequestReviewEvent") { return "${this.t("event_pr_reviewed")} · ${item.targetTitle}" }
-        if (item.eventType == "PullRequestReviewCommentEvent") { return "${this.t("event_pr_commented")} · ${item.targetTitle}" }
-        if (item.eventType == "PushEvent") { return "${this.t("event_push")} · ${item.targetTitle}" }
-        if (item.eventType == "WatchEvent") { return "${this.t("event_starred")} · ${item.repoName}" }
-        if (item.eventType == "ForkEvent") { return "${this.t("event_forked")} · ${item.repoName}" }
-        if (item.eventType == "CreateEvent") { return "${this.t("event_created")} · ${item.targetTitle}" }
-        if (item.eventType == "DeleteEvent") { return "${this.t("event_deleted")} · ${item.targetTitle}" }
-        if (item.eventType == "ReleaseEvent") { return "${this.t("event_released")} · ${item.targetTitle}" }
-        if (item.targetTitle != "") { return item.targetTitle }
-        item.eventType
+        githubUserEventSummary(item, { key => this.t(key) })
     }
 
     func openUrl(url: String): Unit {
@@ -3250,27 +3230,7 @@ public class ExploreUserActivityPage {
     func loadMore(): Unit { this.loadItems(reset: false) }
 
     func eventSummary(item: GitHubEventSnapshot): String {
-        if (item.eventType == "IssuesEvent") {
-            if (item.action == "opened") { return "${this.t("event_issue_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_issue_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_issue_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "IssueCommentEvent") { return "${this.t("event_issue_commented")} · ${item.targetTitle}" }
-        if (item.eventType == "PullRequestEvent") {
-            if (item.action == "opened") { return "${this.t("event_pr_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_pr_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_pr_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "PullRequestReviewEvent") { return "${this.t("event_pr_reviewed")} · ${item.targetTitle}" }
-        if (item.eventType == "PullRequestReviewCommentEvent") { return "${this.t("event_pr_commented")} · ${item.targetTitle}" }
-        if (item.eventType == "PushEvent") { return "${this.t("event_push")} · ${item.targetTitle}" }
-        if (item.eventType == "WatchEvent") { return "${this.t("event_starred")} · ${item.repoName}" }
-        if (item.eventType == "ForkEvent") { return "${this.t("event_forked")} · ${item.repoName}" }
-        if (item.eventType == "CreateEvent") { return "${this.t("event_created")} · ${item.targetTitle}" }
-        if (item.eventType == "DeleteEvent") { return "${this.t("event_deleted")} · ${item.targetTitle}" }
-        if (item.eventType == "ReleaseEvent") { return "${this.t("event_released")} · ${item.targetTitle}" }
-        if (item.targetTitle != "") { return item.targetTitle }
-        item.eventType
+        githubUserEventSummary(item, { key => this.t(key) })
     }
 
     func openUrl(url: String): Unit {

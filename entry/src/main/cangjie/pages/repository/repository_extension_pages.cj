@@ -144,6 +144,193 @@ public class HomeRepositoryWatchersPage {
     func secondaryTextColor(): Int64 { appThemeColor("secondaryText", this.isDarkTheme()) }
 }
 
+func githubUserProfileMetaLine(snapshot: GitHubUserProfileSnapshot): String {
+    if (snapshot.location != "" && snapshot.company != "") {
+        return "${snapshot.location} ${snapshot.company}"
+    }
+    if (snapshot.location != "") {
+        return snapshot.location
+    }
+    snapshot.company
+}
+
+func topGitHubRepositories(items: ArrayList<GitHubRepositoryCardSnapshot>): ArrayList<GitHubRepositoryCardSnapshot> {
+    let top = ArrayList<GitHubRepositoryCardSnapshot>()
+    var index: Int64 = 0
+    for (item in items) {
+        if (index >= 5) { break }
+        top.add(item)
+        index += 1
+    }
+    top
+}
+
+func topGitHubEvents(items: ArrayList<GitHubEventSnapshot>): ArrayList<GitHubEventSnapshot> {
+    let top = ArrayList<GitHubEventSnapshot>()
+    var index: Int64 = 0
+    for (item in items) {
+        if (index >= 5) { break }
+        top.add(item)
+        index += 1
+    }
+    top
+}
+
+func githubUserEventSummary(item: GitHubEventSnapshot, t: (String) -> String): String {
+    if (item.eventType == "IssuesEvent") {
+        if (item.action == "opened") { return "${t("event_issue_opened")} · ${item.targetTitle}" }
+        if (item.action == "closed") { return "${t("event_issue_closed")} · ${item.targetTitle}" }
+        return "${t("event_issue_updated")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "IssueCommentEvent") {
+        return "${t("event_issue_commented")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "PullRequestEvent") {
+        if (item.action == "opened") { return "${t("event_pr_opened")} · ${item.targetTitle}" }
+        if (item.action == "closed") { return "${t("event_pr_closed")} · ${item.targetTitle}" }
+        return "${t("event_pr_updated")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "PullRequestReviewEvent") {
+        return "${t("event_pr_reviewed")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "PullRequestReviewCommentEvent") {
+        return "${t("event_pr_commented")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "PushEvent") {
+        return "${t("event_push")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "WatchEvent") {
+        return "${t("event_starred")} · ${item.repoName}"
+    }
+    if (item.eventType == "ForkEvent") {
+        return "${t("event_forked")} · ${item.repoName}"
+    }
+    if (item.eventType == "CreateEvent") {
+        return "${t("event_created")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "DeleteEvent") {
+        return "${t("event_deleted")} · ${item.targetTitle}"
+    }
+    if (item.eventType == "ReleaseEvent") {
+        return "${t("event_released")} · ${item.targetTitle}"
+    }
+    if (item.targetTitle != "") {
+        return item.targetTitle
+    }
+    item.eventType
+}
+
+@Builder
+func buildGitHubUserProfileIdentityCard(surfaceColor: Int64, mutedSurfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, snapshot: GitHubUserProfileSnapshot, openLabel: String, shareLabel: String, onOpen: () -> Unit, onShare: () -> Unit) {
+    Column(space: 10) {
+        Text(if (snapshot.displayName != "") { snapshot.displayName } else { snapshot.login })
+            .fontSize(20)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(primaryTextColor)
+            .width(100.percent)
+        if (snapshot.bio != "") {
+            Text(snapshot.bio).fontSize(13).lineHeight(20).fontColor(secondaryTextColor).width(100.percent)
+        }
+        if (snapshot.location != "" || snapshot.company != "") {
+            Text(githubUserProfileMetaLine(snapshot))
+                .fontSize(12).fontColor(secondaryTextColor).width(100.percent)
+        }
+        Button(openLabel)
+            .width(100.percent)
+            .height(44)
+            .backgroundColor(surfaceColor)
+            .fontColor(primaryTextColor)
+            .borderRadius(14)
+            .onClick({ _ => onOpen() })
+        Button(shareLabel)
+            .width(100.percent)
+            .height(44)
+            .backgroundColor(mutedSurfaceColor)
+            .fontColor(primaryTextColor)
+            .borderRadius(14)
+            .onClick({ _ => onShare() })
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(surfaceColor)
+    .borderRadius(24)
+}
+
+@Builder
+func buildGitHubUserProfileStatsCard(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, repositoriesLabel: String, repositoriesValue: String, onRepositories: () -> Unit, issuesLabel: String, issuesValue: String, onIssues: () -> Unit, pullRequestsLabel: String, pullRequestsValue: String, onPullRequests: () -> Unit, gistsLabel: String, gistsValue: String, onGists: () -> Unit, followersLabel: String, followersValue: String, onFollowers: () -> Unit, followingLabel: String, followingValue: String, onFollowing: () -> Unit, dividerColor: Int64) {
+    Column(space: 0) {
+        buildStatRow(repositoriesLabel, repositoriesValue, onRepositories, surfaceColor, primaryTextColor, secondaryTextColor)
+        buildThinDivider(dividerColor)
+        buildStatRow(issuesLabel, issuesValue, onIssues, surfaceColor, primaryTextColor, secondaryTextColor)
+        buildThinDivider(dividerColor)
+        buildStatRow(pullRequestsLabel, pullRequestsValue, onPullRequests, surfaceColor, primaryTextColor, secondaryTextColor)
+        buildThinDivider(dividerColor)
+        buildStatRow(gistsLabel, gistsValue, onGists, surfaceColor, primaryTextColor, secondaryTextColor)
+        buildThinDivider(dividerColor)
+        buildStatRow(followersLabel, followersValue, onFollowers, surfaceColor, primaryTextColor, secondaryTextColor)
+        buildThinDivider(dividerColor)
+        buildStatRow(followingLabel, followingValue, onFollowing, surfaceColor, primaryTextColor, secondaryTextColor)
+    }
+    .width(100.percent)
+    .backgroundColor(surfaceColor)
+    .borderRadius(24)
+}
+
+@Builder
+func buildGitHubUserProfileRepoPreviewCard(surfaceColor: Int64, mutedSurfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, repositoriesLabel: String, publicLabel: String, privateLabel: String, items: ArrayList<GitHubRepositoryCardSnapshot>, onOpenRepository: (GitHubRepositoryCardSnapshot) -> Unit) {
+    Column(space: 12) {
+        Text(repositoriesLabel).fontSize(16).fontWeight(FontWeight.Bold).fontColor(primaryTextColor).width(100.percent)
+        ForEach(topGitHubRepositories(items), itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
+            buildRepositoryCardRow(mutedSurfaceColor, primaryTextColor, secondaryTextColor, item, publicLabel, privateLabel, { => onOpenRepository(item) })
+        })
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(surfaceColor)
+    .borderRadius(24)
+}
+
+@Builder
+func buildGitHubUserProfileActivityCard(surfaceColor: Int64, primaryTextColor: Int64, secondaryTextColor: Int64, activityLabel: String, viewAllLabel: String, emptyLabel: String, items: ArrayList<GitHubEventSnapshot>, eventSummary: (GitHubEventSnapshot) -> String, onViewAll: () -> Unit, onOpenEvent: (GitHubEventSnapshot) -> Unit) {
+    Column(space: 12) {
+        Row {
+            Text(activityLabel).fontSize(16).fontWeight(FontWeight.Bold).fontColor(primaryTextColor)
+            Blank()
+            Text(viewAllLabel).fontSize(12).fontColor(secondaryTextColor)
+        }
+        .width(100.percent)
+        .onClick({ _ => onViewAll() })
+        if (items.size > 0) {
+            ForEach(topGitHubEvents(items), itemGeneratorFunc: { item: GitHubEventSnapshot, _: Int64 =>
+                buildGitHubUserActivityRow(primaryTextColor, secondaryTextColor, item, eventSummary(item), { => onOpenEvent(item) })
+            })
+        } else {
+            Text(emptyLabel).fontSize(13).lineHeight(20).fontColor(secondaryTextColor).width(100.percent)
+        }
+    }
+    .width(100.percent)
+    .padding(18)
+    .backgroundColor(surfaceColor)
+    .borderRadius(24)
+}
+
+@Builder
+func buildGitHubUserActivityRow(primaryTextColor: Int64, secondaryTextColor: Int64, item: GitHubEventSnapshot, summary: String, onOpen: () -> Unit) {
+    Column(space: 8) {
+        Text(if (item.repoName == "") { item.targetTitle } else { item.repoName }).fontSize(14).fontWeight(FontWeight.Bold).fontColor(primaryTextColor).width(100.percent)
+        Text(summary).fontSize(12).lineHeight(18).fontColor(secondaryTextColor).width(100.percent)
+    }
+    .width(100.percent)
+    .onClick({ _ => onOpen() })
+}
+
+func firstGitHubGistRawUrl(files: ArrayList<GitHubGistFileSnapshot>): String {
+    if (files.size == 0) {
+        return ""
+    }
+    files[0].rawUrl
+}
+
 @Component
 public class HomeRepositoryStargazersPage {
     @Consume var homeStack: NavPathStack
@@ -834,38 +1021,7 @@ public class HomeUserProfilePage {
 
     @Builder
     func buildIdentityCard() {
-        Column(space: 10) {
-            Text(if (this.selectedGitHubUserProfile.displayName != "") { this.selectedGitHubUserProfile.displayName } else { this.selectedGitHubUserProfile.login })
-                .fontSize(20)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(this.primaryTextColor())
-                .width(100.percent)
-            if (this.selectedGitHubUserProfile.bio != "") {
-                Text(this.selectedGitHubUserProfile.bio).fontSize(13).lineHeight(20).fontColor(this.secondaryTextColor()).width(100.percent)
-            }
-            if (this.selectedGitHubUserProfile.location != "" || this.selectedGitHubUserProfile.company != "") {
-                Text(this.profileMetaLine())
-                    .fontSize(12).fontColor(this.secondaryTextColor()).width(100.percent)
-            }
-            Button(this.t("open_on_github"))
-                .width(100.percent)
-                .height(44)
-                .backgroundColor(this.surfaceColor())
-                .fontColor(this.primaryTextColor())
-                .borderRadius(14)
-                .onClick({ _ => this.openUrl(this.selectedGitHubUserProfile.profileUrl) })
-            Button(this.t("share_profile"))
-                .width(100.percent)
-                .height(44)
-                .backgroundColor(this.mutedSurfaceColor())
-                .fontColor(this.primaryTextColor())
-                .borderRadius(14)
-                .onClick({ _ => shareExternalLink(this.selectedGitHubUserProfile.profileUrl, title: this.selectedGitHubUserLogin, abstract: this.t("share_profile")) })
-        }
-        .width(100.percent)
-        .padding(18)
-        .backgroundColor(this.surfaceColor())
-        .borderRadius(24)
+        buildGitHubUserProfileIdentityCard(this.surfaceColor(), this.mutedSurfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubUserProfile, this.t("open_on_github"), this.t("share_profile"), { => this.openUrl(this.selectedGitHubUserProfile.profileUrl) }, { => shareExternalLink(this.selectedGitHubUserProfile.profileUrl, title: this.selectedGitHubUserLogin, abstract: this.t("share_profile")) })
     }
 
     @Builder
@@ -890,116 +1046,29 @@ public class HomeUserProfilePage {
 
     @Builder
     func buildRepoPreviewCard() {
-        Column(space: 12) {
-            Text(this.t("repositories")).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor()).width(100.percent)
-            ForEach(this.topRepositories(), itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
-                buildRepositoryCardRow(this.mutedSurfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item, this.t("public"), this.t("private"), { => this.openRepository(item.name) })
-            })
-        }
-        .width(100.percent)
-        .padding(18)
-        .backgroundColor(this.surfaceColor())
-        .borderRadius(24)
+        buildGitHubUserProfileRepoPreviewCard(this.surfaceColor(), this.mutedSurfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("repositories"), this.t("public"), this.t("private"), this.selectedGitHubUserRepositories, { item: GitHubRepositoryCardSnapshot => this.openRepository(item.name) })
     }
 
     func topRepositories(): ArrayList<GitHubRepositoryCardSnapshot> {
-        let top = ArrayList<GitHubRepositoryCardSnapshot>()
-        var index: Int64 = 0
-        for (item in this.selectedGitHubUserRepositories) {
-            if (index >= 5) { break }
-            top.add(item)
-            index += 1
-        }
-        top
+        topGitHubRepositories(this.selectedGitHubUserRepositories)
     }
 
     @Builder
     func buildActivityCard() {
-        Column(space: 12) {
-            Row {
-                Text(this.t("activity")).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-                Blank()
-                Text(this.t("view_all")).fontSize(12).fontColor(this.secondaryTextColor())
-            }
-            .width(100.percent)
-            .onClick({ _ => this.homeStack.pushPath(NavPathInfo(name: "userActivityPage", param: ""), options: NavigationOptions(animated: true)) })
-            if (this.recentEvents.size > 0) {
-                ForEach(this.topEvents(), itemGeneratorFunc: { item: GitHubEventSnapshot, _: Int64 =>
-                    this.buildActivityRow(item)
-                })
-            } else {
-                Text(this.t("activity_empty")).fontSize(13).lineHeight(20).fontColor(this.secondaryTextColor()).width(100.percent)
-            }
-        }
-        .width(100.percent)
-        .padding(18)
-        .backgroundColor(this.surfaceColor())
-        .borderRadius(24)
+        buildGitHubUserProfileActivityCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("activity"), this.t("view_all"), this.t("activity_empty"), this.recentEvents, { item: GitHubEventSnapshot => this.eventSummary(item) }, { => this.homeStack.pushPath(NavPathInfo(name: "userActivityPage", param: ""), options: NavigationOptions(animated: true)) }, { item: GitHubEventSnapshot => this.openUrl(item.targetUrl) })
     }
 
     @Builder
     func buildActivityRow(item: GitHubEventSnapshot) {
-        Column(space: 8) {
-            Text(if (item.repoName == "") { item.targetTitle } else { item.repoName }).fontSize(14).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor()).width(100.percent)
-            Text(this.eventSummary(item)).fontSize(12).lineHeight(18).fontColor(this.secondaryTextColor()).width(100.percent)
-        }
-        .width(100.percent)
-        .onClick({ _ => this.openUrl(item.targetUrl) })
+        buildGitHubUserActivityRow(this.primaryTextColor(), this.secondaryTextColor(), item, this.eventSummary(item), { => this.openUrl(item.targetUrl) })
     }
 
     func topEvents(): ArrayList<GitHubEventSnapshot> {
-        let top = ArrayList<GitHubEventSnapshot>()
-        var index: Int64 = 0
-        for (item in this.recentEvents) {
-            if (index >= 5) { break }
-            top.add(item)
-            index += 1
-        }
-        top
+        topGitHubEvents(this.recentEvents)
     }
 
     func eventSummary(item: GitHubEventSnapshot): String {
-        if (item.eventType == "IssuesEvent") {
-            if (item.action == "opened") { return "${this.t("event_issue_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_issue_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_issue_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "IssueCommentEvent") {
-            return "${this.t("event_issue_commented")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "PullRequestEvent") {
-            if (item.action == "opened") { return "${this.t("event_pr_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_pr_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_pr_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "PullRequestReviewEvent") {
-            return "${this.t("event_pr_reviewed")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "PullRequestReviewCommentEvent") {
-            return "${this.t("event_pr_commented")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "PushEvent") {
-            return "${this.t("event_push")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "WatchEvent") {
-            return "${this.t("event_starred")} · ${item.repoName}"
-        }
-        if (item.eventType == "ForkEvent") {
-            return "${this.t("event_forked")} · ${item.repoName}"
-        }
-        if (item.eventType == "CreateEvent") {
-            return "${this.t("event_created")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "DeleteEvent") {
-            return "${this.t("event_deleted")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "ReleaseEvent") {
-            return "${this.t("event_released")} · ${item.targetTitle}"
-        }
-        if (item.targetTitle != "") {
-            return item.targetTitle
-        }
-        item.eventType
+        githubUserEventSummary(item, { key => this.t(key) })
     }
 
     func openUrl(url: String): Unit {
@@ -2146,10 +2215,7 @@ public class HomeGistDetailPage {
     }
 
     func firstRawUrl(): String {
-        if (this.selectedGitHubGistFiles.size == 0) {
-            return ""
-        }
-        this.selectedGitHubGistFiles[0].rawUrl
+        firstGitHubGistRawUrl(this.selectedGitHubGistFiles)
     }
 
     func openFile(item: GitHubGistFileSnapshot): Unit {
@@ -2216,8 +2282,8 @@ public class HomeGistFileContentPage {
                     .width(100.percent)
                     Scroll {
                         Column(space: 12) {
-                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile.filename, this.selectedGitHubGistFile.language)
-                            buildGistFileContentCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile, this.t("file_type"), this.t("file_size"), this.t("content_unavailable"))
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.primaryTextColor(), this.selectedGitHubGistFile.filename, this.selectedGitHubGistFile.language)
+                            buildGistFileContentCard(this.surfaceColor(), this.primaryTextColor(), this.primaryTextColor(), this.selectedGitHubGistFile, this.t("file_type"), this.t("file_size"), this.t("content_unavailable"))
                         }
                         .width(100.percent)
                         .padding(bottom: 120)
@@ -2964,13 +3030,7 @@ public class ExploreUserProfilePage {
 
     @Builder
     func buildIdentityCard() {
-        Column(space: 10) {
-            Text(if (this.selectedGitHubUserProfile.displayName != "") { this.selectedGitHubUserProfile.displayName } else { this.selectedGitHubUserProfile.login }).fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor()).width(100.percent)
-            if (this.selectedGitHubUserProfile.bio != "") { Text(this.selectedGitHubUserProfile.bio).fontSize(13).lineHeight(20).fontColor(this.secondaryTextColor()).width(100.percent) }
-            if (this.selectedGitHubUserProfile.location != "" || this.selectedGitHubUserProfile.company != "") { Text(this.profileMetaLine()).fontSize(12).fontColor(this.secondaryTextColor()).width(100.percent) }
-            Button(this.t("open_on_github")).width(100.percent).height(44).backgroundColor(this.surfaceColor()).fontColor(this.primaryTextColor()).borderRadius(14).onClick({ _ => this.openUrl(this.selectedGitHubUserProfile.profileUrl) })
-            Button(this.t("share_profile")).width(100.percent).height(44).backgroundColor(this.mutedSurfaceColor()).fontColor(this.primaryTextColor()).borderRadius(14).onClick({ _ => shareExternalLink(this.selectedGitHubUserProfile.profileUrl, title: this.selectedGitHubUserLogin, abstract: this.t("share_profile")) })
-        }.width(100.percent).padding(18).backgroundColor(this.surfaceColor()).borderRadius(24)
+        buildGitHubUserProfileIdentityCard(this.surfaceColor(), this.mutedSurfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubUserProfile, this.t("open_on_github"), this.t("share_profile"), { => this.openUrl(this.selectedGitHubUserProfile.profileUrl) }, { => shareExternalLink(this.selectedGitHubUserProfile.profileUrl, title: this.selectedGitHubUserLogin, abstract: this.t("share_profile")) })
     }
     @Builder
     func buildStatsCard() {
@@ -2990,75 +3050,24 @@ public class ExploreUserProfilePage {
     }
     @Builder
     func buildRepoPreviewCard() {
-        Column(space: 12) {
-            Text(this.t("repositories")).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor()).width(100.percent)
-            ForEach(this.topRepositories(), itemGeneratorFunc: { item: GitHubRepositoryCardSnapshot, _: Int64 =>
-                buildRepositoryCardRow(this.mutedSurfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), item, this.t("public"), this.t("private"), { => this.openRepository(item.name) })
-            })
-        }.width(100.percent).padding(18).backgroundColor(this.surfaceColor()).borderRadius(24)
+        buildGitHubUserProfileRepoPreviewCard(this.surfaceColor(), this.mutedSurfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("repositories"), this.t("public"), this.t("private"), this.selectedGitHubUserRepositories, { item: GitHubRepositoryCardSnapshot => this.openRepository(item.name) })
     }
     func topRepositories(): ArrayList<GitHubRepositoryCardSnapshot> {
-        let top = ArrayList<GitHubRepositoryCardSnapshot>()
-        var index: Int64 = 0
-        for (item in this.selectedGitHubUserRepositories) { if (index >= 5) { break }; top.add(item); index += 1 }
-        top
+        topGitHubRepositories(this.selectedGitHubUserRepositories)
     }
     @Builder
     func buildActivityCard() {
-        Column(space: 12) {
-            Row {
-                Text(this.t("activity")).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
-                Blank()
-                Text(this.t("view_all")).fontSize(12).fontColor(this.secondaryTextColor())
-            }
-            .width(100.percent)
-            .onClick({ _ => this.exploreStack.pushPath(NavPathInfo(name: "userActivityPage", param: ""), options: NavigationOptions(animated: true)) })
-            if (this.recentEvents.size > 0) {
-                ForEach(this.topEvents(), itemGeneratorFunc: { item: GitHubEventSnapshot, _: Int64 =>
-                    this.buildActivityRow(item)
-                })
-            } else {
-                Text(this.t("activity_empty")).fontSize(13).lineHeight(20).fontColor(this.secondaryTextColor()).width(100.percent)
-            }
-        }.width(100.percent).padding(18).backgroundColor(this.surfaceColor()).borderRadius(24)
+        buildGitHubUserProfileActivityCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.t("activity"), this.t("view_all"), this.t("activity_empty"), this.recentEvents, { item: GitHubEventSnapshot => this.eventSummary(item) }, { => this.exploreStack.pushPath(NavPathInfo(name: "userActivityPage", param: ""), options: NavigationOptions(animated: true)) }, { item: GitHubEventSnapshot => this.openUrl(item.targetUrl) })
     }
     @Builder
     func buildActivityRow(item: GitHubEventSnapshot) {
-        Column(space: 8) {
-            Text(if (item.repoName == "") { item.targetTitle } else { item.repoName }).fontSize(14).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor()).width(100.percent)
-            Text(this.eventSummary(item)).fontSize(12).lineHeight(18).fontColor(this.secondaryTextColor()).width(100.percent)
-        }
-        .width(100.percent)
-        .onClick({ _ => this.openUrl(item.targetUrl) })
+        buildGitHubUserActivityRow(this.primaryTextColor(), this.secondaryTextColor(), item, this.eventSummary(item), { => this.openUrl(item.targetUrl) })
     }
     func topEvents(): ArrayList<GitHubEventSnapshot> {
-        let top = ArrayList<GitHubEventSnapshot>()
-        var index: Int64 = 0
-        for (item in this.recentEvents) { if (index >= 5) { break }; top.add(item); index += 1 }
-        top
+        topGitHubEvents(this.recentEvents)
     }
     func eventSummary(item: GitHubEventSnapshot): String {
-        if (item.eventType == "IssuesEvent") {
-            if (item.action == "opened") { return "${this.t("event_issue_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_issue_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_issue_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "IssueCommentEvent") { return "${this.t("event_issue_commented")} · ${item.targetTitle}" }
-        if (item.eventType == "PullRequestEvent") {
-            if (item.action == "opened") { return "${this.t("event_pr_opened")} · ${item.targetTitle}" }
-            if (item.action == "closed") { return "${this.t("event_pr_closed")} · ${item.targetTitle}" }
-            return "${this.t("event_pr_updated")} · ${item.targetTitle}"
-        }
-        if (item.eventType == "PullRequestReviewEvent") { return "${this.t("event_pr_reviewed")} · ${item.targetTitle}" }
-        if (item.eventType == "PullRequestReviewCommentEvent") { return "${this.t("event_pr_commented")} · ${item.targetTitle}" }
-        if (item.eventType == "PushEvent") { return "${this.t("event_push")} · ${item.targetTitle}" }
-        if (item.eventType == "WatchEvent") { return "${this.t("event_starred")} · ${item.repoName}" }
-        if (item.eventType == "ForkEvent") { return "${this.t("event_forked")} · ${item.repoName}" }
-        if (item.eventType == "CreateEvent") { return "${this.t("event_created")} · ${item.targetTitle}" }
-        if (item.eventType == "DeleteEvent") { return "${this.t("event_deleted")} · ${item.targetTitle}" }
-        if (item.eventType == "ReleaseEvent") { return "${this.t("event_released")} · ${item.targetTitle}" }
-        if (item.targetTitle != "") { return item.targetTitle }
-        item.eventType
+        githubUserEventSummary(item, { key => this.t(key) })
     }
     func openUrl(url: String): Unit {
         if (url == "") { return }
@@ -4166,10 +4175,7 @@ public class ExploreGistDetailPage {
     }
 
     func firstRawUrl(): String {
-        if (this.selectedGitHubGistFiles.size == 0) {
-            return ""
-        }
-        this.selectedGitHubGistFiles[0].rawUrl
+        firstGitHubGistRawUrl(this.selectedGitHubGistFiles)
     }
 
     func openFile(item: GitHubGistFileSnapshot): Unit {
@@ -4236,8 +4242,8 @@ public class ExploreGistFileContentPage {
                     .width(100.percent)
                     Scroll {
                         Column(space: 12) {
-                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile.filename, this.selectedGitHubGistFile.language)
-                            buildGistFileContentCard(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.selectedGitHubGistFile, this.t("file_type"), this.t("file_size"), this.t("content_unavailable"))
+                            detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.primaryTextColor(), this.selectedGitHubGistFile.filename, this.selectedGitHubGistFile.language)
+                            buildGistFileContentCard(this.surfaceColor(), this.primaryTextColor(), this.primaryTextColor(), this.selectedGitHubGistFile, this.t("file_type"), this.t("file_size"), this.t("content_unavailable"))
                         }
                         .width(100.percent)
                         .padding(bottom: 120)

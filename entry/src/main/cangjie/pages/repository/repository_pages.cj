@@ -485,7 +485,6 @@ public class IssueDetailPage {
     @Consume var languagePreference: String
     @Consume var sharedAuthAccessToken: String
     @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
-    @Consume var pendingPullRequestReviewEvent: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -653,7 +652,6 @@ public class PullRequestDetailPage {
     @Consume var languagePreference: String
     @Consume var sharedAuthAccessToken: String
     @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
-    @Consume var pendingPullRequestReviewEvent: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -730,8 +728,7 @@ public class PullRequestDetailPage {
         GitHubPullRequestSnapshot("", "Pull request not loaded", "Open a repository pull request first.", "", "", "")
     }
     func openReviewComposer(event: String): Unit {
-        this.pendingPullRequestReviewEvent = event
-        this.homeStack.pushPath(NavPathInfo(name: "pullRequestReviewComposer", param: ""), options: NavigationOptions(animated: true))
+        this.homeStack.pushPath(NavPathInfo(name: "pullRequestReviewComposer", param: event), options: NavigationOptions(animated: true))
     }
     func runOnUi(task: () -> Unit): Unit { spawn(UIThread) { => task() } }
     func refreshPullRequestComments(): Unit {

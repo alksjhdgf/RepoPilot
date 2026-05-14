@@ -1357,7 +1357,6 @@ public class HomePullRequestReviewComposerPage {
     @Consume var sharedAuthAccessToken: String
     @Consume var selectedRepository: String
     @Consume var selectedPullRequest: String
-    @Consume var pendingPullRequestReviewEvent: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -1368,6 +1367,7 @@ public class HomePullRequestReviewComposerPage {
     @State var bodyDraft: String = ""
     @State var previewMode: Bool = false
     @State var actionMessage: String = ""
+    @State var reviewEvent: String = "COMMENT"
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
@@ -1422,6 +1422,19 @@ public class HomePullRequestReviewComposerPage {
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
+        .onReady({ context =>
+            match (context.pathInfo.param) {
+                case Some(value) =>
+                    match (value as String) {
+                        case Some(event) =>
+                            if (event != "") {
+                                this.reviewEvent = event
+                            }
+                        case None => ()
+                    }
+                case None => ()
+            }
+        })
     }
 
     @Builder
@@ -1445,10 +1458,10 @@ public class HomePullRequestReviewComposerPage {
         Button(label)
             .height(36)
             .padding(left: 12, right: 12)
-            .backgroundColor(if (this.pendingPullRequestReviewEvent == event) { this.primaryTextColor() } else { this.surfaceColor() })
-            .fontColor(if (this.pendingPullRequestReviewEvent == event) { this.surfaceColor() } else { this.primaryTextColor() })
+            .backgroundColor(if (this.reviewEvent == event) { this.primaryTextColor() } else { this.surfaceColor() })
+            .fontColor(if (this.reviewEvent == event) { this.surfaceColor() } else { this.primaryTextColor() })
             .borderRadius(16)
-            .onClick({ _ => this.pendingPullRequestReviewEvent = event })
+            .onClick({ _ => this.reviewEvent = event })
     }
 
     @Builder
@@ -1503,7 +1516,7 @@ public class HomePullRequestReviewComposerPage {
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.selectedPullRequest,
-            this.pendingPullRequestReviewEvent,
+            this.reviewEvent,
             this.bodyDraft,
             this.t("sign_in_required"),
             this.t("composer_body_required"),
@@ -1670,7 +1683,6 @@ public class ExplorePullRequestReviewComposerPage {
     @Consume var sharedAuthAccessToken: String
     @Consume var selectedRepository: String
     @Consume var selectedPullRequest: String
-    @Consume var pendingPullRequestReviewEvent: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -1681,6 +1693,7 @@ public class ExplorePullRequestReviewComposerPage {
     @State var bodyDraft: String = ""
     @State var previewMode: Bool = false
     @State var actionMessage: String = ""
+    @State var reviewEvent: String = "COMMENT"
 
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
@@ -1735,6 +1748,19 @@ public class ExplorePullRequestReviewComposerPage {
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
+        .onReady({ context =>
+            match (context.pathInfo.param) {
+                case Some(value) =>
+                    match (value as String) {
+                        case Some(event) =>
+                            if (event != "") {
+                                this.reviewEvent = event
+                            }
+                        case None => ()
+                    }
+                case None => ()
+            }
+        })
     }
 
     @Builder
@@ -1758,10 +1784,10 @@ public class ExplorePullRequestReviewComposerPage {
         Button(label)
             .height(36)
             .padding(left: 12, right: 12)
-            .backgroundColor(if (this.pendingPullRequestReviewEvent == event) { this.primaryTextColor() } else { this.surfaceColor() })
-            .fontColor(if (this.pendingPullRequestReviewEvent == event) { this.surfaceColor() } else { this.primaryTextColor() })
+            .backgroundColor(if (this.reviewEvent == event) { this.primaryTextColor() } else { this.surfaceColor() })
+            .fontColor(if (this.reviewEvent == event) { this.surfaceColor() } else { this.primaryTextColor() })
             .borderRadius(16)
-            .onClick({ _ => this.pendingPullRequestReviewEvent = event })
+            .onClick({ _ => this.reviewEvent = event })
     }
 
     @Builder
@@ -1813,7 +1839,7 @@ public class ExplorePullRequestReviewComposerPage {
             this.sharedAuthAccessToken,
             this.selectedRepository,
             this.selectedPullRequest,
-            this.pendingPullRequestReviewEvent,
+            this.reviewEvent,
             this.bodyDraft,
             this.t("sign_in_required"),
             this.t("composer_body_required"),

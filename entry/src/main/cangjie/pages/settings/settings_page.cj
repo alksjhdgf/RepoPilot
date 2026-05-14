@@ -6,13 +6,17 @@ import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
+let SETTINGS_PLACEHOLDER_FIELD_DELIMITER = "::|::"
+
+func buildSettingsPlaceholderParam(title: String, message: String): String {
+    "${title}${SETTINGS_PLACEHOLDER_FIELD_DELIMITER}${message}"
+}
+
 @Component
 public class SettingsPage {
     @Consume var themePreference: String
     @Consume var languagePreference: String
     @Consume var homeStack: NavPathStack
-    @Consume var pendingPageTitle: String
-    @Consume var pendingPageMessage: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -60,9 +64,7 @@ public class SettingsPage {
         } else if (kind == "language") {
             this.homeStack.pushPath(NavPathInfo(name: "languageSettings", param: ""), options: NavigationOptions(animated: true))
         } else {
-            this.pendingPageTitle = title
-            this.pendingPageMessage = "该页面待开发"
-            this.homeStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+            this.homeStack.pushPath(NavPathInfo(name: "placeholder", param: buildSettingsPlaceholderParam(title, "该页面待开发")), options: NavigationOptions(animated: true))
         }
     }
 

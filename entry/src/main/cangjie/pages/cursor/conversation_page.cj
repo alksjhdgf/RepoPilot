@@ -12,6 +12,12 @@ import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.infra.logging.logWarn
 
+let CURSOR_PLACEHOLDER_FIELD_DELIMITER = "::|::"
+
+func buildCursorPlaceholderParam(title: String, message: String): String {
+    "${title}${CURSOR_PLACEHOLDER_FIELD_DELIMITER}${message}"
+}
+
 @Component
 public class CursorConversationPage {
     @Consume var cursorStack: NavPathStack
@@ -29,8 +35,6 @@ public class CursorConversationPage {
     @State var cursorMenuActionMessage: String = ""
     @Consume var selectedRepository: String
     @Consume var liveRepositoryDetail: GitHubRepositoryDetailSnapshot
-    @Consume var pendingPageTitle: String
-    @Consume var pendingPageMessage: String
 
     @StorageProp["colorMode"]
     let systemColorMode: ColorMode = ColorMode.Light
@@ -335,10 +339,8 @@ public class CursorConversationPage {
         this.cursorStack.pushPath(NavPathInfo(name: "cursorModelPicker", param: ""), options: NavigationOptions(animated: true))
     }
     func openPending(title: String, message: String): Unit {
-        this.pendingPageTitle = title
-        this.pendingPageMessage = message
         this.showMenu = false
-        this.cursorStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+        this.cursorStack.pushPath(NavPathInfo(name: "placeholder", param: buildCursorPlaceholderParam(title, message)), options: NavigationOptions(animated: true))
     }
     func refreshModelsIfPossible(): Unit {
         let apiKey = this.currentCursorApiKey()

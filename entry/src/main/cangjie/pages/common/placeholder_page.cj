@@ -6,16 +6,42 @@ import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
+let PLACEHOLDER_FIELD_DELIMITER = "::|::"
+
+func parsePlaceholderParam(payload: String): (String, String) {
+    let parts = payload.split(PLACEHOLDER_FIELD_DELIMITER)
+    if (parts.size >= 2) {
+        return (parts[0], parts[1])
+    }
+    (payload, "")
+}
+
+func buildPlaceholderParam(title: String, message: String): String {
+    "${title}${PLACEHOLDER_FIELD_DELIMITER}${message}"
+}
+
+func placeholderPayloadFromContext(context: NavDestinationContext): String {
+    match (context.pathInfo.param) {
+        case Some(value) =>
+            match (value as String) {
+                case Some(text) => text
+                case None => ""
+            }
+        case None => ""
+    }
+}
+
 @Component
 public class HomePlaceholderPage {
     @Consume var homeStack: NavPathStack
-    @Consume var pendingPageTitle: String
-    @Consume var pendingPageMessage: String
     @Consume var themePreference: String
     @Consume var languagePreference: String
 
     @StorageProp["colorMode"] let systemColorMode: ColorMode = ColorMode.Light
     @StorageProp["languageCode"] let systemLanguageCode: String = "en"
+
+    @State var pageTitle: String = "Pending"
+    @State var pageMessage: String = "该页面待开发"
 
     protected override func aboutToAppear(): Unit { applyAppStatusBarStyle(this.isDarkTheme()) }
 
@@ -24,8 +50,8 @@ public class HomePlaceholderPage {
             Stack() {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Column(space: 16) {
-                    detailHeaderCommon(this.homeStack, this.t("back"), this.pendingPageTitle, this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.pendingPageTitle, this.pendingPageMessage)
+                    detailHeaderCommon(this.homeStack, this.t("back"), this.pageTitle, this.primaryTextColor(), this.surfaceColor())
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.pageTitle, this.pageMessage)
                     detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), "Status", "该页面待开发")
                 }
                 .width(100.percent)
@@ -37,6 +63,11 @@ public class HomePlaceholderPage {
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
+        .onReady({ context =>
+            let values = parsePlaceholderParam(placeholderPayloadFromContext(context))
+            this.pageTitle = values[0]
+            this.pageMessage = values[1]
+        })
     }
 
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
@@ -50,13 +81,14 @@ public class HomePlaceholderPage {
 @Component
 public class CursorPlaceholderPage {
     @Consume var cursorStack: NavPathStack
-    @Consume var pendingPageTitle: String
-    @Consume var pendingPageMessage: String
     @Consume var themePreference: String
     @Consume var languagePreference: String
 
     @StorageProp["colorMode"] let systemColorMode: ColorMode = ColorMode.Light
     @StorageProp["languageCode"] let systemLanguageCode: String = "en"
+
+    @State var pageTitle: String = "Pending"
+    @State var pageMessage: String = "该页面待开发"
 
     protected override func aboutToAppear(): Unit { applyAppStatusBarStyle(this.isDarkTheme()) }
 
@@ -65,8 +97,8 @@ public class CursorPlaceholderPage {
             Stack() {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Column(space: 16) {
-                    detailHeaderCommon(this.cursorStack, this.t("back"), this.pendingPageTitle, this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.pendingPageTitle, this.pendingPageMessage)
+                    detailHeaderCommon(this.cursorStack, this.t("back"), this.pageTitle, this.primaryTextColor(), this.surfaceColor())
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.pageTitle, this.pageMessage)
                     detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), "Status", "该页面待开发")
                 }
                 .width(100.percent)
@@ -78,6 +110,11 @@ public class CursorPlaceholderPage {
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
+        .onReady({ context =>
+            let values = parsePlaceholderParam(placeholderPayloadFromContext(context))
+            this.pageTitle = values[0]
+            this.pageMessage = values[1]
+        })
     }
 
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }
@@ -91,13 +128,14 @@ public class CursorPlaceholderPage {
 @Component
 public class ExplorePlaceholderPage {
     @Consume var exploreStack: NavPathStack
-    @Consume var pendingPageTitle: String
-    @Consume var pendingPageMessage: String
     @Consume var themePreference: String
     @Consume var languagePreference: String
 
     @StorageProp["colorMode"] let systemColorMode: ColorMode = ColorMode.Light
     @StorageProp["languageCode"] let systemLanguageCode: String = "en"
+
+    @State var pageTitle: String = "Pending"
+    @State var pageMessage: String = "该页面待开发"
 
     protected override func aboutToAppear(): Unit { applyAppStatusBarStyle(this.isDarkTheme()) }
 
@@ -106,8 +144,8 @@ public class ExplorePlaceholderPage {
             Stack() {
                 detailBackgroundCommon(this.pageBackgroundColor())
                 Column(space: 16) {
-                    detailHeaderCommon(this.exploreStack, this.t("back"), this.pendingPageTitle, this.primaryTextColor(), this.surfaceColor())
-                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.pendingPageTitle, this.pendingPageMessage)
+                    detailHeaderCommon(this.exploreStack, this.t("back"), this.pageTitle, this.primaryTextColor(), this.surfaceColor())
+                    detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), this.pageTitle, this.pageMessage)
                     detailCardCommon(this.surfaceColor(), this.primaryTextColor(), this.secondaryTextColor(), "Status", "该页面待开发")
                 }
                 .width(100.percent)
@@ -119,6 +157,11 @@ public class ExplorePlaceholderPage {
         }
         .hideTitleBar(true)
         .backgroundColor(this.pageBackgroundColor())
+        .onReady({ context =>
+            let values = parsePlaceholderParam(placeholderPayloadFromContext(context))
+            this.pageTitle = values[0]
+            this.pageMessage = values[1]
+        })
     }
 
     func t(key: String): String { appLocalizedText(appResolveLanguage(this.languagePreference, this.systemLanguageCode), key) }

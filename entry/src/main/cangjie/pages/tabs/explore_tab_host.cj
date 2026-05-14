@@ -11,6 +11,12 @@ import ohos_app_cangjie_entry.services.app.refreshGitHubRepositoryBundle
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.github.{repositoryNameFromApiUrl, resourceNumberFromApiUrl}
 
+let EXPLORE_PLACEHOLDER_FIELD_DELIMITER = "::|::"
+
+func buildExplorePlaceholderParam(title: String, message: String): String {
+    "${title}${EXPLORE_PLACEHOLDER_FIELD_DELIMITER}${message}"
+}
+
 @Component
 public class ExploreTabHost {
     @Consume var exploreStack: NavPathStack = NavPathStack()
@@ -26,9 +32,6 @@ public class ExploreTabHost {
     @Consume var liveIssues: ArrayList<GitHubIssueSnapshot>
     @Consume var livePullRequests: ArrayList<GitHubPullRequestSnapshot>
 
-    @Provide var pendingPageTitle: String = "Pending"
-    @Provide var pendingPageMessage: String = "该页面待开发"
-    @Provide var pendingPullRequestReviewEvent: String = "COMMENT"
     @Provide var selectedGitHubUserLogin: String = ""
     @Provide var selectedGitHubUserProfile: GitHubUserProfileSnapshot = GitHubUserProfileSnapshot("", "", "", "", "", "", "", "", "0", "0", "0", "0")
     @Provide var selectedGitHubUserRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()
@@ -258,9 +261,7 @@ public class ExploreTabHost {
                     this.exploreStack.pushPath(NavPathInfo(name: "searchUsersPage", param: ""), options: NavigationOptions(animated: true))
                 })
                 this.buildSearchCategoryRow(this.t("organizations"), { =>
-                    this.pendingPageTitle = this.t("organizations")
-                    this.pendingPageMessage = this.t("not_available")
-                    this.exploreStack.pushPath(NavPathInfo(name: "placeholder", param: ""), options: NavigationOptions(animated: true))
+                    this.exploreStack.pushPath(NavPathInfo(name: "placeholder", param: buildExplorePlaceholderParam(this.t("organizations"), this.t("not_available"))), options: NavigationOptions(animated: true))
                 })
             }
         }

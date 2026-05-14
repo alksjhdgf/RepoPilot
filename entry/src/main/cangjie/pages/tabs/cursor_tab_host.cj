@@ -17,9 +17,6 @@ public class CursorTabHost {
     @Provide var cursorConversationTitle: String = ""
     @Provide var cursorSelectedModelId: String = "claude-haiku-4.5"
     @Provide var cursorConnectionReady: Bool = false
-    @Provide var pendingPageTitle: String = "Pending"
-    @Provide var pendingPageMessage: String = "该页面待开发"
-
     @Consume var cursorStack: NavPathStack = NavPathStack()
     @Consume var themePreference: String = "system"
     @Consume var languagePreference: String = "system"

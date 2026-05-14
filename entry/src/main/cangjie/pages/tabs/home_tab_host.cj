@@ -38,9 +38,6 @@ public class HomeTabHost {
     @Consume var selectedPullRequest: String = ""
     @Consume var selectedTask: String = ""
 
-    @Provide var pendingPageTitle: String = "Pending"
-    @Provide var pendingPageMessage: String = "该页面待开发"
-    @Provide var pendingPullRequestReviewEvent: String = "COMMENT"
     @Provide var selectedGitHubUserLogin: String = ""
     @Provide var selectedGitHubUserProfile: GitHubUserProfileSnapshot = GitHubUserProfileSnapshot("", "", "", "", "", "", "", "", "0", "0", "0", "0")
     @Provide var selectedGitHubUserRepositories: ArrayList<GitHubRepositoryCardSnapshot> = ArrayList<GitHubRepositoryCardSnapshot>()

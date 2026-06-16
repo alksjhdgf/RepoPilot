@@ -2,7 +2,7 @@ package ohos_app_cangjie_entry.pages.settings
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
-import ohos_app_cangjie_entry.infra.runtime.applyAppStatusBarStyle
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, notifyAppSignOut}
 import ohos_app_cangjie_entry.ui.theme.{appResolveIsDarkTheme, appThemeColor}
 import ohos_app_cangjie_entry.ui.i18n.{appLocalizedText, appResolveLanguage}
 
@@ -43,9 +43,10 @@ public class SettingsPage {
                         this.buildFeaturePreviewSettingsGroup()
                         this.buildAccountSettingsGroup()
                         this.buildCacheRow()
+                        this.buildSignOutRow()
                     }
                     .width(100.percent)
-                    .padding(left: 18, right: 18, top: 8, bottom: 32)
+                    .padding(left: 18, right: 18, top: 8, bottom: 168)
                 }
                 .width(100.percent)
                 .height(100.percent)
@@ -69,6 +70,7 @@ public class SettingsPage {
     }
 
     func goBack(): Unit { this.homeStack.pop(animated: true) }
+    func signOut(): Unit { notifyAppSignOut() }
 
     func preferenceLabel(kind: String, value: String): String {
         if (value == "system") {
@@ -255,5 +257,19 @@ public class SettingsPage {
         .padding(left: 18, right: 18)
         .backgroundColor(this.surfaceColor())
         .borderRadius(26)
+    }
+
+    @Builder
+    func buildSignOutRow() {
+        Row() {
+            Text(this.t("sign_out")).fontSize(18).fontColor(0xD14343)
+            Blank()
+        }
+        .width(100.percent)
+        .height(72)
+        .padding(left: 18, right: 18)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(26)
+        .onClick({ _ => this.signOut() })
     }
 }

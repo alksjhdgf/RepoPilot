@@ -14,6 +14,7 @@ var appAuthCallbackHandler: ?(String) -> Unit = None
 var appPreferenceHandler: ?(String, String) -> Unit = None
 var appDataRefreshHandler: ?(String, () -> Unit) -> Unit = None
 var appTabChangeHandler: ?(String) -> Unit = None
+var appSignOutHandler: ?() -> Unit = None
 var pendingAuthCallbackUri: ?String = None
 
 /**
@@ -111,8 +112,8 @@ public func clearAppForegroundHandler(): Unit {
 }
 
 /**
- * 由 UIAbility 生命周期触发前台通知，转发给当前页面壳层。
- * Forwards foreground lifecycle notifications from UIAbility into the active app shell.
+ * 注册补充前台回调，供功能页在回到应用时补一次状态检查。
+ * Registers a supplemental foreground callback for feature pages that need a return-to-app check.
  */
 public func notifyAppForeground(): Unit {
     if (let Some(handler) <- appForegroundHandler) {
@@ -213,6 +214,32 @@ public func clearAppTabChangeHandler(): Unit {
 public func notifyAppTabChange(tab: String): Unit {
     if (let Some(handler) <- appTabChangeHandler) {
         handler(tab)
+    }
+}
+
+/**
+ * 注册全局退出登录处理器，供设置页将退出登录动作统一交回 AppShell。
+ * Registers a global sign-out handler so settings pages can delegate the action back to AppShell.
+ */
+public func setAppSignOutHandler(handler: () -> Unit): Unit {
+    appSignOutHandler = Some(handler)
+}
+
+/**
+ * 清理全局退出登录处理器。
+ * Clears the global sign-out handler.
+ */
+public func clearAppSignOutHandler(): Unit {
+    appSignOutHandler = None
+}
+
+/**
+ * 将页面发起的退出登录动作转交给当前 AppShell。
+ * Forwards page-initiated sign-out actions into the active app shell.
+ */
+public func notifyAppSignOut(): Unit {
+    if (let Some(handler) <- appSignOutHandler) {
+        handler()
     }
 }
 

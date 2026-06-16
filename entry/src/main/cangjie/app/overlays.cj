@@ -39,6 +39,13 @@ func buildAuthWelcome(shell: AppShell) {
                 .borderRadius(18)
                 .onClick({ _ => shell.setAuthMessage("GitHub Enterprise sign-in is not implemented yet.") })
 
+            if (shell.authMessageValue() != "") {
+                Text(shell.authMessageValue())
+                    .fontSize(13)
+                    .fontColor(0xFCA5A5)
+                    .textAlign(TextAlign.Center)
+            }
+
             Text(shell.t("auth_enterprise_hint"))
                 .fontSize(13)
                 .fontColor(0x98A2B3)

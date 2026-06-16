@@ -8,7 +8,7 @@ import std.collection.ArrayList
 import ohos.arkui.state_macro_manage.*
 import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubViewerSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logInfo, logWarn}
-import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, clearAppPreferenceHandler, clearAppTabChangeHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler, setAppPreferenceHandler, setAppTabChangeHandler}
+import ohos_app_cangjie_entry.infra.runtime.{applyAppStatusBarStyle, clearAppAuthCallbackHandler, clearAppForegroundHandler, clearAppPreferenceHandler, clearAppSignOutHandler, clearAppTabChangeHandler, consumePendingAuthCallback, getAppAbilityContext, setAppAuthCallbackHandler, setAppForegroundHandler, setAppPreferenceHandler, setAppSignOutHandler, setAppTabChangeHandler}
 import ohos_app_cangjie_entry.services.platform.{defaultWorkplace, workplaceSnapshot}
 import ohos_app_cangjie_entry.services.app.{buildGitHubAuthLaunchSnapshot, createScratchGitHubRepository, ensureSelectionSnapshot, exchangeGitHubAuthCode, loadStoredLanguagePreference, loadStoredThemePreference, persistLanguagePreference, persistThemePreference, refreshGitHubProfileData, refreshGitHubRepositoryBundle, refreshStoredGitHubSession, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId, restoreMockWorkplaceSelection}
 import ohos_app_cangjie_entry.services.github.{clearStoredGitHubSession, extractUrlQueryParameter, persistStoredGitHubSession, restoreStoredGitHubSession}
@@ -167,6 +167,7 @@ public class AppShell {
         setAppAuthCallbackHandler({ uri => this.handleAuthCallbackUri(uri) })
         setAppPreferenceHandler({ kind, value => this.applyRootPreference(kind, value) })
         setAppTabChangeHandler({ tab => this.handleTabTap(tab) })
+        setAppSignOutHandler({ => this.signOut() })
         applyAppStatusBarStyle(this.isDarkTheme())
         if (let Some(pendingUri) <- consumePendingAuthCallback()) {
             this.handleAuthCallbackUri(pendingUri)
@@ -184,6 +185,7 @@ public class AppShell {
         clearAppAuthCallbackHandler()
         clearAppPreferenceHandler()
         clearAppTabChangeHandler()
+        clearAppSignOutHandler()
     }
 
     public func build() {
@@ -379,6 +381,10 @@ public class AppShell {
         this.authMessage = message
     }
 
+    func authMessageValue(): String {
+        this.authMessage
+    }
+
     /**
      * 将异步回调中的 UI 写操作切回主线程执行。
      * Moves UI mutations from async callbacks back onto the UI thread.
@@ -563,12 +569,20 @@ public class AppShell {
         getUIContext().animateTo(AnimateParam(duration: 220, curve: Curve.Ease), { =>
             this.isAuthenticated = false
             this.authStage = "welcome"
+            this.activeTab = "home"
+            this.showWorkplacePicker = false
             this.authMessage = ""
             this.authVerificationUri = ""
             this.authUserCode = ""
             this.authRequestState = ""
             this.authAccessToken = ""
             this.sharedAuthAccessToken = ""
+            this.shellStack = NavPathStack()
+            this.homeStack = NavPathStack()
+            this.inboxStack = NavPathStack()
+            this.exploreStack = NavPathStack()
+            this.cursorStack = NavPathStack()
+            this.hideFloatingNavigation = false
             this.authCheckingToken = false
             this.viewerLogin = ""
             this.viewerAvatarUrl = ""

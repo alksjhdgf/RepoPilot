@@ -6,9 +6,10 @@ import ohos.net.http.{HttpData, HttpDataType, HttpRequestOptions, RequestMethod}
 import ohos_app_cangjie_entry.domain.{GitHubAccessTokenSnapshot, GitHubStoredSessionSnapshot}
 import ohos_app_cangjie_entry.infra.logging.{logDebug, logError, logInfo, logWarn}
 
-let GITHUB_APP_CLIENT_ID = "Iv23lidHotlwYwAflJsH"
-let GITHUB_APP_CLIENT_SECRET = "c8863007758b40df8c156dd9db829902032d3861"
-let GITHUB_APP_REDIRECT_URI = "repopilot://auth/callback"
+let GITHUB_OAUTH_CLIENT_ID = "Ov23liM4Ky6UX6B2Kf3B"
+let GITHUB_OAUTH_CLIENT_SECRET = "f4a47664933d40eda4c88d0c98968c30c4ff34cd"
+let GITHUB_OAUTH_REDIRECT_URI = "repopilot://auth/callback"
+let GITHUB_OAUTH_SCOPE = "repo delete_repo notifications gist read:org user:follow read:user"
 let AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 let ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
 
@@ -79,11 +80,12 @@ func exchangeGitHubTokenPayload(
 }
 
 /**
- * 构建 GitHub App Web 授权页链接，供客户端直接拉起网页登录与授权。
- * Builds the GitHub App web authorization URL for direct browser sign-in and consent.
+ * 构建 GitHub OAuth Web 授权页链接，供客户端直接拉起网页登录与授权。
+ * Builds the GitHub OAuth web authorization URL for direct browser sign-in and consent.
  */
 public func buildGitHubAuthorizationUri(state: String): String {
-    "${AUTHORIZE_URL}?client_id=${GITHUB_APP_CLIENT_ID}&redirect_uri=${GITHUB_APP_REDIRECT_URI}&state=${state}"
+    let encodedScope = GITHUB_OAUTH_SCOPE.replace(" ", "%20")
+    "${AUTHORIZE_URL}?client_id=${GITHUB_OAUTH_CLIENT_ID}&redirect_uri=${GITHUB_OAUTH_REDIRECT_URI}&scope=${encodedScope}&state=${state}"
 }
 
 /**
@@ -96,7 +98,7 @@ public func exchangeGitHubWebCode(
     onFailure: (String) -> Unit
 ): Unit {
     logInfo("AuthService", "Exchanging GitHub callback code for access token.")
-    let payload = "client_id=${GITHUB_APP_CLIENT_ID}&client_secret=${GITHUB_APP_CLIENT_SECRET}&code=${code}&redirect_uri=${GITHUB_APP_REDIRECT_URI}"
+    let payload = "client_id=${GITHUB_OAUTH_CLIENT_ID}&client_secret=${GITHUB_OAUTH_CLIENT_SECRET}&code=${code}&redirect_uri=${GITHUB_OAUTH_REDIRECT_URI}"
     exchangeGitHubTokenPayload(payload, onSuccess, onFailure)
 }
 
@@ -111,7 +113,7 @@ public func refreshGitHubWebToken(
 ): Unit {
     logInfo("AuthService", "Refreshing GitHub access token.")
     let payload =
-        "client_id=${GITHUB_APP_CLIENT_ID}&client_secret=${GITHUB_APP_CLIENT_SECRET}" +
+        "client_id=${GITHUB_OAUTH_CLIENT_ID}&client_secret=${GITHUB_OAUTH_CLIENT_SECRET}" +
         "&grant_type=refresh_token&refresh_token=${refreshToken}"
     exchangeGitHubTokenPayload(payload, onSuccess, onFailure)
 }

@@ -121,6 +121,9 @@ func localizedEn(key: String): String {
     else if (key == "cursor_error_unknown") { "Cursor returned an unexpected error. The original response is shown below." }
     else if (key == "cursor_open_dashboard") { "Open Cursor dashboard" }
     else if (key == "cursor_clear_api_key") { "Clear API key" }
+    else if (key == "cursor_clear_input") { "Clear input" }
+    else if (key == "cursor_reset_draft") { "Restore saved key" }
+    else if (key == "cursor_api_key_restored") { "Restored the saved API key draft." }
     else if (key == "cursor_dashboard_opened") { "Cursor dashboard opened. Go to Integrations and create a User API key, then return here." }
     else if (key == "cursor_api_key_path_hint") { "Cursor Dashboard -> Integrations -> User API Keys" }
     else if (key == "cursor_browser_open_failed") { "Unable to open the browser. Please try again." }
@@ -144,6 +147,8 @@ func localizedEn(key: String): String {
     else if (key == "connect_github_first") { "Connect GitHub first." }
     else if (key == "repository_create_sign_in_required") { "Sign in to GitHub before creating a repository." }
     else if (key == "repository_created") { "Repository created on GitHub." }
+    else if (key == "repository_create_scope_required") { "GitHub denied repository creation for the current OAuth token. Reconnect GitHub to refresh repository scopes, then try again." }
+    else if (key == "repository_create_reconnect_action") { "Reconnect GitHub" }
     else if (key == "repository_fork_requested") { "Fork requested on GitHub." }
     else if (key == "repository_deleted") { "Repository deleted on GitHub." }
     else if (key == "issue_node_id_missing") { "This issue is missing a GitHub node id." }
@@ -159,6 +164,7 @@ func localizedEn(key: String): String {
     else if (key == "share_repository") { "Share Repository" }
     else if (key == "share_profile") { "Share Profile" }
     else if (key == "share_gist") { "Share Gist" }
+    else if (key == "sign_out") { "Sign out" }
     else if (key == "terms_of_service") { "Terms of Service" }
     else if (key == "privacy_policy") { "Privacy Policy & Analytics" }
     else if (key == "feature_preview") { "Feature Preview" }
@@ -212,7 +218,7 @@ func localizedEn(key: String): String {
     else if (key == "light") { "Light" }
     else if (key == "dark") { "Dark" }
     else if (key == "lang_en") { "English" }
-    else if (key == "lang_zh") { "Chinese" }
+    else if (key == "lang_zh") { "中文" }
     else if (key == "save") { "Save" }
     else if (key == "close") { "Close" }
     else if (key == "add_short") { "+" }
@@ -478,6 +484,9 @@ func localizedZh(key: String): String {
     else if (key == "cursor_error_unknown") { "Cursor 返回了未预期的错误，原始返回如下。" }
     else if (key == "cursor_open_dashboard") { "打开 Cursor 控制台" }
     else if (key == "cursor_clear_api_key") { "清除 API key" }
+    else if (key == "cursor_clear_input") { "清空输入" }
+    else if (key == "cursor_reset_draft") { "恢复已保存 key" }
+    else if (key == "cursor_api_key_restored") { "已恢复为本地保存的 API key 草稿。" }
     else if (key == "cursor_dashboard_opened") { "已打开 Cursor 控制台。请前往 Integrations 创建 User API key，然后返回这里。" }
     else if (key == "cursor_api_key_path_hint") { "Cursor Dashboard -> Integrations -> User API Keys" }
     else if (key == "cursor_browser_open_failed") { "无法打开浏览器，请重试。" }
@@ -501,6 +510,8 @@ func localizedZh(key: String): String {
     else if (key == "connect_github_first") { "请先连接 GitHub。" }
     else if (key == "repository_create_sign_in_required") { "创建仓库前请先连接 GitHub。" }
     else if (key == "repository_created") { "仓库已在 GitHub 上创建。" }
+    else if (key == "repository_create_scope_required") { "GitHub 因当前 OAuth 令牌缺少仓库权限而拒绝了创建仓库。请重新连接 GitHub 刷新仓库 scopes 后再试。" }
+    else if (key == "repository_create_reconnect_action") { "重新连接 GitHub" }
     else if (key == "repository_fork_requested") { "已在 GitHub 上发起 fork。" }
     else if (key == "repository_deleted") { "仓库已从 GitHub 删除。" }
     else if (key == "issue_node_id_missing") { "当前 Issue 缺少 GitHub 节点标识。" }
@@ -516,6 +527,7 @@ func localizedZh(key: String): String {
     else if (key == "share_repository") { "分享仓库" }
     else if (key == "share_profile") { "分享主页" }
     else if (key == "share_gist") { "分享 Gist" }
+    else if (key == "sign_out") { "退出登录" }
     else if (key == "terms_of_service") { "服务条款" }
     else if (key == "privacy_policy") { "隐私政策与分析" }
     else if (key == "feature_preview") { "功能预览" }
@@ -568,7 +580,7 @@ func localizedZh(key: String): String {
     else if (key == "system") { "跟随系统" }
     else if (key == "light") { "浅色" }
     else if (key == "dark") { "深色" }
-    else if (key == "lang_en") { "英语" }
+    else if (key == "lang_en") { "English" }
     else if (key == "lang_zh") { "中文" }
     else if (key == "save") { "保存" }
     else if (key == "close") { "关闭" }

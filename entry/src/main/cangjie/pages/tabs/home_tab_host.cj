@@ -8,8 +8,8 @@ import ohos.base.UIThread
 import std.collection.ArrayList
 import ohos_app_cangjie_entry.pages.maps.homePageMap
 import ohos_app_cangjie_entry.domain.{GitHubCommitDetailSnapshot, GitHubCommitSnapshot, GitHubEventSnapshot, GitHubGistFileSnapshot, GitHubGistSnapshot, GitHubIssueSnapshot, GitHubProfileMetricsSnapshot, GitHubPullRequestSnapshot, GitHubRepositoryCardSnapshot, GitHubRepositoryDetailSnapshot, GitHubSimpleUserSnapshot, GitHubUserProfileSnapshot, GitHubViewerSnapshot}
-import ohos_app_cangjie_entry.infra.runtime.getAppAbilityContext
-import ohos_app_cangjie_entry.infra.runtime.notifyAppTabChange
+import ohos_app_cangjie_entry.infra.logging.{logInfo, logWarn}
+import ohos_app_cangjie_entry.infra.runtime.{getAppAbilityContext, notifyAppTabChange}
 import ohos_app_cangjie_entry.services.app.{createScratchGitHubRepository, refreshGitHubProfileData, refreshGitHubRepositoryBundle, resolveSelectedIssueState, resolveSelectedPullRequestId, resolveSelectedRepositoryId}
 import ohos_app_cangjie_entry.services.agent.taskIdForIssue
 import ohos_app_cangjie_entry.services.github.{fetchGitHubViewerActivity, loadStoredFavoriteRepositories, persistStoredFavoriteRepositories, syncFavoriteRepositories}
@@ -66,11 +66,16 @@ public class HomeTabHost {
 
     @State var homeRefreshing: Bool = false
     @State var homeActionMessage: String = ""
+    @State var homeActionLinkLabel: String = ""
+    @State var homeActionLinkUrl: String = ""
+    @State var homeActionLinkKind: String = ""
     @State var liveActivityEvents: ArrayList<GitHubEventSnapshot> = ArrayList<GitHubEventSnapshot>()
-
     protected override func aboutToAppear(): Unit {
         this.favoriteRepositories = loadStoredFavoriteRepositories()
         this.refreshHomeContent()
+    }
+
+    protected override func aboutToDisappear(): Unit {
     }
 
     public func build() {
@@ -227,6 +232,8 @@ public class HomeTabHost {
     func primaryTextColor(): Int64 { tabColor("primaryText", this.themePreference, this.systemColorMode) }
     func secondaryTextColor(): Int64 { tabColor("secondaryText", this.themePreference, this.systemColorMode) }
     func accentStrongColor(): Int64 { tabColor("accentStrong", this.themePreference, this.systemColorMode) }
+    func homePrimaryButtonColor(): Int64 { this.accentStrongColor() }
+    func homePrimaryButtonTextColor(): Int64 { if (this.isDarkTheme()) { 0xFF0B1220 } else { 0xFFFFFFFF } }
     func topBarOverlayColor(): Int64 { if (this.isDarkTheme()) { 0xE0090B10 } else { 0xEAF2F3F7 } }
     func currentHeaderWorkplaceTitle(): String { tabWorkplaceHeaderTitle(this.currentWorkplace, this.languagePreference, this.systemLanguageCode) }
     func canCreateFromCurrentWorkplace(): Bool { this.currentWorkplace != "unified" }
@@ -274,19 +281,42 @@ public class HomeTabHost {
     func createRepository(): Unit {
         if (this.sharedAuthAccessToken == "") {
             this.homeActionMessage = this.t("repository_create_sign_in_required")
+            this.homeActionLinkLabel = ""
+            this.homeActionLinkUrl = ""
+            this.homeActionLinkKind = ""
             return
         }
+        logInfo("HomeTabHost", "Create repository requested. tokenLength=${this.sharedAuthAccessToken.size}")
         createScratchGitHubRepository(
             this.sharedAuthAccessToken,
             { repositoryName =>
                 this.runOnUi({
                     =>
                     this.homeActionMessage = this.t("repository_created")
+                    this.homeActionLinkLabel = ""
+                    this.homeActionLinkUrl = ""
+                    this.homeActionLinkKind = ""
                     this.refreshHomeContent()
                 })
             },
             { message =>
-                this.runOnUi({ => this.homeActionMessage = message })
+                logWarn("HomeTabHost", "Create repository failed: ${message}")
+                this.runOnUi({
+                    =>
+                    if (
+                        message.contains("GitHub API 401")
+                        || message.contains("GitHub API 403")
+                        || message.contains("Bad credentials")
+                        || message.contains("Resource not accessible by integration")
+                    ) {
+                        this.homeActionMessage = this.t("repository_create_scope_required")
+                    } else {
+                        this.homeActionMessage = message
+                    }
+                    this.homeActionLinkLabel = ""
+                    this.homeActionLinkUrl = ""
+                    this.homeActionLinkKind = ""
+                })
             }
         )
     }
@@ -294,6 +324,10 @@ public class HomeTabHost {
     func openUrl(url: String): Unit {
         if (url == "") { return }
         try { getAppAbilityContext().startAbility(Want(uri: url, action: "ohos.want.action.viewData")) } catch (_: BusinessException) {}
+    }
+
+    func handleHomeActionLink(): Unit {
+        this.openUrl(this.homeActionLinkUrl)
     }
 
     @Builder
@@ -347,13 +381,13 @@ public class HomeTabHost {
             if (this.homeActionMessage != "") {
                 this.buildActionMessageCard()
             }
-            this.buildSectionHeader(this.t("my_work"))
+            this.buildSectionHeader("my_work")
             this.buildHomeWorkPanel()
-            this.buildSectionHeader(this.t("favorites"))
+            this.buildSectionHeader("favorites")
             this.buildHomeFavoritesPanel()
-            this.buildSectionHeader(this.t("shortcuts"))
+            this.buildSectionHeader("shortcuts")
             this.buildHomeShortcutsPanel()
-            this.buildSectionHeader(this.t("recent"))
+            this.buildSectionHeader("recent")
             this.buildHomeRecentPanel()
         }
         .width(100.percent)
@@ -361,29 +395,42 @@ public class HomeTabHost {
 
     @Builder
     func buildActionMessageCard() {
-        Text(this.homeActionMessage)
-            .width(100.percent)
-            .padding(left: 16, right: 16, top: 14, bottom: 14)
-            .backgroundColor(this.surfaceColor())
-            .borderRadius(18)
-            .fontSize(14)
-            .fontColor(this.primaryTextColor())
+        Column(space: 12) {
+            Text(this.homeActionMessage)
+                .width(100.percent)
+                .fontSize(14)
+                .fontColor(this.primaryTextColor())
+            if (this.homeActionLinkLabel != "") {
+                Button(this.homeActionLinkLabel)
+                    .width(100.percent)
+                    .height(40)
+                    .borderRadius(14)
+                    .backgroundColor(this.homePrimaryButtonColor())
+                    .fontColor(this.homePrimaryButtonTextColor())
+                    .fontSize(14)
+                    .onClick({ _ => this.handleHomeActionLink() })
+            }
+        }
+        .width(100.percent)
+        .padding(left: 16, right: 16, top: 14, bottom: 14)
+        .backgroundColor(this.surfaceColor())
+        .borderRadius(18)
     }
 
     @Builder
     func buildHomeWorkPanel() {
         Column() {
-            this.buildHomeWorkRow(0x68D968, "◎", this.t("issues"), { => this.openSelectedIssue() })
+            this.buildHomeWorkRow(0x68D968, "◎", "issues", { => this.openSelectedIssue() })
             this.buildDivider()
-            this.buildHomeWorkRow(0x4B88FF, "⎇", this.t("pull_requests"), { => this.openSelectedPullRequest() })
+            this.buildHomeWorkRow(0x4B88FF, "⎇", "pull_requests", { => this.openSelectedPullRequest() })
             this.buildDivider()
-            this.buildHomeWorkRow(0x7B56E8, "◫", this.t("repositories"), { => this.homeStack.pushPath(NavPathInfo(name: "repositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
+            this.buildHomeWorkRow(0x7B56E8, "◫", "repositories", { => this.homeStack.pushPath(NavPathInfo(name: "repositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
             this.buildDivider()
-            this.buildHomeWorkRow(0x4B4F5C, "⌘", this.t("top_repositories"), { => this.homeStack.pushPath(NavPathInfo(name: "topRepositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
+            this.buildHomeWorkRow(0x4B4F5C, "⌘", "top_repositories", { => this.homeStack.pushPath(NavPathInfo(name: "topRepositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
             this.buildDivider()
-            this.buildHomeWorkRow(0xF4A24B, "⌂", this.t("organizations"), { => this.homeStack.pushPath(NavPathInfo(name: "organizationsPage", param: ""), options: NavigationOptions(animated: true)) })
+            this.buildHomeWorkRow(0xF4A24B, "⌂", "organizations", { => this.homeStack.pushPath(NavPathInfo(name: "organizationsPage", param: ""), options: NavigationOptions(animated: true)) })
             this.buildDivider()
-            this.buildHomeWorkRow(0xFFD54A, "☆", this.t("starred"), { => this.homeStack.pushPath(NavPathInfo(name: "starredRepositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
+            this.buildHomeWorkRow(0xFFD54A, "☆", "starred", { => this.homeStack.pushPath(NavPathInfo(name: "starredRepositoriesPage", param: ""), options: NavigationOptions(animated: true)) })
         }
         .width(100.percent)
         .backgroundColor(this.surfaceColor())
@@ -392,11 +439,11 @@ public class HomeTabHost {
     }
 
     @Builder
-    func buildHomeWorkRow(accentColor: Int64, iconText: String, title: String, onTap: () -> Unit) {
+    func buildHomeWorkRow(accentColor: Int64, iconText: String, titleKey: String, onTap: () -> Unit) {
         Row(space: 14) {
             Row() { Text(iconText).fontSize(14).fontWeight(FontWeight.Bold).fontColor(0xF8FAFC) }
                 .width(36).height(36).backgroundColor(accentColor).borderRadius(9).justifyContent(FlexAlign.Center)
-            Text(title).fontSize(15).fontColor(this.primaryTextColor())
+            Text(this.t(titleKey)).fontSize(15).fontColor(this.primaryTextColor())
             Blank()
             Text("›").fontSize(20).fontColor(this.secondaryTextColor())
         }
@@ -606,9 +653,9 @@ public class HomeTabHost {
     }
 
     @Builder
-    func buildSectionHeader(title: String) {
+    func buildSectionHeader(titleKey: String) {
         Row() {
-            Text(title).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
+            Text(this.t(titleKey)).fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.primaryTextColor())
             Blank()
             Text("...").fontSize(14).fontWeight(FontWeight.Bold).fontColor(this.secondaryTextColor())
         }

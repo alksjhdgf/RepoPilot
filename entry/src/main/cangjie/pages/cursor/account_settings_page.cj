@@ -30,6 +30,7 @@ public class CursorAccountSettingsPage {
     let systemLanguageCode: String = "en"
 
     @State var cursorApiKeyDraft: String = ""
+    @State var storedApiKeyDraft: String = ""
     @State var hasStoredApiKey: Bool = false
     @State var validationMessage: String = ""
     @State var connectionValidated: Bool = false
@@ -40,6 +41,7 @@ public class CursorAccountSettingsPage {
     protected override func aboutToAppear(): Unit {
         applyAppStatusBarStyle(this.isDarkTheme())
         let storedApiKey = loadStoredCursorApiKey()
+        this.storedApiKeyDraft = storedApiKey
         this.cursorApiKeyDraft = storedApiKey
         this.hasStoredApiKey = storedApiKey != ""
     }
@@ -84,6 +86,33 @@ public class CursorAccountSettingsPage {
                             .borderRadius(18)
                             .padding(left: 16, right: 16)
                             .onChange({ value => this.cursorApiKeyDraft = value })
+
+                        if (this.cursorApiKeyDraft != "" || this.storedApiKeyDraft != "") {
+                            Row(space: 10) {
+                                if (this.cursorApiKeyDraft != this.storedApiKeyDraft) {
+                                    Button(this.t("cursor_reset_draft"))
+                                        .layoutWeight(1.0)
+                                        .height(42)
+                                        .backgroundColor(this.mutedSurfaceColor())
+                                        .fontColor(this.primaryTextColor())
+                                        .fontSize(14)
+                                        .borderRadius(14)
+                                        .onClick({ _ => this.resetCursorApiKeyDraft() })
+                                }
+
+                                if (this.cursorApiKeyDraft != "") {
+                                    Button(this.t("cursor_clear_input"))
+                                        .layoutWeight(1.0)
+                                        .height(42)
+                                        .backgroundColor(this.mutedSurfaceColor())
+                                        .fontColor(this.secondaryTextColor())
+                                        .fontSize(14)
+                                        .borderRadius(14)
+                                        .onClick({ _ => this.clearDraftInput() })
+                                }
+                            }
+                            .width(100.percent)
+                        }
 
                         if (this.validationMessage != "") {
                             Text(this.validationMessage)
@@ -218,6 +247,7 @@ public class CursorAccountSettingsPage {
         this.loadCursorAgents()
     }
     func clearCursorApiKey(): Unit {
+        this.storedApiKeyDraft = ""
         this.cursorApiKeyDraft = ""
         this.hasStoredApiKey = false
         spawn { => clearStoredCursorApiKey() }
@@ -227,6 +257,21 @@ public class CursorAccountSettingsPage {
         this.cursorConversationId = ""
         this.cursorConversationTitle = this.t("cursor_new_conversation")
         this.validationMessage = this.t("cursor_api_key_cleared")
+        this.closeFailureDialog()
+    }
+    func clearDraftInput(): Unit {
+        this.cursorApiKeyDraft = ""
+        this.validationMessage = ""
+        this.connectionValidated = false
+        this.closeFailureDialog()
+    }
+    func resetCursorApiKeyDraft(): Unit {
+        let storedApiKey = loadStoredCursorApiKey()
+        this.storedApiKeyDraft = storedApiKey
+        this.cursorApiKeyDraft = storedApiKey
+        this.hasStoredApiKey = storedApiKey != ""
+        this.validationMessage = if (storedApiKey == "") { "" } else { this.t("cursor_api_key_restored") }
+        this.connectionValidated = false
         this.closeFailureDialog()
     }
     func showFailureDialog(title: String, body: String): Unit {
@@ -268,6 +313,7 @@ public class CursorAccountSettingsPage {
                     this.connectionValidated = true
                     this.cursorConnectionReady = true
                     this.cursorConversations = items
+                    this.storedApiKeyDraft = this.cursorApiKeyDraft
                     this.hasStoredApiKey = true
                     if (items.size > 0) {
                         let first = items[0]
